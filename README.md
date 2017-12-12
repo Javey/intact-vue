@@ -1,6 +1,6 @@
 # intact-vue
 
-A compatibiliy layer for running Intact[1] component in Vue[2].
+A compatibiliy layer for running [Intact][1] component in [Vue][2].
 
 ## Usage
 

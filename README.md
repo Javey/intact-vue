@@ -16,6 +16,7 @@ class IntactComponent extends Intact {
     }
 
     onClick() {
+        this.set('value', this.get('value') + 1);
         this.trigger('click');
     }
 }
@@ -28,12 +29,12 @@ const vue = new Vue({
         count: 0,
     },
     template: `<div>
-        <IntactComponent @click="add" v-model="count"/>
+        <IntactComponent @click="onClick" v-model="count"/>
         <div>count: {{ count }}</div>
     </div>`,
     methods: {
-        add() {
-            this.count++;
+        onClick() {
+            console.log(this.count);
         }
     },
     components: {IntactComponent}

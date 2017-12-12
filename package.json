@@ -28,6 +28,10 @@
     "url": "https://github.com/Javey/intact-vue/issues"
   },
   "homepage": "https://github.com/Javey/intact-vue#readme",
+  "peerDependencies": {
+    "vue": "^2.5.9",
+    "intact": "^2.2.0-16"
+  },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",

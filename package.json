@@ -4,7 +4,7 @@
   "description": "A compatibility layer for running intact component in vue",
   "main": "dist/index.js",
   "scripts": {
-    "test": "karma start karma.conf.js",
+    "test": "karma start karma.config.js",
     "build": "rollup -c rollup.config.js && uglifyjs dist/intact.vue.js -o dist/intact.vue.min.js -m"
   },
   "repository": {

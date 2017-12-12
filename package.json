@@ -2,7 +2,8 @@
   "name": "intact-vue",
   "version": "0.0.2",
   "description": "A compatibility layer for running intact component in vue",
-  "main": "dist/index.js",
+  "main": "dist/intact.vue.js",
+  "module": "src/index.js",
   "scripts": {
     "test": "karma start karma.config.js",
     "build": "rollup -c rollup.config.js && uglifyjs dist/intact.vue.js -o dist/intact.vue.min.js -m",

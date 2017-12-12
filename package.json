@@ -1,0 +1,56 @@
+{
+  "name": "intact-vue",
+  "version": "0.0.1",
+  "description": "A compatibility layer for running intact component in vue",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "karma start karma.conf.js",
+    "build": "rollup -c rollup.config.js && uglifyjs dist/intact.vue.js -o dist/intact.vue.min.js -m"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Javey/intact-vue.git"
+  },
+  "keywords": [
+    "intact",
+    "vue",
+    "intact-vue"
+  ],
+  "author": "Javey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Javey/intact-vue/issues"
+  },
+  "homepage": "https://github.com/Javey/intact-vue#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "chai": "^4.1.2",
+    "css-loader": "^0.28.7",
+    "html-webpack-plugin": "^2.30.1",
+    "intact": "^2.2.0-16",
+    "karma": "^1.7.1",
+    "karma-mocha": "^1.3.0",
+    "karma-sinon-chai": "^1.3.3",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.6",
+    "mocha": "^4.0.1",
+    "rollup": "^0.52.1",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "sinon": "^4.1.3",
+    "sinon-chai": "^2.14.0",
+    "vdt": "^1.1.2-14",
+    "vdt-loader": "^1.3.1",
+    "vue": "^2.5.9",
+    "vue-loader": "^13.5.0",
+    "vue-style-loader": "^3.0.3",
+    "vue-template-compiler": "^2.5.9",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.9.7"
+  }
+}

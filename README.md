@@ -41,5 +41,17 @@ const vue = new Vue({
 });
 ```
 
+### webpack
+
+You can use alias config of webpack to replace intact module.
+
+```js
+resolve: {
+    alias: {
+        'intact$': 'intact-vue'
+    }
+}
+```
+
 [1]: http://javey.github.io/intact
 [2]: https://vuejs.org

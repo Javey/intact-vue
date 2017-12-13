@@ -5,9 +5,9 @@ const h = Intact.Vdt.miss.h;
 const patch = Vue.prototype.__patch__;
 
 export function normalizeChildren(vNodes) {
-	if (vNodes) {
-		const ret = [];
-		vNodes.forEach(vNode => {
+    if (vNodes) {
+        const ret = [];
+        vNodes.forEach(vNode => {
             if (isIntactComponent(vNode)) {
                 const options = vNode.componentOptions;
                 vNode = h(
@@ -21,11 +21,11 @@ export function normalizeChildren(vNodes) {
             } else {
                 vNode = h(Wrapper, {vueVNode: vNode});
             }
-			ret.push(vNode);
-		});
-		return ret;
-	}
-	return vNodes;
+            ret.push(vNode);
+        });
+        return ret;
+    }
+    return vNodes;
 }
 
 export function attachProps(vNode) {

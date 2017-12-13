@@ -63,13 +63,13 @@ export class MockVueComponent {
 }
 
 class Wrapper {
-	init(lastVNode, nextVNode) {
+    init(lastVNode, nextVNode) {
         return patch(null, nextVNode.props.vueVNode);
-	}
+    }
 
-	update(lastVNode, nextVNode) {
+    update(lastVNode, nextVNode) {
         return patch(lastVNode.props.vueVNode, nextVNode.props.vueVNode);
-	}
+    }
 
     destroy(vNode) {
         patch(vNode.props.vueVNode, null);
@@ -96,7 +96,7 @@ function className(vNode) {
 }
 
 function isIntactComponent(vNode) {
-	let i = vNode.data;
-	return i && (i = i.hook) && (i = i.init) &&
+    let i = vNode.data;
+    return i && (i = i.hook) && (i = i.init) &&
         vNode.componentOptions.Ctor.cid === 'IntactVue';
 }

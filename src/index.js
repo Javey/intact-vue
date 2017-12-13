@@ -14,7 +14,7 @@ export default class IntactVue extends Intact {
 
     static options = Object.assign({}, Vue.options);
 
-	constructor(options) {
+    constructor(options) {
         const parentVNode = options._parentVnode;
         if (parentVNode) {
             super(attachProps(parentVNode));
@@ -37,27 +37,27 @@ export default class IntactVue extends Intact {
         } else {
             super(options);
         }
-	}
+    }
 
-	$mount(el, hydrating) {
-		this.$el = this.init();
-		this._vnode = {};
-		this.$options._parentElm.appendChild(this.$el);
-	}
+    $mount(el, hydrating) {
+        this.$el = this.init();
+        this._vnode = {};
+        this.$options._parentElm.appendChild(this.$el);
+    }
 
-	$forceUpdate() {
+    $forceUpdate() {
         this._initMountedQueue();
         attachProps(this.$vnode);
         this._handleSlots();
-		this.update(this.$lastVNode, this.$vnode);
+        this.update(this.$lastVNode, this.$vnode);
         this.$lastVNode = this.$vnode;
         this.parentVNode = this.$vnode;
         this._triggerMountedQueue();
-	}
+    }
 
-	$destroy() {
-		this.destroy();
-	}
+    $destroy() {
+        this.destroy();
+    }
 
     _handleSlots() {
         const {default: d, ...rest} = this.$slots;

@@ -53,5 +53,21 @@ resolve: {
 }
 ```
 
+## Incompatible
+
+1. Intact does not support `modifier`, so you can't use it for intact component.
+But you can use it for vue element or/and component originally. For example:
+
+```js
+// native modifier
+<IntactComponent @click.native="onClick" />
+
+// v-model modifier
+<IntactComponent v-model.trim="value" />
+```
+
+2. Intact does not support `scoped`. You should avoid using them. 
+Use className to limit style instead of.
+
 [1]: http://javey.github.io/intact
 [2]: https://vuejs.org

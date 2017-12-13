@@ -15,7 +15,7 @@ export default class IntactVue extends Intact {
     static options = Object.assign({}, Vue.options);
 
     constructor(options) {
-        const parentVNode = options._parentVnode;
+        const parentVNode = options && options._parentVnode;
         if (parentVNode) {
             super(attachProps(parentVNode));
 

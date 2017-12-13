@@ -3,6 +3,8 @@ import Vue from 'vue';
 import Intact from 'intact/dist/intact';
 import {
     normalizeChildren,
+    normalize,
+    getChildrenAndBlocks,
     attachProps,
     MockVueComponent
 } from './utils';
@@ -17,14 +19,8 @@ export default class IntactVue extends Intact {
     constructor(options) {
         const parentVNode = options && options._parentVnode;
         if (parentVNode) {
-            super(attachProps(parentVNode));
-
-            // get slots
-            const vm = new MockVueComponent();
-            init.call(vm, options);
-            this.$slots = vm.$slots;
-            this._handleSlots();
-            this._isVue = vm._isVue
+            const vNode = normalize(parentVNode);
+            super(vNode.props);
 
             // inject hook
             options.mounted = [this.mount];
@@ -32,26 +28,28 @@ export default class IntactVue extends Intact {
             this.$options = options;
             this.$vnode = parentVNode; 
 
-            this.$lastVNode = parentVNode; 
-            this.parentVNode = parentVNode;
+            this.parentVNode = vNode;
+            vNode.children = this;
         } else {
             super(options);
         }
     }
 
     $mount(el, hydrating) {
-        this.$el = this.init();
+        this.$el = this.init(null, this.parentVNode);
         this._vnode = {};
         this.$options._parentElm.appendChild(this.$el);
     }
 
     $forceUpdate() {
         this._initMountedQueue();
-        attachProps(this.$vnode);
-        this._handleSlots();
-        this.update(this.$lastVNode, this.$vnode);
-        this.$lastVNode = this.$vnode;
-        this.parentVNode = this.$vnode;
+
+        const vNode = normalize(this.$vnode);
+        vNode.children = this;
+
+        this.update(this.parentVNode, vNode);
+        this.parentVNode = vNode;
+
         this._triggerMountedQueue();
     }
 
@@ -59,20 +57,7 @@ export default class IntactVue extends Intact {
         this.destroy();
     }
 
-    _handleSlots() {
-        const {default: d, ...rest} = this.$slots;
-        let blocks;
-        if (rest) {
-            blocks = {};
-            for (const key in rest) {
-                blocks[key] = function() {
-                    return normalizeChildren(rest[key]);
-                }
-            }
-        }
-        this.set({
-            children: normalizeChildren(d),
-            _blocks: blocks,
-        }, {update: false});
-    }
+    // mock api
+    $on() {}
+    $off() {}
 }

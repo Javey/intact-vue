@@ -5,35 +5,52 @@ const h = Intact.Vdt.miss.h;
 const patch = Vue.prototype.__patch__;
 
 export function normalizeChildren(vNodes) {
-    if (vNodes) {
+    if (Array.isArray(vNodes)) {
         const ret = [];
         vNodes.forEach(vNode => {
-            if (isIntactComponent(vNode)) {
-                const options = vNode.componentOptions;
-                vNode = h(
-                    options.Ctor,
-                    Object.assign({className: className(vNode)}, vNode.data.attrs),
-                    normalizeChildren(options.children),
-                    null,
-                    vNode.key,
-                    vNode.ref
-                );
-            } else {
-                vNode = h(Wrapper, {vueVNode: vNode});
-            }
-            ret.push(vNode);
+            ret.push(normalize(vNode));
         });
         return ret;
     }
     return vNodes;
 }
 
-export function attachProps(vNode) {
+export function normalize(vNode) {
+    if (isIntactComponent(vNode)) {
+        const options = vNode.componentOptions;
+        return h(
+            options.Ctor,
+            normalizeProps(vNode),
+            null,
+            null,
+            vNode.key,
+            vNode.ref
+        );
+    } else if (vNode.text !== undefined) {
+        return vNode.text;
+    }
+    return h(Wrapper, {vueVNode: vNode}, null, className(vNode));
+}
+
+export function normalizeProps(vNode) {
     const componentOptions = vNode.componentOptions;
     const data = vNode.data;
-    const props = Object.assign({
-        // children: normalizeChildren(componentOptions.children)
-    }, data.attrs);
+    const attrs = data.attrs;
+    const propTypes = componentOptions.Ctor.propTypes;
+    const props = {};
+
+    if (attrs) {
+        for (const key in attrs) {
+            if (key === 'staticClass' || key === 'class') continue;
+            let value = attrs[key];
+            if (propTypes && propTypes[key] === Boolean && value === '') {
+                value = true;
+            }
+            props[key] = value; 
+        }
+        // add className
+        props.className = className(vNode);
+    }
 
     // if exists v-model
     if (data.model) {
@@ -51,16 +68,36 @@ export function attachProps(vNode) {
         }
     }
 
-    vNode.props = props;
+    // handle children and blocks
+    const slots = resolveSlots(componentOptions.children);
+    Object.assign(props, getChildrenAndBlocks(slots));
 
     return props;
 }
 
-export class MockVueComponent {
-    static options = Vue.options;
-    // mock api
-    $on() {}
+export function getChildrenAndBlocks(slots) {
+    const {default: d, ...rest} = slots; 
+    let blocks;
+    if (rest) {
+        blocks = {};
+        for (const key in rest) {
+            blocks[key] = function() {
+                return normalizeChildren(rest[key]);
+            }
+        }
+    }
+
+    return {
+        children: normalizeChildren(d),
+        _blocks: blocks,
+    };
 }
+
+// export class MockVueComponent {
+    // static options = Vue.options;
+    // // mock api
+    // $on() {}
+// }
 
 class Wrapper {
     init(lastVNode, nextVNode) {
@@ -99,4 +136,43 @@ function isIntactComponent(vNode) {
     let i = vNode.data;
     return i && (i = i.hook) && (i = i.init) &&
         vNode.componentOptions.Ctor.cid === 'IntactVue';
+}
+
+// copy from vue/src/core/instance/render-helpers/resolve-slots.js
+function resolveSlots(children) {
+    const slots = {}
+    if (!children) {
+        return slots;
+    }
+    const defaultSlot = [];
+    for (let i = 0, l = children.length; i < l; i++) {
+        const child = children[i];
+        const data = child.data;
+        // remove slot attribute if the node is resolved as a Vue slot node
+        if (data && data.attrs && data.attrs.slot) {
+            delete data.attrs.slot;
+        }
+        if (data && data.slot != null) {
+            const name = data.slot;
+            const slot = (slots[name] || (slots[name] = []));
+            if (child.tag === 'template') {
+                slot.push.apply(slot, child.children || []);
+            } else {
+                slot.push(child);
+            }
+        } else {
+            (slots.default || (slots.default = [])).push(child);
+        }
+    }
+    // ignore slots that contains only whitespace
+    for (const name in slots) {
+        if (slots[name].every(isWhitespace)) {
+            delete slots[name];
+        }
+    }
+    return slots;
+}
+
+function isWhitespace(node) {
+      return (node.isComment && !node.asyncFactory) || node.text === ' ';
 }

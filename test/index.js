@@ -46,10 +46,12 @@ const SimpleIntactComponent = createIntactComponent(simpleTemplate);
 const ChildrenIntactComponent = createIntactComponent(`<div>{self.get('children')}</div>`);
 const PropsIntactComponent = createIntactComponent(`<div>a: {self.get('a')} b: {self.get('b')}</div>`);
 
+function reset() {
+    document.body.removeChild(vm.$el);
+}
+
 describe('Unit test', () => {
-    afterEach(() => {
-        document.body.removeChild(vm.$el);
-    });
+    // afterEach(reset);
 
     describe('Render', () => {
         it('render intact component in vue', (done) => {
@@ -181,6 +183,26 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('render undefined slot', done => {
+            render('<Component><div slot="footer"><Component>test</Component></div></Component>', {
+                Component: createIntactComponent(`<div>{self.get('children')}</div>`)
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div></div>');
+                reset();
+
+                render('<Component><Component><div slot="footer">test</div></Component></Component>', {
+                    Component: createIntactComponent(`<div>{self.get('children')}</div>`)
+                });
+
+                vm.$nextTick(() => {
+                    expect(vm.$el.outerHTML).be.eql('<div><div></div></div>');
+                    done();
+                });
+            });
+        });
     });
 
     describe('Lifecycle', () => {
@@ -245,36 +267,38 @@ describe('Unit test', () => {
     });
 
     describe('Demo', () => {
-        class IntactComponent extends Intact {
-            get template() {
-                return `<button ev-click={self.onClick.bind(self)}>
-                    click {self.get('value')}
-                </button>`;
-            }
-
-            onClick() {
-                this.set('value', this.get('value') + 1);
-                this.trigger('click');
-            }
-        }
-
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        const vue = new Vue({
-            el: container,
-            data: {
-                count: 0,
-            },
-            template: `<div>
-                <IntactComponent @click="onClick" v-model="count"/>
-                <div>count: {{ count }}</div>
-            </div>`,
-            methods: {
-                onClick() {
-                    console.log(this.count);
+        it('demo', () => {
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<button ev-click={self.onClick.bind(self)}>
+                        click {self.get('value')}
+                    </button>`;
                 }
-            },
-            components: {IntactComponent}
+
+                onClick() {
+                    this.set('value', this.get('value') + 1);
+                    this.trigger('click');
+                }
+            }
+
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            const vue = new Vue({
+                el: container,
+                data: {
+                    count: 0,
+                },
+                template: `<div>
+                    <IntactComponent @click="onClick" v-model="count"/>
+                    <div>count: {{ count }}</div>
+                </div>`,
+                methods: {
+                    onClick() {
+                        console.log(this.count);
+                    }
+                },
+                components: {IntactComponent}
+            });
         });
     });
 });

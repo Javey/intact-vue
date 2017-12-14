@@ -110,7 +110,11 @@ export function functionalWrapper(Component) {
                 _context: {
                     data: {
                         get(name) {
-                            return get(data, name);
+                            if (name != null) {
+                                return get(data, name);
+                            } else {
+                                return data;
+                            }
                         },
                         set(name, value) {
                             set(data, name, value);

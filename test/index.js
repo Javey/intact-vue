@@ -43,7 +43,7 @@ function dispatchEvent(target, eventName) {
 
 const simpleTemplate = '<div>Intact Component</div>';
 const SimpleIntactComponent = createIntactComponent(simpleTemplate);
-const ChildrenIntactComponent = createIntactComponent(`<div>{self.get('children')}</div>`);
+const ChildrenIntactComponent = createIntactComponent(`<div class={self.get('className')}>{self.get('children')}</div>`);
 const PropsIntactComponent = createIntactComponent(`<div>a: {self.get('a')} b: {self.get('b')}</div>`);
 
 function reset() {
@@ -117,6 +117,23 @@ describe('Unit test', () => {
             });
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql(`<div><div><div><div></div></div></div></div>`);
+                done();
+            });
+        });
+
+        it('render nested component in template', done => {
+            render('<C class="a"><V><div></div></V></C>', {
+                C: ChildrenIntactComponent,
+                V: {
+                    template: `<C class="b"><slot></slot></C>`,
+                    components: {
+                        C: ChildrenIntactComponent,
+                    }
+                }
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql(`<div class="a"><div class="b"><div></div></div></div>`);
                 done();
             });
         });

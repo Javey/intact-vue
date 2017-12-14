@@ -48,9 +48,11 @@ export function normalizeProps(vNode) {
             }
             props[key] = value; 
         }
-        // add className
-        props.className = className(vNode);
     }
+
+    // add className
+    props.className = className(vNode);
+
 
     // if exists v-model
     if (data.model) {
@@ -101,11 +103,11 @@ export function getChildrenAndBlocks(slots) {
 
 class Wrapper {
     init(lastVNode, nextVNode) {
-        return patch(null, nextVNode.props.vueVNode);
+        return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
     }
 
     update(lastVNode, nextVNode) {
-        return patch(lastVNode.props.vueVNode, nextVNode.props.vueVNode);
+        return patch(lastVNode.props.vueVNode, nextVNode.props.vueVNode, false, false, this.parentDom);
     }
 
     destroy(vNode) {

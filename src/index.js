@@ -5,8 +5,8 @@ import {
     normalizeChildren,
     normalize,
     getChildrenAndBlocks,
-    attachProps,
-    MockVueComponent
+    MockVueComponent,
+    functionalWrapper
 } from './utils';
 
 const init = Vue.prototype._init;
@@ -15,6 +15,8 @@ export default class IntactVue extends Intact {
     static cid = 'IntactVue';
 
     static options = Object.assign({}, Vue.options);
+
+    static functionalWrapper = functionalWrapper;
 
     constructor(options) {
         const parentVNode = options && options._parentVnode;

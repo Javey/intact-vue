@@ -3,6 +3,7 @@ import Vue from 'vue';
 
 const h = Intact.Vdt.miss.h;
 const patch = Vue.prototype.__patch__;
+const {get, set} = Intact.utils;
 
 export function normalizeChildren(vNodes) {
     if (Array.isArray(vNodes)) {
@@ -93,6 +94,58 @@ export function getChildrenAndBlocks(slots) {
         children: normalizeChildren(d),
         _blocks: blocks,
     };
+}
+
+export function functionalWrapper(Component) {
+    function Ctor(props) {
+        Component(props);
+    }
+
+    Ctor.options = {
+        functional: true,
+        render(h, props) {
+            const data = props.parent.$data;
+            const _props = {
+                children: props.children,
+                _context: {
+                    data: {
+                        get(name) {
+                            return get(data, name);
+                        },
+                        set(name, value) {
+                            set(data, name, value);
+                        }
+                    }
+                }
+            };
+            for (const key in props.data.attrs) {
+                _props[key] = props.data.attrs[key];
+            }
+            const _className = className(props);
+            if (_className) {
+                _props.className = _className;
+            }
+            const vNode = Component(_props);
+            const attrs = {};
+            const __props = {attrs};
+            for (const key in vNode.props) {
+                if (~['children', '_context', 'className'].indexOf(key)) continue;
+                attrs[key] = vNode.props[key];
+            }
+            if (vNode.props.className) {
+                __props.staticClass = vNode.props.className;
+            }
+            return h(
+                vNode.tag,
+                __props,
+                vNode.props.children,
+            );
+        }
+    }
+
+    Ctor.cid = 'IntactFunctionalComponent';
+
+    return Ctor;
 }
 
 // export class MockVueComponent {

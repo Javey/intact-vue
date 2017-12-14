@@ -69,6 +69,10 @@ var possibleConstructorReturn = function (self, call) {
 
 var h = Intact.Vdt.miss.h;
 var patch = Vue.prototype.__patch__;
+var _Intact$utils = Intact.utils;
+var _get = _Intact$utils.get;
+var _set = _Intact$utils.set;
+
 
 function normalizeChildren(vNodes) {
     if (Array.isArray(vNodes)) {
@@ -158,6 +162,54 @@ function getChildrenAndBlocks(slots) {
         children: normalizeChildren(d),
         _blocks: blocks
     };
+}
+
+function functionalWrapper(Component) {
+    function Ctor(props) {
+        Component(props);
+    }
+
+    Ctor.options = {
+        functional: true,
+        render: function render(h, props) {
+            var data = props.parent.$data;
+            var _props = {
+                children: props.children,
+                _context: {
+                    data: {
+                        get: function get$$1(name) {
+                            return _get(data, name);
+                        },
+                        set: function set$$1(name, value) {
+                            _set(data, name, value);
+                        }
+                    }
+                }
+            };
+            for (var key in props.data.attrs) {
+                _props[key] = props.data.attrs[key];
+            }
+            var _className = className(props);
+            if (_className) {
+                _props.className = _className;
+            }
+            var vNode = Component(_props);
+            var attrs = {};
+            var __props = { attrs: attrs };
+            for (var _key2 in vNode.props) {
+                if (~['children', '_context', 'className'].indexOf(_key2)) continue;
+                attrs[_key2] = vNode.props[_key2];
+            }
+            if (vNode.props.className) {
+                __props.staticClass = vNode.props.className;
+            }
+            return h(vNode.tag, __props, vNode.props.children);
+        }
+    };
+
+    Ctor.cid = 'IntactFunctionalComponent';
+
+    return Ctor;
 }
 
 // export class MockVueComponent {
@@ -311,6 +363,7 @@ var IntactVue = function (_Intact) {
 
 IntactVue.cid = 'IntactVue';
 IntactVue.options = Object.assign({}, Vue.options);
+IntactVue.functionalWrapper = functionalWrapper;
 
 return IntactVue;
 

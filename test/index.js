@@ -1,7 +1,6 @@
 import Intact from '../src';
 import Vue from 'vue';
 
-
 let vm;
 
 function render(template, components, data = {}, methods = {}) {
@@ -218,6 +217,21 @@ describe('Unit test', () => {
                     expect(vm.$el.outerHTML).be.eql('<div><div></div></div>');
                     done();
                 });
+            });
+        });
+
+        it('render functional component which wrap intact component', done => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(function(props) {
+                return h(ChildrenIntactComponent, props);
+            });
+            render('<Component class="a" :a="1">test</Component>', {
+                Component
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div class="a">test</div>');
+                done();
             });
         });
     });

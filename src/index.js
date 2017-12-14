@@ -9,7 +9,7 @@ import {
     functionalWrapper
 } from './utils';
 
-const init = Vue.prototype._init;
+const {init, $nextTick} = Vue.prototype;
 
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
@@ -29,6 +29,7 @@ export default class IntactVue extends Intact {
 
             this.$options = options;
             this.$vnode = parentVNode; 
+            this._isVue = true;
 
             this.parentVNode = vNode;
             vNode.children = this;
@@ -63,3 +64,5 @@ export default class IntactVue extends Intact {
     $on() {}
     $off() {}
 }
+
+IntactVue.prototype.$nextTick = $nextTick;

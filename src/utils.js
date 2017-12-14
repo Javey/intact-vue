@@ -30,7 +30,7 @@ export function normalize(vNode) {
     } else if (vNode.text !== undefined) {
         return vNode.text;
     }
-    return h(Wrapper, {vueVNode: vNode}, null, className(vNode));
+    return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode));
 }
 
 export function normalizeProps(vNode) {
@@ -52,7 +52,7 @@ export function normalizeProps(vNode) {
     }
 
     // add className
-    props.className = className(vNode);
+    props.className = handleClassName(vNode);
 
 
     // if exists v-model
@@ -98,7 +98,7 @@ export function getChildrenAndBlocks(slots) {
 
 export function functionalWrapper(Component) {
     function Ctor(props) {
-        Component(props);
+        return Component(props);
     }
 
     Ctor.options = {
@@ -125,9 +125,9 @@ export function functionalWrapper(Component) {
             for (const key in props.data.attrs) {
                 _props[key] = props.data.attrs[key];
             }
-            const _className = className(props);
-            if (_className) {
-                _props.className = _className;
+            const className = handleClassName(props);
+            if (className) {
+                _props.className = className;
             }
             const vNode = Component(_props);
             const attrs = {};
@@ -172,12 +172,12 @@ class Wrapper {
     }
 }
 
-function className(vNode) {
+function handleClassName(vNode) {
     let className;
     let data = vNode.data;
     if (data) {
         if (data.staticClass) {
-            if (!className) className = data.staticClass;
+            className = data.staticClass;
         }
         if (data.class) {
             if (!className) {
@@ -189,6 +189,17 @@ function className(vNode) {
     }
 
     return className;
+}
+
+// TODO
+function handleStyle(vNode) {
+    let style;
+    let data = vNode.data;
+    if (data) {
+        if (data.staticStyle) {
+            // style = 
+        }
+    }
 }
 
 function isIntactComponent(vNode) {

@@ -7,6 +7,22 @@
 Vue = Vue && Vue.hasOwnProperty('default') ? Vue['default'] : Vue;
 Intact = Intact && Intact.hasOwnProperty('default') ? Intact['default'] : Intact;
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+
+
+
+
+
+
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -92,7 +108,7 @@ function normalize(vNode) {
     } else if (vNode.text !== undefined) {
         return vNode.text;
     }
-    return h(Wrapper, { vueVNode: vNode }, null, className(vNode));
+    return h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode));
 }
 
 function normalizeProps(vNode) {
@@ -104,7 +120,7 @@ function normalizeProps(vNode) {
 
     if (attrs) {
         for (var key in attrs) {
-            if (key === 'staticClass' || key === 'class') continue;
+            if (~['staticClass', 'class', 'style', 'staticStyle'].indexOf(key)) continue;
             var value = attrs[key];
             if (propTypes && propTypes[key] === Boolean && value === '') {
                 value = true;
@@ -114,7 +130,9 @@ function normalizeProps(vNode) {
     }
 
     // add className
-    props.className = className(vNode);
+    props.className = handleClassName(vNode);
+    // add style
+    props.style = handleStyle(vNode);
 
     // if exists v-model
     if (data.model) {
@@ -166,7 +184,7 @@ function getChildrenAndBlocks(slots) {
 
 function functionalWrapper(Component) {
     function Ctor(props) {
-        Component(props);
+        return Component(props);
     }
 
     Ctor.options = {
@@ -178,7 +196,11 @@ function functionalWrapper(Component) {
                 _context: {
                     data: {
                         get: function get$$1(name) {
-                            return _get(data, name);
+                            if (name != null) {
+                                return _get(data, name);
+                            } else {
+                                return data;
+                            }
                         },
                         set: function set$$1(name, value) {
                             _set(data, name, value);
@@ -189,9 +211,13 @@ function functionalWrapper(Component) {
             for (var key in props.data.attrs) {
                 _props[key] = props.data.attrs[key];
             }
-            var _className = className(props);
-            if (_className) {
-                _props.className = _className;
+            var className = handleClassName(props);
+            if (className) {
+                _props.className = className;
+            }
+            var style = handleStyle(props);
+            if (style) {
+                _props.style = style;
             }
             var vNode = Component(_props);
             var attrs = {};
@@ -211,12 +237,6 @@ function functionalWrapper(Component) {
 
     return Ctor;
 }
-
-// export class MockVueComponent {
-// static options = Vue.options;
-// // mock api
-// $on() {}
-// }
 
 var Wrapper = function () {
     function Wrapper() {
@@ -238,23 +258,118 @@ var Wrapper = function () {
     return Wrapper;
 }();
 
-function className(vNode) {
+function handleClassName(vNode) {
     var className = void 0;
     var data = vNode.data;
     if (data) {
         if (data.staticClass) {
-            if (!className) className = data.staticClass;
+            className = data.staticClass;
         }
         if (data.class) {
             if (!className) {
-                className = data.class;
+                className = stringifyClass(data.class);
             } else {
-                className += ' ' + data.class;
+                className += ' ' + stringifyClass(data.class);
             }
         }
     }
 
     return className;
+}
+
+function stringifyClass(className) {
+    if (Array.isArray(className)) {
+        return stringifyArray(className);
+    }
+    if ((typeof className === 'undefined' ? 'undefined' : _typeof(className)) === 'object') {
+        return stringifyObject(className);
+    }
+    if (typeof className === 'string') {
+        return className;
+    }
+
+    return '';
+}
+
+function stringifyArray(value) {
+    var res = '';
+    var stringified = void 0;
+    for (var i = 0; i < value.length; i++) {
+        if ((stringified = stringifyClass(value[i])) != null && stringified !== '') {
+            if (res) res += ' ';
+            res += stringified;
+        }
+    }
+
+    return res;
+}
+
+function stringifyObject(value) {
+    var res = '';
+    for (var key in value) {
+        if (value[key]) {
+            if (res) res += ' ';
+            res += key;
+        }
+    }
+
+    return res;
+}
+
+function handleStyle(vNode) {
+    var style = void 0;
+    var data = vNode.data;
+    if (data) {
+        style = getStyleBinding(data.style);
+        if (data.staticStyle) {
+            return Object.assign(data.staticStyle, style);
+        }
+    }
+
+    return style;
+}
+
+function getStyleBinding(style) {
+    if (!style) return style;
+
+    if (Array.isArray(style)) {
+        return toObject(style);
+    }
+    if (typeof style === 'string') {
+        return parseStyleText(style);
+    }
+
+    return style;
+}
+
+function toObject(arr) {
+    var res = {};
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i]) {
+            Object.assign(res, arr[i]);
+        }
+    }
+
+    return res;
+}
+
+var cache = Object.create(null);
+function parseStyleText(cssText) {
+    var hit = cache[cssText];
+    if (hit) return hit;
+
+    var res = {};
+    var listDelimiter = /;(?![^(]*\))/g;
+    var propertyDelimiter = /:(.+)/;
+    cssText.split(listDelimiter).forEach(function (item) {
+        if (item) {
+            var tmp = item.split(propertyDelimiter);
+            tmp.length > 1 && (res[tmp[0].trim()] = tmp[1].trim());
+        }
+    });
+    cache[cssText] = res;
+
+    return res;
 }
 
 function isIntactComponent(vNode) {
@@ -301,7 +416,9 @@ function isWhitespace(node) {
 }
 
 // for webpack alias Intact to IntactVue
-var init = Vue.prototype._init;
+var _Vue$prototype = Vue.prototype;
+var init = _Vue$prototype.init;
+var $nextTick = _Vue$prototype.$nextTick;
 
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
@@ -320,6 +437,7 @@ var IntactVue = function (_Intact) {
 
             _this.$options = options;
             _this.$vnode = parentVNode;
+            _this._isVue = true;
 
             _this.parentVNode = vNode;
             vNode.children = _this;
@@ -364,6 +482,7 @@ var IntactVue = function (_Intact) {
 IntactVue.cid = 'IntactVue';
 IntactVue.options = Object.assign({}, Vue.options);
 IntactVue.functionalWrapper = functionalWrapper;
+IntactVue.prototype.$nextTick = $nextTick;
 
 return IntactVue;
 

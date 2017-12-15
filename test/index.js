@@ -247,6 +247,21 @@ describe('Unit test', () => {
         });
     });
 
+    describe('Update', () => {
+        it('insert removed element should keep the original order', (done) => {
+            render('<div><C v-if="show">1</C><C>2</C></div>', {
+                C: ChildrenIntactComponent
+            }, {show: false});
+
+            vm.show = true;
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div><div>1</div><div>2</div></div>');
+                done();
+            });
+        });
+    });
+
     describe('Lifecycle', () => {
         it('lifecycle of intact in vue', (done) => {
             const _create = sinon.spy();

@@ -41,7 +41,13 @@ export default class IntactVue extends Intact {
     $mount(el, hydrating) {
         this.$el = this.init(null, this.parentVNode);
         this._vnode = {};
-        this.$options._parentElm.appendChild(this.$el);
+        const options = this.$options;
+        const refElm = options._refElm;
+        if (refElm) {
+            options._parentElm.replaceChild(this.$el, refElm);
+        } else {
+            options._parentElm.appendChild(this.$el);
+        }
     }
 
     $forceUpdate() {

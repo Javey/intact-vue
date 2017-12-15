@@ -18,6 +18,8 @@ export default class IntactVue extends Intact {
 
     static functionalWrapper = functionalWrapper;
 
+    static normalize = normalizeChildren;
+
     constructor(options) {
         const parentVNode = options && options._parentVnode;
         if (parentVNode) {
@@ -65,6 +67,12 @@ export default class IntactVue extends Intact {
     $destroy() {
         this.destroy();
     }
+
+    // wrapp vm._c to return Intact vNode.
+    // __c(...args) {
+        // const vNode = vm._c(...args); 
+
+    // }
 
     // mock api
     $on() {}

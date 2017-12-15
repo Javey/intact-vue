@@ -13,10 +13,11 @@ export function normalizeChildren(vNodes) {
         });
         return ret;
     }
-    return vNodes;
+    return normalize(vNodes);
 }
 
 export function normalize(vNode) {
+    if (vNode == null) return vNode;
     if (isIntactComponent(vNode)) {
         const options = vNode.componentOptions;
         return h(

@@ -69,5 +69,8 @@ But you can use it for vue element or/and component originally. For example:
 2. Intact does not support `scoped`. You should avoid using them. 
 Use className to limit style instead of.
 
+3. [Multiple values][3] style is not supported.
+
 [1]: http://javey.github.io/intact
 [2]: https://vuejs.org
+[3]: https://vuejs.org/v2/guide/class-and-style.html#Multiple-Values

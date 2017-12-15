@@ -234,6 +234,17 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('render style and class', done => {
+            render(`<Component style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
+                Component: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div class="a b" style="color: red; font-size: 12px;">test</div>');
+                done();
+            });
+        });
     });
 
     describe('Lifecycle', () => {

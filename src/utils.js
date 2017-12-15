@@ -42,7 +42,7 @@ export function normalizeProps(vNode) {
 
     if (attrs) {
         for (const key in attrs) {
-            if (key === 'staticClass' || key === 'class') continue;
+            if (~['staticClass', 'class', 'style', 'staticStyle'].indexOf(key)) continue;
             let value = attrs[key];
             if (propTypes && propTypes[key] === Boolean && value === '') {
                 value = true;
@@ -53,7 +53,8 @@ export function normalizeProps(vNode) {
 
     // add className
     props.className = handleClassName(vNode);
-
+    // add style
+    props.style = handleStyle(vNode);
 
     // if exists v-model
     if (data.model) {
@@ -129,6 +130,10 @@ export function functionalWrapper(Component) {
             if (className) {
                 _props.className = className;
             }
+            const style = handleStyle(props);
+            if (style) {
+                _props.style = style;
+            }
             const vNode = Component(_props);
             const attrs = {};
             const __props = {attrs};
@@ -151,12 +156,6 @@ export function functionalWrapper(Component) {
 
     return Ctor;
 }
-
-// export class MockVueComponent {
-    // static options = Vue.options;
-    // // mock api
-    // $on() {}
-// }
 
 class Wrapper {
     init(lastVNode, nextVNode) {
@@ -181,9 +180,9 @@ function handleClassName(vNode) {
         }
         if (data.class) {
             if (!className) {
-                className = data.class;
+                className = stringifyClass(data.class);
             } else {
-                className += ' ' + data.class;
+                className += ' ' + stringifyClass(data.class);
             }
         }
     }
@@ -191,15 +190,100 @@ function handleClassName(vNode) {
     return className;
 }
 
-// TODO
+function stringifyClass(className) {
+    if (Array.isArray(className)) {
+        return stringifyArray(className);
+    }
+    if (typeof className === 'object') {
+        return stringifyObject(className);
+    }
+    if (typeof className === 'string') {
+        return className;
+    }
+
+    return '';
+}
+
+function stringifyArray(value) {
+    let res = '';
+    let stringified;
+    for (let i = 0; i < value.length; i++) {
+        if ((stringified = stringifyClass(value[i])) != null && stringified !== '') {
+            if (res) res += ' ';
+            res += stringified;
+        }
+    }
+
+    return res;
+}
+
+function stringifyObject(value) {
+    let res = '';
+    for (let key in value) {
+        if (value[key]) {
+            if (res) res += ' ';
+            res += key;
+        }
+    }
+
+    return res;
+}
+
 function handleStyle(vNode) {
     let style;
     let data = vNode.data;
     if (data) {
+        style = getStyleBinding(data.style);
         if (data.staticStyle) {
-            // style = 
+            return Object.assign(data.staticStyle, style);
         }
     }
+
+    return style;
+}
+
+function getStyleBinding(style) {
+    if (!style) return style;
+
+    if (Array.isArray(style)) {
+        return toObject(style);
+    }
+    if (typeof style === 'string') {
+        return parseStyleText(style);
+    }
+
+    return style;
+}
+
+function toObject(arr) {
+    const res = {};
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i]) {
+            Object.assign(res, arr[i]);
+        }
+    }
+
+    return res;
+}
+
+
+const cache = Object.create(null);
+function parseStyleText(cssText) {
+    const hit = cache[cssText];
+    if (hit) return hit;
+
+    const res = {};
+    const listDelimiter = /;(?![^(]*\))/g;
+    const propertyDelimiter = /:(.+)/;
+    cssText.split(listDelimiter).forEach(function (item) {
+        if (item) {
+            var tmp = item.split(propertyDelimiter);
+            tmp.length > 1 && (res[tmp[0].trim()] = tmp[1].trim());
+        }
+    });
+    cache[cssText] = res;
+
+    return res;
 }
 
 function isIntactComponent(vNode) {

@@ -197,6 +197,7 @@ function handleClassName(vNode) {
 }
 
 function stringifyClass(className) {
+    if (className == null) return '';
     if (Array.isArray(className)) {
         return stringifyArray(className);
     }

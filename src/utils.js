@@ -18,6 +18,10 @@ export function normalizeChildren(vNodes) {
 
 export function normalize(vNode) {
     if (vNode == null) return vNode;
+    const type = typeof vNode;
+    if (type === 'string' || type === 'number') return vNode;
+    // is a intact vnode
+    if (vNode.type) return vNode;
     if (isIntactComponent(vNode)) {
         const options = vNode.componentOptions;
         return h(
@@ -28,7 +32,8 @@ export function normalize(vNode) {
             vNode.key,
             vNode.ref
         );
-    } else if (vNode.text !== undefined) {
+    }
+    if (vNode.text !== undefined) {
         return vNode.text;
     }
     return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode));

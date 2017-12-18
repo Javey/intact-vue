@@ -140,19 +140,38 @@ function normalizeProps(vNode) {
     // add style
     props.style = handleStyle(vNode);
 
+    // add key
+    if (vNode.key) {
+        props.key = vNode.key;
+    }
+
+    // if exists scoped slots
+    var scopedSlots = data.scopedSlots;
+    if (scopedSlots) {
+        var _loop = function _loop(_key) {
+            props[_key] = function () {
+                return normalizeChildren(scopedSlots[_key].apply(this, arguments));
+            };
+        };
+
+        for (var _key in scopedSlots) {
+            _loop(_key);
+        }
+    }
+
     // if exists v-model
     if (data.model) {
         props.value = data.model.value;
     }
 
-    for (var _key in componentOptions.listeners) {
+    for (var _key2 in componentOptions.listeners) {
         // is a v-model directive of vue
-        if (_key === 'input') {
+        if (_key2 === 'input') {
             props['ev-$change:value'] = function (c, v) {
                 componentOptions.listeners.input(v);
             };
         } else {
-            props['ev-' + _key] = componentOptions.listeners[_key];
+            props['ev-' + _key2] = componentOptions.listeners[_key2];
         }
     }
 
@@ -171,14 +190,14 @@ function getChildrenAndBlocks(slots) {
     if (rest) {
         blocks = {};
 
-        var _loop = function _loop(key) {
+        var _loop2 = function _loop2(key) {
             blocks[key] = function () {
                 return normalizeChildren(rest[key]);
             };
         };
 
         for (var key in rest) {
-            _loop(key);
+            _loop2(key);
         }
     }
 
@@ -228,9 +247,9 @@ function functionalWrapper(Component) {
             var vNode = Component(_props);
             var attrs = {};
             var __props = { attrs: attrs };
-            for (var _key2 in vNode.props) {
-                if (~['children', '_context', 'className'].indexOf(_key2)) continue;
-                attrs[_key2] = vNode.props[_key2];
+            for (var _key3 in vNode.props) {
+                if (~['children', '_context', 'className'].indexOf(_key3)) continue;
+                attrs[_key3] = vNode.props[_key3];
             }
             if (vNode.props.className) {
                 __props.staticClass = vNode.props.className;

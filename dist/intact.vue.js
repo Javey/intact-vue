@@ -98,14 +98,20 @@ function normalizeChildren(vNodes) {
         });
         return ret;
     }
-    return vNodes;
+    return normalize(vNodes);
 }
 
 function normalize(vNode) {
+    if (vNode == null) return vNode;
+    var type = typeof vNode === 'undefined' ? 'undefined' : _typeof(vNode);
+    if (type === 'string' || type === 'number') return vNode;
+    // is a intact vnode
+    if (vNode.type) return vNode;
     if (isIntactComponent(vNode)) {
         var options = vNode.componentOptions;
         return h(options.Ctor, normalizeProps(vNode), null, null, vNode.key, vNode.ref);
-    } else if (vNode.text !== undefined) {
+    }
+    if (vNode.text !== undefined) {
         return vNode.text;
     }
     return h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode));
@@ -278,6 +284,7 @@ function handleClassName(vNode) {
 }
 
 function stringifyClass(className) {
+    if (className == null) return '';
     if (Array.isArray(className)) {
         return stringifyArray(className);
     }
@@ -450,7 +457,13 @@ var IntactVue = function (_Intact) {
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
         this.$el = this.init(null, this.parentVNode);
         this._vnode = {};
-        this.$options._parentElm.appendChild(this.$el);
+        var options = this.$options;
+        var refElm = options._refElm;
+        if (refElm) {
+            options._parentElm.replaceChild(this.$el, refElm);
+        } else {
+            options._parentElm.appendChild(this.$el);
+        }
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {
@@ -469,6 +482,12 @@ var IntactVue = function (_Intact) {
         this.destroy();
     };
 
+    // wrapp vm._c to return Intact vNode.
+    // __c(...args) {
+    // const vNode = vm._c(...args); 
+
+    // }
+
     // mock api
 
 
@@ -482,6 +501,7 @@ var IntactVue = function (_Intact) {
 IntactVue.cid = 'IntactVue';
 IntactVue.options = Object.assign({}, Vue.options);
 IntactVue.functionalWrapper = functionalWrapper;
+IntactVue.normalize = normalizeChildren;
 IntactVue.prototype.$nextTick = $nextTick;
 
 return IntactVue;

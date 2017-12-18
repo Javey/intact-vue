@@ -5,7 +5,6 @@ import {
     normalizeChildren,
     normalize,
     getChildrenAndBlocks,
-    MockVueComponent,
     functionalWrapper
 } from './utils';
 

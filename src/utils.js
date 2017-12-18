@@ -62,8 +62,19 @@ export function normalizeProps(vNode) {
     // add style
     props.style = handleStyle(vNode);
 
+    // add key
     if (vNode.key) {
         props.key = vNode.key;
+    }
+
+    // if exists scoped slots
+    const scopedSlots = data.scopedSlots;
+    if (scopedSlots) {
+        for (const key in scopedSlots) {
+            props[key] = function() {
+                return normalizeChildren(scopedSlots[key].apply(this, arguments));
+            };
+        }
     }
 
     // if exists v-model

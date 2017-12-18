@@ -220,6 +220,17 @@ describe('Unit test', () => {
             });
         });
 
+        it('render with scoped slots', done => {
+            render('<Component><div slot-scope="scope">{{ scope }}</div></Component>', {
+                Component: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div><div>test</div></div>');
+                done();
+            });
+        });
+
         it('render functional component which wrap intact component', done => {
             const h = Intact.Vdt.miss.h;
             const Component = Intact.functionalWrapper(function(props) {

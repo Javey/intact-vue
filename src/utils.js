@@ -62,6 +62,10 @@ export function normalizeProps(vNode) {
     // add style
     props.style = handleStyle(vNode);
 
+    if (vNode.key) {
+        props.key = vNode.key;
+    }
+
     // if exists v-model
     if (data.model) {
         props.value = data.model.value;

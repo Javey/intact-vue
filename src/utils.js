@@ -155,7 +155,10 @@ export function functionalWrapper(Component) {
             if (style) {
                 _props.style = style;
             }
-            const vNode = Component(_props);
+            const vNode = Component(_props, true /* is in vue */);
+            if (Array.isArray(vNode)) {
+                throw new Error('Array children does not be supported.');
+            }
             const attrs = {};
             const __props = {attrs};
             for (const key in vNode.props) {

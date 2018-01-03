@@ -259,15 +259,20 @@ function functionalWrapper(Component) {
             if (Array.isArray(vNode)) {
                 throw new Error('Array children does not be supported.');
             }
+
             var attrs = {};
             var __props = { attrs: attrs };
             for (var key in vNode.props) {
-                if (~['children', '_context', 'className'].indexOf(key)) continue;
+                if (~['children', '_context', 'className', 'style'].indexOf(key)) continue;
                 attrs[key] = vNode.props[key];
             }
             if (vNode.props.className) {
                 __props.staticClass = vNode.props.className;
             }
+            if (vNode.props.style) {
+                __props.staticStyle = vNode.props.style;
+            }
+
             return h(vNode.tag, __props, vNode.props.children);
         }
     };

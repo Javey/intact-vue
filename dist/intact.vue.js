@@ -37,6 +37,20 @@ var classCallCheck = function (instance, Constructor) {
 
 
 
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
 
 
 var inherits = function (subClass, superClass) {
@@ -176,7 +190,7 @@ function normalizeProps(vNode) {
     }
 
     // handle children and blocks
-    var slots = resolveSlots(componentOptions.children);
+    var slots = vNode.slots || resolveSlots(componentOptions.children);
     Object.assign(props, getChildrenAndBlocks(slots));
 
     return props;
@@ -216,8 +230,8 @@ function functionalWrapper(Component) {
         functional: true,
         render: function render(h, props) {
             var data = props.parent.$data;
-            var _props = {
-                children: props.children,
+            var _props = _extends({
+                // children: props.children,
                 _context: {
                     data: {
                         get: function get$$1(name) {
@@ -232,24 +246,24 @@ function functionalWrapper(Component) {
                         }
                     }
                 }
-            };
-            for (var key in props.data.attrs) {
-                _props[key] = props.data.attrs[key];
+            }, normalizeProps({
+                // fake
+                componentOptions: {
+                    Ctor: Component,
+                    listeners: props.listeners
+                },
+                data: props.data,
+                slots: props.slots()
+            }));
+            var vNode = Component(_props, true /* is in vue */);
+            if (Array.isArray(vNode)) {
+                throw new Error('Array children does not be supported.');
             }
-            var className = handleClassName(props);
-            if (className) {
-                _props.className = className;
-            }
-            var style = handleStyle(props);
-            if (style) {
-                _props.style = style;
-            }
-            var vNode = Component(_props);
             var attrs = {};
             var __props = { attrs: attrs };
-            for (var _key3 in vNode.props) {
-                if (~['children', '_context', 'className'].indexOf(_key3)) continue;
-                attrs[_key3] = vNode.props[_key3];
+            for (var key in vNode.props) {
+                if (~['children', '_context', 'className'].indexOf(key)) continue;
+                attrs[key] = vNode.props[key];
             }
             if (vNode.props.className) {
                 __props.staticClass = vNode.props.className;

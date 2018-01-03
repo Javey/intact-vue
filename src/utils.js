@@ -94,7 +94,7 @@ export function normalizeProps(vNode) {
     }
 
     // handle children and blocks
-    const slots = resolveSlots(componentOptions.children);
+    const slots = vNode.slots || resolveSlots(componentOptions.children);
     Object.assign(props, getChildrenAndBlocks(slots));
 
     return props;
@@ -143,19 +143,16 @@ export function functionalWrapper(Component) {
                         }
                     }
                 },
-                ...getChildrenAndBlocks(props.slots())
+                ...normalizeProps({
+                    // fake
+                    componentOptions: {
+                        Ctor: Component,
+                        listeners: props.listeners,
+                    },
+                    data: props.data,
+                    slots: props.slots(),
+                })
             };
-            for (const key in props.data.attrs) {
-                _props[key] = props.data.attrs[key];
-            }
-            const className = handleClassName(props);
-            if (className) {
-                _props.className = className;
-            }
-            const style = handleStyle(props);
-            if (style) {
-                _props.style = style;
-            }
             const vNode = Component(_props, true /* is in vue */);
             if (Array.isArray(vNode)) {
                 throw new Error('Array children does not be supported.');

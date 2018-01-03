@@ -128,7 +128,7 @@ export function functionalWrapper(Component) {
         render(h, props) {
             const data = props.parent.$data;
             const _props = {
-                children: props.children,
+                // children: props.children,
                 _context: {
                     data: {
                         get(name) {
@@ -142,7 +142,8 @@ export function functionalWrapper(Component) {
                             set(data, name, value);
                         }
                     }
-                }
+                },
+                ...getChildrenAndBlocks(props.slots())
             };
             for (const key in props.data.attrs) {
                 _props[key] = props.data.attrs[key];

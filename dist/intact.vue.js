@@ -288,15 +288,39 @@ var Wrapper = function () {
     }
 
     Wrapper.prototype.init = function init(lastVNode, nextVNode) {
+        this._addProps(nextVNode);
         return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
     };
 
     Wrapper.prototype.update = function update(lastVNode, nextVNode) {
+        this._addProps(nextVNode);
         return patch(lastVNode.props.vueVNode, nextVNode.props.vueVNode, false, false, this.parentDom);
     };
 
     Wrapper.prototype.destroy = function destroy(vNode) {
         patch(vNode.props.vueVNode, null);
+    };
+
+    // maybe the props has been changed, so we change the vueVNode's data
+
+
+    Wrapper.prototype._addProps = function _addProps(vNode) {
+        var props = vNode.props;
+        var vueVNode = props.vueVNode;
+        for (var key in props) {
+            if (key === 'vueVNode') continue;
+            if (!vueVNode.data) vueVNode.data = {};
+            var data = vueVNode.data;
+            var prop = props[key];
+            // is event
+            if (key.substr(0, 3) === 'ev-') {
+                if (!data.on) data.on = {};
+                data.on[key.substr(3)] = prop;
+            } else {
+                if (!data.attrs) data.attrs = {};
+                data.attrs[key] = prop;
+            }
+        }
     };
 
     return Wrapper;

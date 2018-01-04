@@ -334,6 +334,47 @@ describe('Unit test', () => {
         });
     });
 
+    describe('vNode', () => {
+        it('change children\'s props of vue element', function(done) {
+            this.enableTimeouts(false);
+            const onClick = sinon.spy(() => console.log('click'));
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<div>{self.get('children')}</div>`
+                }
+
+                _init() {
+                    this._changeProps();
+                    this.on('$change:children', this._changeProps);
+                }
+
+                _changeProps() {
+                    const children = this.get('children.0');
+                    children.props['ev-click'] = this.onClick.bind(this);
+                }
+
+                get onClick() {
+                    return onClick;
+                }
+            }
+
+            render('<Component><div>click</div></Component>', {
+                Component: IntactComponent,
+            });
+
+            vm.$nextTick(() => {
+                dispatchEvent(vm.$el.firstChild, 'click');
+                expect(onClick.callCount).be.eql(1);
+                vm.$forceUpdate();
+                vm.$nextTick(() => {
+                    dispatchEvent(vm.$el.firstChild, 'click');
+                    expect(onClick.callCount).be.eql(2);
+                    done();
+                });
+            });
+        });
+    });
+
     describe('Demo', () => {
         it('demo', () => {
             class IntactComponent extends Intact {

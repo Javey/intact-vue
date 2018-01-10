@@ -530,6 +530,8 @@ var IntactVue = function (_Intact) {
     }
 
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
+        this._initMountedQueue();
+
         this.$el = this.init(null, this.parentVNode);
         this._vnode = {};
         var options = this.$options;
@@ -539,6 +541,8 @@ var IntactVue = function (_Intact) {
         } else {
             options._parentElm.appendChild(this.$el);
         }
+
+        this._triggerMountedQueue();
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {

@@ -40,6 +40,8 @@ export default class IntactVue extends Intact {
     }
 
     $mount(el, hydrating) {
+        this._initMountedQueue();
+
         this.$el = this.init(null, this.parentVNode);
         this._vnode = {};
         const options = this.$options;
@@ -49,6 +51,8 @@ export default class IntactVue extends Intact {
         } else {
             options._parentElm.appendChild(this.$el);
         }
+
+        this._triggerMountedQueue();
     }
 
     $forceUpdate() {

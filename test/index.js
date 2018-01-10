@@ -246,6 +246,21 @@ describe('Unit test', () => {
             });
         });
 
+        it('render blocks in functional component', done => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(props => {
+                return h(createIntactComponent(`<div><b:test /></div>`), props);
+            });
+            render('<Component><span slot="test">test</span></Component>', {
+                Component
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
+                done();
+            });
+        });
+
         it('render style and class', done => {
             render(`<Component style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
                 Component: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)

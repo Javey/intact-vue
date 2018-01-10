@@ -191,7 +191,20 @@ function normalizeProps(vNode) {
 
     // handle children and blocks
     var slots = vNode.slots || resolveSlots(componentOptions.children);
-    Object.assign(props, getChildrenAndBlocks(slots));
+
+    var _getChildrenAndBlocks = getChildrenAndBlocks(slots),
+        children = _getChildrenAndBlocks.children,
+        _blocks = _getChildrenAndBlocks._blocks;
+    // for Intact Functional component, the blocks has been handled
+    // In this case, we should merge them 
+
+
+    props.children = children;
+    if (props._blocks) {
+        Object.assign(props._blocks, _blocks);
+    } else {
+        props._blocks = _blocks;
+    }
 
     return props;
 }

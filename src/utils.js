@@ -194,6 +194,8 @@ export function functionalWrapper(Component) {
 
 class Wrapper {
     init(lastVNode, nextVNode) {
+        // let the component destroy by itself
+        this.destroyed = true; 
         this._addProps(nextVNode);
         return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
     }
@@ -209,6 +211,8 @@ class Wrapper {
 
     // maybe the props has been changed, so we change the vueVNode's data
     _addProps(vNode) {
+        // for Intact reusing the dom
+        this.vdt = {vNode};
         const props = vNode.props;
         const vueVNode = props.vueVNode;
         for (let key in props) {

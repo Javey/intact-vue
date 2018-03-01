@@ -301,6 +301,8 @@ var Wrapper = function () {
     }
 
     Wrapper.prototype.init = function init(lastVNode, nextVNode) {
+        // let the component destroy by itself
+        this.destroyed = true;
         this._addProps(nextVNode);
         return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
     };
@@ -318,6 +320,8 @@ var Wrapper = function () {
 
 
     Wrapper.prototype._addProps = function _addProps(vNode) {
+        // for Intact reusing the dom
+        this.vdt = { vNode: vNode };
         var props = vNode.props;
         var vueVNode = props.vueVNode;
         for (var key in props) {

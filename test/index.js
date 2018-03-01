@@ -286,6 +286,26 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('diff IntactComponent with vue element', function(done) {
+            this.enableTimeouts(false);
+            render('<C><C v-if="show">1</C><p v-else>2</p></C>', {
+                C: ChildrenIntactComponent
+            }, {show: false});
+
+            vm.show = true;
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div><div>1</div></div>');
+
+                vm.show = false;
+
+                vm.$nextTick(() => {
+                    expect(vm.$el.outerHTML).be.eql('<div><p>2</p></div>');
+                    done();
+                });
+            });
+        });
     });
 
     describe('Lifecycle', () => {

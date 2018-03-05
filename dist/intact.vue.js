@@ -176,6 +176,15 @@ function normalizeProps(vNode) {
     // if exists v-model
     if (data.model) {
         props.value = data.model.value;
+    } else if (data.directives) {
+        // for vue@2.1.8
+        var directives = data.directives;
+        for (var i = 0; i < directives.length; i++) {
+            if (directives[i].name === 'model') {
+                props.value = directives[i].value;
+                break;
+            }
+        }
     }
 
     for (var _key2 in componentOptions.listeners) {
@@ -505,6 +514,7 @@ function isWhitespace(node) {
 var _Vue$prototype = Vue.prototype;
 var init = _Vue$prototype.init;
 var $nextTick = _Vue$prototype.$nextTick;
+var _updateFromParent = _Vue$prototype._updateFromParent;
 
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
@@ -520,6 +530,8 @@ var IntactVue = function (_Intact) {
             var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
 
             options.mounted = [_this.mount];
+            // force vue update intact component
+            options._renderChildren = true;
 
             _this.$options = options;
             _this.$vnode = parentVNode;
@@ -558,6 +570,10 @@ var IntactVue = function (_Intact) {
         this.update(this.parentVNode, vNode);
         this.parentVNode = vNode;
 
+        // force vue update intact component
+        // reset it, because vue may set it to undefined
+        this.$options._renderChildren = true;
+
         this._triggerMountedQueue();
     };
 
@@ -586,6 +602,8 @@ IntactVue.options = Object.assign({}, Vue.options);
 IntactVue.functionalWrapper = functionalWrapper;
 IntactVue.normalize = normalizeChildren;
 IntactVue.prototype.$nextTick = $nextTick;
+// for vue@2.1.8
+IntactVue.prototype._updateFromParent = _updateFromParent;
 
 return IntactVue;
 

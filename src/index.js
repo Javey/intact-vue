@@ -8,7 +8,7 @@ import {
     functionalWrapper
 } from './utils';
 
-const {init, $nextTick} = Vue.prototype;
+const {init, $nextTick, _updateFromParent} = Vue.prototype;
 
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
@@ -27,6 +27,8 @@ export default class IntactVue extends Intact {
 
             // inject hook
             options.mounted = [this.mount];
+            // force vue update intact component
+            options._renderChildren = true;
 
             this.$options = options;
             this.$vnode = parentVNode; 
@@ -64,6 +66,10 @@ export default class IntactVue extends Intact {
         this.update(this.parentVNode, vNode);
         this.parentVNode = vNode;
 
+        // force vue update intact component
+        // reset it, because vue may set it to undefined
+        this.$options._renderChildren = true;
+
         this._triggerMountedQueue();
     }
 
@@ -83,3 +89,5 @@ export default class IntactVue extends Intact {
 }
 
 IntactVue.prototype.$nextTick = $nextTick;
+// for vue@2.1.8
+IntactVue.prototype._updateFromParent = _updateFromParent;

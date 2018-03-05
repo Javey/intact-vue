@@ -80,6 +80,15 @@ export function normalizeProps(vNode) {
     // if exists v-model
     if (data.model) {
         props.value = data.model.value;
+    } else if (data.directives) {
+        // for vue@2.1.8
+        const directives = data.directives;
+        for (let i = 0; i < directives.length; i++) {
+            if (directives[i].name === 'model') {
+                props.value = directives[i].value;
+                break;
+            }
+        }
     }
 
     for (let key in componentOptions.listeners) {

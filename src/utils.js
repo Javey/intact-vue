@@ -91,6 +91,9 @@ export function normalizeProps(vNode) {
         }
     }
 
+    // convert ref string to function
+    handleRef(vNode, props);
+
     for (let key in componentOptions.listeners) {
         // is a v-model directive of vue
         if (key === 'input') {
@@ -238,6 +241,37 @@ class Wrapper {
                 data.attrs[key] = prop;
             }
         }
+    }
+}
+
+function handleRef(vNode, props) {
+    const key = vNode.data.ref;
+    if (key) {
+        const refs = vNode.context.$refs;
+        let ref;
+        props.ref = function(i) { 
+            if (i) {
+                ref = i;
+                if (vNode.data.refInFor) {
+                    if (!Array.isArray(refs)) {
+                        refs[key] = [ref];
+                    } else if (refs[key].indexOf(ref) < 0) {
+                        refs[key].push(ref);
+                    }
+                } else {
+                    refs[key] = ref; 
+                }
+            } else {
+                if (Array.isArray(refs[key])) {
+                    var index = refs[key].indexOf(ref);
+                    if (~index) {
+                        refs[key].splice(index, 1);
+                    }
+                } else {
+                    refs[key] = ref = undefined;
+                }
+            }
+        };
     }
 }
 

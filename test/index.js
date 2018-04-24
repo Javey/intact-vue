@@ -54,7 +54,7 @@ describe('Unit test', () => {
 
     describe('Render', () => {
         it('render intact component in vue', (done) => {
-            render('<Component />', {Component: SimpleIntactComponent});
+            render('<C/>', {C: SimpleIntactComponent});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql(simpleTemplate);
                 done();
@@ -62,7 +62,7 @@ describe('Unit test', () => {
         });
 
         it('render intact in vue element', (done) => {
-            render('<div><Component /></div>', {Component: SimpleIntactComponent});
+            render('<div><C/></div>', {C: SimpleIntactComponent});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql(`<div>${simpleTemplate}</div>`);
                 done();
@@ -71,12 +71,12 @@ describe('Unit test', () => {
 
         it('render intact in vue component', (done) => {
             render(
-                '<VueComponent><Component /></VueComponent>',
+                '<VueComponent><C/></VueComponent>',
                 {
                     VueComponent: {
                         template: `<div><slot></slot></div>`
                     },
-                    Component: SimpleIntactComponent
+                    C: SimpleIntactComponent
                 }
             );
 
@@ -87,7 +87,7 @@ describe('Unit test', () => {
         });
         
         it('render vue element in intact', done => {
-            render('<Component><div>vue</div></Component>', {Component: ChildrenIntactComponent});
+            render('<C><div>vue</div></C>', {C: ChildrenIntactComponent});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql(`<div><div>vue</div></div>`);
                 done();
@@ -95,8 +95,8 @@ describe('Unit test', () => {
         });
         
         it('render vue component in intact', done => {
-            render('<Component><VueComponent /></Component>', {
-                Component: ChildrenIntactComponent,
+            render('<C><VueComponent /></C>', {
+                C: ChildrenIntactComponent,
                 VueComponent: {
                     template: `<div>vue component</div>`
                 }
@@ -138,8 +138,8 @@ describe('Unit test', () => {
         });
 
         it('render with props', done => {
-            render('<Component a="a" :b="b" />', {
-                Component: PropsIntactComponent
+            render('<C a="a" :b="b" />', {
+                C: PropsIntactComponent
             }, {b: 1});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql('<div>a: a b: 1</div>');
@@ -148,8 +148,8 @@ describe('Unit test', () => {
         });
 
         it('render with v-model', done => {
-            render('<Component v-model="a" ref="a" />', {
-                Component: createIntactComponent(`<div>{self.get('value')}</div>`)
+            render('<C v-model="a" ref="a" />', {
+                C: createIntactComponent(`<div>{self.get('value')}</div>`)
             }, {a: 1}, {
                 add() {
                     this.a++;
@@ -168,8 +168,8 @@ describe('Unit test', () => {
         });
 
         it('render with event', done => {
-            render('<div><Component @click="onClick" />{{ a }}</div>', {
-                Component: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {
+            render('<div><C @click="onClick" />{{ a }}</div>', {
+                C: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {
                     onClick() {
                         this.trigger('click');
                     }
@@ -190,8 +190,8 @@ describe('Unit test', () => {
         });
 
         it('render with slots', done => {
-            render('<Component><div slot="footer">footer</div><div>children</div></Component>', {
-                Component: createIntactComponent(`<div>{self.get('children')}<b:footer></b:footer></div>`)
+            render('<C><div slot="footer">footer</div><div>children</div></C>', {
+                C: createIntactComponent(`<div>{self.get('children')}<b:footer></b:footer></div>`)
             });
 
             vm.$nextTick(() => {
@@ -201,16 +201,16 @@ describe('Unit test', () => {
         });
 
         it('render undefined slot', done => {
-            render('<Component><div slot="footer"><Component>test</Component></div></Component>', {
-                Component: createIntactComponent(`<div>{self.get('children')}</div>`)
+            render('<C><div slot="footer"><C>test</C></div></C>', {
+                C: createIntactComponent(`<div>{self.get('children')}</div>`)
             });
 
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).be.eql('<div></div>');
                 reset();
 
-                render('<Component><Component><div slot="footer">test</div></Component></Component>', {
-                    Component: createIntactComponent(`<div>{self.get('children')}</div>`)
+                render('<C><C><div slot="footer">test</div></C></C>', {
+                    C: createIntactComponent(`<div>{self.get('children')}</div>`)
                 });
 
                 vm.$nextTick(() => {
@@ -221,8 +221,8 @@ describe('Unit test', () => {
         });
 
         it('render with scoped slots', done => {
-            render('<Component><div slot-scope="scope">{{ scope }}</div></Component>', {
-                Component: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
+            render('<C><div slot-scope="scope">{{ scope }}</div></C>', {
+                C: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
             });
 
             vm.$nextTick(() => {
@@ -236,8 +236,8 @@ describe('Unit test', () => {
             const Component = Intact.functionalWrapper(function(props) {
                 return h(ChildrenIntactComponent, props);
             });
-            render('<Component class="a" :a="1">test</Component>', {
-                Component
+            render('<C class="a" :a="1">test</C>', {
+                C: Component
             });
 
             vm.$nextTick(() => {
@@ -251,8 +251,8 @@ describe('Unit test', () => {
             const Component = Intact.functionalWrapper(props => {
                 return h(createIntactComponent(`<div><b:test /></div>`), props);
             });
-            render('<Component><span slot="test">test</span></Component>', {
-                Component
+            render('<C><span slot="test">test</span></C>', {
+                C: Component
             });
 
             vm.$nextTick(() => {
@@ -262,8 +262,8 @@ describe('Unit test', () => {
         });
 
         it('render style and class', done => {
-            render(`<Component style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
-                Component: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
+            render(`<C style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
+                C: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
             });
 
             vm.$nextTick(() => {
@@ -306,6 +306,21 @@ describe('Unit test', () => {
                 });
             });
         });
+
+        it('should update ref', done => {
+            render('<div><C v-if="show">1</C><C ref="a" v-else>2</C></div>', {
+                // C: Vue.extend({
+                    // template: '<div><template slots="default"></template></div>'
+                // }) 
+                C: ChildrenIntactComponent
+            }, {show: true});
+
+            vm.show = false;
+            vm.$nextTick(() => {
+                expect(vm.$refs.a).be.an.instanceof(ChildrenIntactComponent);
+                done();
+            });
+        });
     });
 
     describe('Lifecycle', () => {
@@ -314,8 +329,8 @@ describe('Unit test', () => {
             const _mount = sinon.spy();
             const _update = sinon.spy();
             const _destroy = sinon.spy();
-            render('<Component :a="a" v-if="show"/>', {
-                Component: createIntactComponent('<div></div>', {
+            render('<C :a="a" v-if="show"/>', {
+                C: createIntactComponent('<div></div>', {
                     _create,
                     _mount,
                     _update, 
@@ -342,8 +357,8 @@ describe('Unit test', () => {
             const mounted = sinon.spy();
             const updated = sinon.spy();
             const destroyed = sinon.spy();
-            render('<Component v-if="show"><VueComponent :a="a"/></Component>', {
-                Component: ChildrenIntactComponent,
+            render('<C v-if="show"><VueComponent :a="a"/></C>', {
+                C: ChildrenIntactComponent,
                 VueComponent: {
                     props: ['a'],
                     template: '<div>{{a}}</div>',
@@ -393,8 +408,8 @@ describe('Unit test', () => {
                 }
             }
 
-            render('<Component><div>click</div></Component>', {
-                Component: IntactComponent,
+            render('<C><div>click</div></C>', {
+                C: IntactComponent,
             });
 
             vm.$nextTick(() => {

@@ -70,6 +70,9 @@ export default class IntactVue extends Intact {
         // reset it, because vue may set it to undefined
         this.$options._renderChildren = true;
 
+        // let the vNode patchable for vue to register ref
+        this._vnode = this.vdt.vNode;
+
         this._triggerMountedQueue();
     }
 

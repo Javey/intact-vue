@@ -554,6 +554,9 @@ var init = _Vue$prototype.init;
 var $nextTick = _Vue$prototype.$nextTick;
 var _updateFromParent = _Vue$prototype._updateFromParent;
 
+
+var activeInstance = void 0;
+
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
 
@@ -563,6 +566,7 @@ var IntactVue = function (_Intact) {
         var parentVNode = options && options._parentVnode;
         if (parentVNode) {
             var vNode = normalize(parentVNode);
+            vNode.parentVNode = activeInstance && activeInstance.vNode;
 
             // inject hook
             var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
@@ -575,7 +579,8 @@ var IntactVue = function (_Intact) {
             _this.$vnode = parentVNode;
             _this._isVue = true;
 
-            _this.parentVNode = vNode;
+            _this.vNode = vNode;
+            _this.parentVNode = vNode.parentVNode;
             vNode.children = _this;
         } else {
             var _this = possibleConstructorReturn(this, _Intact.call(this, options));
@@ -584,9 +589,11 @@ var IntactVue = function (_Intact) {
     }
 
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
+        var preActiveInstance = activeInstance;
         this._initMountedQueue();
+        activeInstance = this;
 
-        this.$el = this.init(null, this.parentVNode);
+        this.$el = this.init(null, this.vNode);
         this._vnode = {};
         var options = this.$options;
         var refElm = options._refElm;
@@ -597,16 +604,20 @@ var IntactVue = function (_Intact) {
         }
 
         this._triggerMountedQueue();
+        activeInstance = preActiveInstance;
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {
+        var preActiveInstance = activeInstance;
         this._initMountedQueue();
+        activeInstance = this;
 
         var vNode = normalize(this.$vnode);
         vNode.children = this;
 
-        this.update(this.parentVNode, vNode);
-        this.parentVNode = vNode;
+        this.update(this.vNode, vNode);
+        this.vNode = vNode;
+        this.parentVNode = preActiveInstance && preActiveInstance.vNode;
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -616,6 +627,7 @@ var IntactVue = function (_Intact) {
         this._vnode = this.vdt.vNode;
 
         this._triggerMountedQueue();
+        activeInstance = preActiveInstance;
     };
 
     IntactVue.prototype.$destroy = function $destroy() {

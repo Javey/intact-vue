@@ -10,6 +10,8 @@ import {
 
 const {init, $nextTick, _updateFromParent} = Vue.prototype;
 
+let activeInstance;
+
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
 
@@ -23,6 +25,7 @@ export default class IntactVue extends Intact {
         const parentVNode = options && options._parentVnode;
         if (parentVNode) {
             const vNode = normalize(parentVNode);
+            vNode.parentVNode = activeInstance && activeInstance.vNode;
             super(vNode.props);
 
             // inject hook
@@ -34,7 +37,8 @@ export default class IntactVue extends Intact {
             this.$vnode = parentVNode; 
             this._isVue = true;
 
-            this.parentVNode = vNode;
+            this.vNode = vNode;
+            this.parentVNode = vNode.parentVNode;
             vNode.children = this;
         } else {
             super(options);
@@ -42,9 +46,11 @@ export default class IntactVue extends Intact {
     }
 
     $mount(el, hydrating) {
+        const preActiveInstance = activeInstance;
         this._initMountedQueue();
+        activeInstance = this;
 
-        this.$el = this.init(null, this.parentVNode);
+        this.$el = this.init(null, this.vNode);
         this._vnode = {};
         const options = this.$options;
         const refElm = options._refElm;
@@ -55,16 +61,20 @@ export default class IntactVue extends Intact {
         }
 
         this._triggerMountedQueue();
+        activeInstance = preActiveInstance;
     }
 
     $forceUpdate() {
+        const preActiveInstance = activeInstance;
         this._initMountedQueue();
+        activeInstance = this;
 
         const vNode = normalize(this.$vnode);
         vNode.children = this;
 
-        this.update(this.parentVNode, vNode);
-        this.parentVNode = vNode;
+        this.update(this.vNode, vNode);
+        this.vNode = vNode;
+        this.parentVNode = preActiveInstance && preActiveInstance.vNode;
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -74,6 +84,7 @@ export default class IntactVue extends Intact {
         this._vnode = this.vdt.vNode;
 
         this._triggerMountedQueue();
+        activeInstance = preActiveInstance;
     }
 
     $destroy() {

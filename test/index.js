@@ -423,6 +423,34 @@ describe('Unit test', () => {
                 });
             });
         });
+
+        it('should get parentVNode', (done) => {
+            // render('<C><p><E><b><D /></b></E></p></C>', {
+                // C: {template: `<div><slot></slot></div>`},
+                // D: {template: `<span>test</span>`},
+                // E: {template: `<i><slot></slot></i>`},
+            // });
+
+            // render('<C><D /></C>', {
+                // C: ChildrenIntactComponent,
+                // D: createIntactComponent('<span>test</span>', {
+                    // _mount() {
+                        // console.log(this);
+                    // }
+                // })
+            // });
+
+            render('<C><p><E><b><D /></b></E></p></C>', {
+                C: ChildrenIntactComponent,
+                D: createIntactComponent('<span>test</span>', {
+                    _mount() {
+                        expect(this.parentVNode.parentVNode.tag === ChildrenIntactComponent).to.be.true;
+                        done();
+                    }
+                }),
+                E: createIntactComponent('<i>{self.get("children")}</i>')
+            });
+        });
     });
 
     describe('Demo', () => {

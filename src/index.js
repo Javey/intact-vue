@@ -10,7 +10,8 @@ import {
 
 const {init, $nextTick, _updateFromParent} = Vue.prototype;
 
-let activeInstance;
+let activeInstance = {};
+let mountedQueue;
 
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
@@ -25,7 +26,6 @@ export default class IntactVue extends Intact {
         const parentVNode = options && options._parentVnode;
         if (parentVNode) {
             const vNode = normalize(parentVNode);
-            vNode.parentVNode = activeInstance && activeInstance.vNode;
             super(vNode.props);
 
             // inject hook
@@ -38,19 +38,39 @@ export default class IntactVue extends Intact {
             this._isVue = true;
 
             this.vNode = vNode;
-            this.parentVNode = vNode.parentVNode;
             vNode.children = this;
         } else {
             super(options);
         }
+        this._prevActiveInstance = activeInstance;
+        activeInstance = this;
+    }
+
+    init(lastVNode, nextVNode) {
+        mountedQueue = this.mountedQueue;
+        const element = super.init(lastVNode, nextVNode);
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
+
+        return element;
+    }
+
+    update(lastVNode, nextVNode, fromPending) {
+        mountedQueue = this.mountedQueue;
+        this._prevActiveInstance = activeInstance;
+        activeInstance = this;
+        const element = super.update(lastVNode, nextVNode, fromPending);
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
+
+        return element;
     }
 
     $mount(el, hydrating) {
-        const preActiveInstance = activeInstance;
-        this._initMountedQueue();
-        activeInstance = this;
+        this.__initMountedQueue();
 
-        this.$el = this.init(null, this.vNode);
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.$el = super.init(null, this.vNode);
         this._vnode = {};
         const options = this.$options;
         const refElm = options._refElm;
@@ -60,21 +80,24 @@ export default class IntactVue extends Intact {
             options._parentElm.appendChild(this.$el);
         }
 
-        this._triggerMountedQueue();
-        activeInstance = preActiveInstance;
+        this.__triggerMountedQueue();
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     }
 
     $forceUpdate() {
-        const preActiveInstance = activeInstance;
-        this._initMountedQueue();
+        this.__initMountedQueue();
+
+        this._prevActiveInstance = activeInstance;
         activeInstance = this;
 
         const vNode = normalize(this.$vnode);
+        const oldVNode = this.vNode;
         vNode.children = this;
 
-        this.update(this.vNode, vNode);
         this.vNode = vNode;
-        this.parentVNode = preActiveInstance && preActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        super.update(oldVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -83,12 +106,37 @@ export default class IntactVue extends Intact {
         // let the vNode patchable for vue to register ref
         this._vnode = this.vdt.vNode;
 
-        this._triggerMountedQueue();
-        activeInstance = preActiveInstance;
+        this.__triggerMountedQueue();
+
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     }
 
     $destroy() {
         this.destroy();
+    }
+
+    // we should promise that all intact components have been mounted
+    __initMountedQueue() {
+        this._shouldTrigger = false;
+        if (!mountedQueue) {
+            this._shouldTrigger = true;
+            if (!this.mountedQueue) {
+                super._initMountedQueue();
+            }
+            mountedQueue = this.mountedQueue;
+        } else {
+            this.mountedQueue = mountedQueue;
+        }
+    }
+
+    __triggerMountedQueue() {
+        if (this._shouldTrigger) {
+            super._triggerMountedQueue();
+            mountedQueue = null;
+            console.log('mountedQueue', mountedQueue);
+            this._shouldTrigger = false;
+        }
     }
 
     // wrapp vm._c to return Intact vNode.

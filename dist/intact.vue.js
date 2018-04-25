@@ -555,7 +555,8 @@ var $nextTick = _Vue$prototype.$nextTick;
 var _updateFromParent = _Vue$prototype._updateFromParent;
 
 
-var activeInstance = void 0;
+var activeInstance = {};
+var mountedQueue = void 0;
 
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
@@ -566,7 +567,6 @@ var IntactVue = function (_Intact) {
         var parentVNode = options && options._parentVnode;
         if (parentVNode) {
             var vNode = normalize(parentVNode);
-            vNode.parentVNode = activeInstance && activeInstance.vNode;
 
             // inject hook
             var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
@@ -580,20 +580,40 @@ var IntactVue = function (_Intact) {
             _this._isVue = true;
 
             _this.vNode = vNode;
-            _this.parentVNode = vNode.parentVNode;
             vNode.children = _this;
         } else {
             var _this = possibleConstructorReturn(this, _Intact.call(this, options));
         }
+        _this._prevActiveInstance = activeInstance;
+        activeInstance = _this;
         return possibleConstructorReturn(_this);
     }
 
-    IntactVue.prototype.$mount = function $mount(el, hydrating) {
-        var preActiveInstance = activeInstance;
-        this._initMountedQueue();
-        activeInstance = this;
+    IntactVue.prototype.init = function init(lastVNode, nextVNode) {
+        mountedQueue = this.mountedQueue;
+        var element = _Intact.prototype.init.call(this, lastVNode, nextVNode);
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
 
-        this.$el = this.init(null, this.vNode);
+        return element;
+    };
+
+    IntactVue.prototype.update = function update(lastVNode, nextVNode, fromPending) {
+        mountedQueue = this.mountedQueue;
+        this._prevActiveInstance = activeInstance;
+        activeInstance = this;
+        var element = _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
+
+        return element;
+    };
+
+    IntactVue.prototype.$mount = function $mount(el, hydrating) {
+        this.__initMountedQueue();
+
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.$el = _Intact.prototype.init.call(this, null, this.vNode);
         this._vnode = {};
         var options = this.$options;
         var refElm = options._refElm;
@@ -603,21 +623,24 @@ var IntactVue = function (_Intact) {
             options._parentElm.appendChild(this.$el);
         }
 
-        this._triggerMountedQueue();
-        activeInstance = preActiveInstance;
+        this.__triggerMountedQueue();
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {
-        var preActiveInstance = activeInstance;
-        this._initMountedQueue();
+        this.__initMountedQueue();
+
+        this._prevActiveInstance = activeInstance;
         activeInstance = this;
 
         var vNode = normalize(this.$vnode);
+        var oldVNode = this.vNode;
         vNode.children = this;
 
-        this.update(this.vNode, vNode);
         this.vNode = vNode;
-        this.parentVNode = preActiveInstance && preActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        _Intact.prototype.update.call(this, oldVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -626,12 +649,37 @@ var IntactVue = function (_Intact) {
         // let the vNode patchable for vue to register ref
         this._vnode = this.vdt.vNode;
 
-        this._triggerMountedQueue();
-        activeInstance = preActiveInstance;
+        this.__triggerMountedQueue();
+
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     };
 
     IntactVue.prototype.$destroy = function $destroy() {
         this.destroy();
+    };
+
+    // we should promise that all intact components have been mounted
+
+
+    IntactVue.prototype.__initMountedQueue = function __initMountedQueue() {
+        this._shouldTrigger = false;
+        if (!mountedQueue) {
+            this._shouldTrigger = true;
+            if (!this.mountedQueue) {
+                _Intact.prototype._initMountedQueue.call(this);
+            }
+            mountedQueue = this.mountedQueue;
+        } else {
+            this.mountedQueue = mountedQueue;
+        }
+    };
+
+    IntactVue.prototype.__triggerMountedQueue = function __triggerMountedQueue() {
+        if (this._shouldTrigger) {
+            _Intact.prototype._triggerMountedQueue.call(this);
+            mountedQueue = null;
+        }
     };
 
     // wrapp vm._c to return Intact vNode.

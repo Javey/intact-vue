@@ -402,11 +402,8 @@ describe('Unit test', () => {
                     const children = this.get('children.0');
                     children.props['ev-click'] = this.onClick.bind(this);
                 }
-
-                get onClick() {
-                    return onClick;
-                }
             }
+            IntactComponent.prototype.onClick = onClick;
 
             render('<C><div>click</div></C>', {
                 C: IntactComponent,
@@ -424,7 +421,8 @@ describe('Unit test', () => {
             });
         });
 
-        it('should get parentVNode', (done) => {
+        it('should get parentVNode', function(done) {
+            this.enableTimeouts(false);
             // render('<C><p><E><b><D /></b></E></p></C>', {
                 // C: {template: `<div><slot></slot></div>`},
                 // D: {template: `<span>test</span>`},
@@ -445,10 +443,59 @@ describe('Unit test', () => {
                 D: createIntactComponent('<span>test</span>', {
                     _mount() {
                         expect(this.parentVNode.parentVNode.tag === ChildrenIntactComponent).to.be.true;
-                        done();
                     }
                 }),
                 E: createIntactComponent('<i>{self.get("children")}</i>')
+            });
+
+            const C = createIntactComponent(`<div>{self.get('children')}</div>`);
+            const mount = sinon.spy();
+            const update = sinon.spy();
+
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<D>{self.get('children')}</D>`
+                }
+
+                _init() {
+                    this.D = createIntactComponent('<i>{self.get("children")}</i>', {
+                        _mount() {
+                            mount();
+                            expect(this.parentVNode.tag === IntactComponent).to.be.true;
+                            expect(this.parentVNode.parentVNode.tag === C).to.be.true;
+                            expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
+                        },
+
+                        _update() {
+                            update();
+                            expect(this.parentVNode.tag === IntactComponent).to.be.true;
+                            expect(this.parentVNode.parentVNode.tag === C).to.be.true;
+                            expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
+                        }
+                    });
+                }
+            }
+
+            class IntactComponent1 extends Intact {
+                get template() {
+                    return `<C>{self.get('children')}</C>`;
+                }
+
+                _init() {
+                    this.C = C;
+                }
+            }
+
+            render('<div>{{count}}<IntactComponent1><p>{{count}}<IntactComponent>test{{count}}</IntactComponent></p></IntactComponent1></div>', {
+                IntactComponent1,
+                IntactComponent,
+            }, {count: 1});
+
+            vm.count = 2;
+            vm.$nextTick(() => {
+                expect(mount.callCount).to.eql(1);
+                expect(update.callCount).to.eql(1);
+                done();
             });
         });
     });

@@ -1,6 +1,6 @@
 {
   "name": "intact-vue",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "A compatibility layer for running intact component in vue",
   "main": "dist/intact.vue.js",
   "scripts": {

@@ -591,6 +591,7 @@ var IntactVue = function (_Intact) {
 
     IntactVue.prototype.init = function init(lastVNode, nextVNode) {
         mountedQueue = this.mountedQueue;
+
         var element = _Intact.prototype.init.call(this, lastVNode, nextVNode);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
@@ -599,7 +600,10 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.update = function update(lastVNode, nextVNode, fromPending) {
-        mountedQueue = this.mountedQueue;
+        if (nextVNode || fromPending || this._updateCount !== 0) {
+            mountedQueue = this.mountedQueue;
+        }
+
         this._prevActiveInstance = activeInstance;
         activeInstance = this;
         var element = _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
@@ -679,6 +683,7 @@ var IntactVue = function (_Intact) {
         if (this._shouldTrigger) {
             _Intact.prototype._triggerMountedQueue.call(this);
             mountedQueue = null;
+            this._shouldTrigger = false;
         }
     };
 

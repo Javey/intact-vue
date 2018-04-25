@@ -48,6 +48,7 @@ export default class IntactVue extends Intact {
 
     init(lastVNode, nextVNode) {
         mountedQueue = this.mountedQueue;
+
         const element = super.init(lastVNode, nextVNode);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
@@ -56,7 +57,10 @@ export default class IntactVue extends Intact {
     }
 
     update(lastVNode, nextVNode, fromPending) {
-        mountedQueue = this.mountedQueue;
+        if (nextVNode || fromPending || this._updateCount !== 0) {
+            mountedQueue = this.mountedQueue;
+        }
+
         this._prevActiveInstance = activeInstance;
         activeInstance = this;
         const element = super.update(lastVNode, nextVNode, fromPending);
@@ -134,7 +138,6 @@ export default class IntactVue extends Intact {
         if (this._shouldTrigger) {
             super._triggerMountedQueue();
             mountedQueue = null;
-            console.log('mountedQueue', mountedQueue);
             this._shouldTrigger = false;
         }
     }

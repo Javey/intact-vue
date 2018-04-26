@@ -96,19 +96,31 @@ export default class IntactVue extends Intact {
         activeInstance = this;
 
         const vNode = normalize(this.$vnode);
-        const oldVNode = this.vNode;
+        const lastVNode = this.vNode;
         vNode.children = this;
 
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
-        super.update(oldVNode, vNode);
+        super.update(lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
         this.$options._renderChildren = true;
 
         // let the vNode patchable for vue to register ref
-        this._vnode = this.vdt.vNode;
+        // this._vnode = this.vdt.vNode;
+        // don't let vue to register ref, it will change className and so on
+        // handle it there
+        const lastRef = lastVNode.ref;
+        const nextRef = vNode.ref;
+        if (lastRef !== nextRef) {
+            if (lastRef) {
+                lastRef(null);
+            }
+            if (nextRef) {
+                nextRef(this);
+            }
+        }
 
         this.__triggerMountedQueue();
 

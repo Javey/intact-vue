@@ -523,7 +523,7 @@ describe('Unit test', () => {
                     count: 0,
                 },
                 template: `<div>
-                    <IntactComponent @click="onClick" v-model="count"/>
+                    <IntactComponent @click="onClick" v-model="count" ref="a"/>
                     <div>count: {{ count }}</div>
                 </div>`,
                 methods: {

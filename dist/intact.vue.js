@@ -557,6 +557,7 @@ var _updateFromParent = _Vue$prototype._updateFromParent;
 
 var activeInstance = {};
 var mountedQueue = void 0;
+var ignoreMountedQueue = false;
 
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
@@ -590,17 +591,29 @@ var IntactVue = function (_Intact) {
     }
 
     IntactVue.prototype.init = function init(lastVNode, nextVNode) {
-        mountedQueue = this.mountedQueue;
+        var prevIgnoreMountedQueue = ignoreMountedQueue;
+        if (!nextVNode) {
+            ignoreMountedQueue = true;
+        }
+        if (!ignoreMountedQueue) {
+            mountedQueue = this.mountedQueue;
+        }
 
         var element = _Intact.prototype.init.call(this, lastVNode, nextVNode);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
 
+        ignoreMountedQueue = prevIgnoreMountedQueue;
+
         return element;
     };
 
     IntactVue.prototype.update = function update(lastVNode, nextVNode, fromPending) {
-        if (nextVNode || fromPending || this._updateCount !== 0) {
+        var prevIgnoreMountedQueue = ignoreMountedQueue;
+        if (!nextVNode && !fromPending && this._updateCount === 0) {
+            ignoreMountedQueue = true;
+        }
+        if (!ignoreMountedQueue) {
             mountedQueue = this.mountedQueue;
         }
 
@@ -609,6 +622,8 @@ var IntactVue = function (_Intact) {
         var element = _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
+
+        ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;
     };

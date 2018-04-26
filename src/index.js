@@ -12,6 +12,7 @@ const {init, $nextTick, _updateFromParent} = Vue.prototype;
 
 let activeInstance = {};
 let mountedQueue;
+let ignoreMountedQueue = false;
 
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
@@ -47,17 +48,29 @@ export default class IntactVue extends Intact {
     }
 
     init(lastVNode, nextVNode) {
-        mountedQueue = this.mountedQueue;
+        const prevIgnoreMountedQueue = ignoreMountedQueue;
+        if (!nextVNode) {
+            ignoreMountedQueue = true;
+        }
+        if (!ignoreMountedQueue) {
+            mountedQueue = this.mountedQueue;
+        }
 
         const element = super.init(lastVNode, nextVNode);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
 
+        ignoreMountedQueue = prevIgnoreMountedQueue;
+
         return element;
     }
 
     update(lastVNode, nextVNode, fromPending) {
-        if (nextVNode || fromPending || this._updateCount !== 0) {
+        const prevIgnoreMountedQueue = ignoreMountedQueue;
+        if (!nextVNode && !fromPending && this._updateCount === 0) {
+            ignoreMountedQueue = true;
+        }
+        if (!ignoreMountedQueue) {
             mountedQueue = this.mountedQueue;
         }
 
@@ -66,6 +79,8 @@ export default class IntactVue extends Intact {
         const element = super.update(lastVNode, nextVNode, fromPending);
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
+
+        ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;
     }

@@ -48,6 +48,8 @@ export default class IntactVue extends Intact {
     }
 
     init(lastVNode, nextVNode) {
+        if (!this._isVue) return super.init(lastVNode, nextVNode);
+
         const prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode) {
             ignoreMountedQueue = true;
@@ -66,6 +68,8 @@ export default class IntactVue extends Intact {
     }
 
     update(lastVNode, nextVNode, fromPending) {
+        if (!this._isVue) return super.update(lastVNode, nextVNode, fromPending);
+
         const prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode && !fromPending && this._updateCount === 0) {
             ignoreMountedQueue = true;

@@ -591,6 +591,8 @@ var IntactVue = function (_Intact) {
     }
 
     IntactVue.prototype.init = function init(lastVNode, nextVNode) {
+        if (!this._isVue) return _Intact.prototype.init.call(this, lastVNode, nextVNode);
+
         var prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode) {
             ignoreMountedQueue = true;
@@ -609,6 +611,8 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.update = function update(lastVNode, nextVNode, fromPending) {
+        if (!this._isVue) return _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
+
         var prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode && !fromPending && this._updateCount === 0) {
             ignoreMountedQueue = true;

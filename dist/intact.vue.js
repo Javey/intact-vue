@@ -639,19 +639,31 @@ var IntactVue = function (_Intact) {
         activeInstance = this;
 
         var vNode = normalize(this.$vnode);
-        var oldVNode = this.vNode;
+        var lastVNode = this.vNode;
         vNode.children = this;
 
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
-        _Intact.prototype.update.call(this, oldVNode, vNode);
+        _Intact.prototype.update.call(this, lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
         this.$options._renderChildren = true;
 
         // let the vNode patchable for vue to register ref
-        this._vnode = this.vdt.vNode;
+        // this._vnode = this.vdt.vNode;
+        // don't let vue to register ref, it will change className and so on
+        // handle it there
+        var lastRef = lastVNode.ref;
+        var nextRef = vNode.ref;
+        if (lastRef !== nextRef) {
+            if (lastRef) {
+                lastRef(null);
+            }
+            if (nextRef) {
+                nextRef(this);
+            }
+        }
 
         this.__triggerMountedQueue();
 

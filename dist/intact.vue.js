@@ -591,7 +591,17 @@ var IntactVue = function (_Intact) {
     }
 
     IntactVue.prototype.init = function init(lastVNode, nextVNode) {
-        if (!this._isVue) return _Intact.prototype.init.call(this, lastVNode, nextVNode);
+        var _this2 = this;
+
+        var init = function init() {
+            var element = _Intact.prototype.init.call(_this2, lastVNode, nextVNode);
+            activeInstance = _this2._prevActiveInstance;
+            _this2._prevActiveInstance = null;
+
+            return element;
+        };
+
+        if (!this._isVue) return init();
 
         var prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode) {
@@ -601,9 +611,7 @@ var IntactVue = function (_Intact) {
             mountedQueue = this.mountedQueue;
         }
 
-        var element = _Intact.prototype.init.call(this, lastVNode, nextVNode);
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
+        var element = init();
 
         ignoreMountedQueue = prevIgnoreMountedQueue;
 
@@ -611,7 +619,19 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.update = function update(lastVNode, nextVNode, fromPending) {
-        if (!this._isVue) return _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
+        var _this3 = this;
+
+        var update = function update() {
+            _this3._prevActiveInstance = activeInstance;
+            activeInstance = _this3;
+            var element = _Intact.prototype.update.call(_this3, lastVNode, nextVNode, fromPending);
+            activeInstance = _this3._prevActiveInstance;
+            _this3._prevActiveInstance = null;
+
+            return element;
+        };
+
+        if (!this._isVue) return update();
 
         var prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode && !fromPending && this._updateCount === 0) {
@@ -621,11 +641,7 @@ var IntactVue = function (_Intact) {
             mountedQueue = this.mountedQueue;
         }
 
-        this._prevActiveInstance = activeInstance;
-        activeInstance = this;
-        var element = _Intact.prototype.update.call(this, lastVNode, nextVNode, fromPending);
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
+        var element = update();
 
         ignoreMountedQueue = prevIgnoreMountedQueue;
 

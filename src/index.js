@@ -48,7 +48,15 @@ export default class IntactVue extends Intact {
     }
 
     init(lastVNode, nextVNode) {
-        if (!this._isVue) return super.init(lastVNode, nextVNode);
+        const init = () => {
+            var element = super.init(lastVNode, nextVNode);
+            activeInstance = this._prevActiveInstance;
+            this._prevActiveInstance = null;
+
+            return element;
+        };
+
+        if (!this._isVue) return init();
 
         const prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode) {
@@ -58,17 +66,25 @@ export default class IntactVue extends Intact {
             mountedQueue = this.mountedQueue;
         }
 
-        const element = super.init(lastVNode, nextVNode);
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
-
+        const element = init();
+        
         ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;
     }
 
     update(lastVNode, nextVNode, fromPending) {
-        if (!this._isVue) return super.update(lastVNode, nextVNode, fromPending);
+        const update = () => {
+            this._prevActiveInstance = activeInstance;
+            activeInstance = this;
+            const element = super.update(lastVNode, nextVNode, fromPending);
+            activeInstance = this._prevActiveInstance;
+            this._prevActiveInstance = null;
+
+            return element;
+        };
+
+        if (!this._isVue) return update(); 
 
         const prevIgnoreMountedQueue = ignoreMountedQueue;
         if (!nextVNode && !fromPending && this._updateCount === 0) {
@@ -78,11 +94,7 @@ export default class IntactVue extends Intact {
             mountedQueue = this.mountedQueue;
         }
 
-        this._prevActiveInstance = activeInstance;
-        activeInstance = this;
-        const element = super.update(lastVNode, nextVNode, fromPending);
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
+        const element = update();
 
         ignoreMountedQueue = prevIgnoreMountedQueue;
 

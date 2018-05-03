@@ -104,7 +104,7 @@ export default class IntactVue extends Intact {
     $mount(el, hydrating) {
         this.__initMountedQueue();
 
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         this.$el = super.init(null, this.vNode);
         this._vnode = {};
         const options = this.$options;
@@ -131,7 +131,7 @@ export default class IntactVue extends Intact {
         vNode.children = this;
 
         this.vNode = vNode;
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         super.update(lastVNode, vNode);
 
         // force vue update intact component

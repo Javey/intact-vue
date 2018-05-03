@@ -651,7 +651,7 @@ var IntactVue = function (_Intact) {
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
         this.__initMountedQueue();
 
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         this.$el = _Intact.prototype.init.call(this, null, this.vNode);
         this._vnode = {};
         var options = this.$options;
@@ -678,7 +678,7 @@ var IntactVue = function (_Intact) {
         vNode.children = this;
 
         this.vNode = vNode;
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         _Intact.prototype.update.call(this, lastVNode, vNode);
 
         // force vue update intact component

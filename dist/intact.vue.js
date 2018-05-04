@@ -550,7 +550,7 @@ var $nextTick = _Vue$prototype.$nextTick;
 var _updateFromParent = _Vue$prototype._updateFromParent;
 
 
-var activeInstance = {};
+var activeInstance = void 0;
 var mountedQueue = void 0;
 var ignoreMountedQueue = false;
 
@@ -565,9 +565,16 @@ var IntactVue = function (_Intact) {
             var vNode = normalize(parentVNode);
 
             // inject hook
+            // if exist mountedQueue, it indicate that the component is nested into vue element
+            // we call __patch__ to render it, and it will lead to call mounted hooks
+            // but this component has not been appended
+            // so we do it nextTick
             var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
 
-            options.mounted = [_this.mount];
+            options.mounted = [activeInstance ? function () {
+                _this.$nextTick(_this.mount);
+            } : _this.mount];
+
             // force vue update intact component
             options._renderChildren = true;
 

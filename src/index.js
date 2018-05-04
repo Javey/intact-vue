@@ -10,7 +10,7 @@ import {
 
 const {init, $nextTick, _updateFromParent} = Vue.prototype;
 
-let activeInstance = {};
+let activeInstance;
 let mountedQueue;
 let ignoreMountedQueue = false;
 
@@ -30,7 +30,17 @@ export default class IntactVue extends Intact {
             super(vNode.props);
 
             // inject hook
-            options.mounted = [this.mount];
+            // if exist mountedQueue, it indicate that the component is nested into vue element
+            // we call __patch__ to render it, and it will lead to call mounted hooks
+            // but this component has not been appended
+            // so we do it nextTick
+            options.mounted = [activeInstance ? 
+                () => {
+                    this.$nextTick(this.mount);
+                } :
+                this.mount
+            ];
+
             // force vue update intact component
             options._renderChildren = true;
 

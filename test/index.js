@@ -386,6 +386,27 @@ describe('Unit test', () => {
                 });
             });
         });
+
+        it('lifecycle of mounted nested intact component', done => {
+            const mounted1 = sinon.spy(() => console.log(1));
+            const mounted2 = sinon.spy(() => console.log(2));
+
+            render('<div<C><div><D /></div></C></div>', {
+                C: createIntactComponent('<div>{self.get("children")}</div>', {
+                    _mount: mounted1,
+                }),
+                D: createIntactComponent('<div></div>', {
+                    _mount: mounted2
+                })
+            });
+
+            vm.$nextTick(() => {
+                expect(mounted1.callCount).be.eql(1);
+                expect(mounted2.callCount).be.eql(1);
+                expect(mounted2.calledAfter(mounted1)).be.true;
+                done();
+            });
+        });
     });
 
     describe('vNode', () => {

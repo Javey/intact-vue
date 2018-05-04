@@ -251,12 +251,16 @@ describe('Unit test', () => {
             const Component = Intact.functionalWrapper(props => {
                 return h(createIntactComponent(`<div><b:test /></div>`), props);
             });
-            render('<C><span slot="test">test</span></C>', {
+            render('<C ref="test"><span slot="test">test</span></C>', {
                 C: Component
-            });
+            }, {test: 1});
 
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
+                const _context = vm.$refs.test.get('_context');
+                expect(_context.data.get('test')).be.eql(1);
+                _context.data.set('test', 2);
+                expect(vm.test).be.eql(2);
                 done();
             });
         });

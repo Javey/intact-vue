@@ -273,7 +273,7 @@ function functionalWrapper(Component) {
                 data: props.data,
                 slots: props.slots(),
                 context: {
-                    data: props.parent.$data
+                    $data: props.parent.$data
                 }
             });
             var vNode = Component(_props, true /* is in vue */);
@@ -284,8 +284,11 @@ function functionalWrapper(Component) {
             var attrs = {};
             var __props = { attrs: attrs };
             for (var key in vNode.props) {
-                if (~['children', '_context', 'className', 'style'].indexOf(key)) continue;
+                if (~['children', '_context', 'className', 'style', 'ref'].indexOf(key)) continue;
                 attrs[key] = vNode.props[key];
+            }
+            if (props.data.ref) {
+                __props.ref = props.data.ref;
             }
             if (vNode.props.className) {
                 __props.staticClass = vNode.props.className;

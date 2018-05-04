@@ -121,7 +121,27 @@ export function normalizeProps(vNode) {
         props._blocks = _blocks;
     }
 
+    normalizeContext(vNode, props);
+
     return props;
+}
+
+function normalizeContext(vNode, props) {
+    const $data = vNode.context.$data;
+    props._context = {
+        data: {
+            get(name) {
+                if (name != null) {
+                    return get($data, name);
+                } else {
+                    return $data;
+                }
+            },
+            set(name, value) {
+                set($data, name, value);
+            }
+        }
+    };
 }
 
 export function getChildrenAndBlocks(slots) {
@@ -150,33 +170,18 @@ export function functionalWrapper(Component) {
     Ctor.options = {
         functional: true,
         render(h, props) {
-            const data = props.parent.$data;
-            const _props = {
-                // children: props.children,
-                _context: {
-                    data: {
-                        get(name) {
-                            if (name != null) {
-                                return get(data, name);
-                            } else {
-                                return data;
-                            }
-                        },
-                        set(name, value) {
-                            set(data, name, value);
-                        }
-                    }
+            const _props = normalizeProps({
+                // fake
+                componentOptions: {
+                    Ctor: Component,
+                    listeners: props.listeners,
                 },
-                ...normalizeProps({
-                    // fake
-                    componentOptions: {
-                        Ctor: Component,
-                        listeners: props.listeners,
-                    },
-                    data: props.data,
-                    slots: props.slots(),
-                })
-            };
+                data: props.data,
+                slots: props.slots(),
+                context: {
+                    data: props.parent.$data,
+                },
+            });
             const vNode = Component(_props, true /* is in vue */);
             if (Array.isArray(vNode)) {
                 throw new Error('Array children does not be supported.');

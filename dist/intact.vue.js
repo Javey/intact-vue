@@ -37,20 +37,6 @@ var classCallCheck = function (instance, Constructor) {
 
 
 
-var _extends = Object.assign || function (target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i];
-
-    for (var key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        target[key] = source[key];
-      }
-    }
-  }
-
-  return target;
-};
-
 
 
 var inherits = function (subClass, superClass) {
@@ -222,7 +208,27 @@ function normalizeProps(vNode) {
         props._blocks = _blocks;
     }
 
+    normalizeContext(vNode, props);
+
     return props;
+}
+
+function normalizeContext(vNode, props) {
+    var $data = vNode.context.$data;
+    props._context = {
+        data: {
+            get: function get$$1(name) {
+                if (name != null) {
+                    return _get($data, name);
+                } else {
+                    return $data;
+                }
+            },
+            set: function set$$1(name, value) {
+                _set($data, name, value);
+            }
+        }
+    };
 }
 
 function getChildrenAndBlocks(slots) {
@@ -258,32 +264,18 @@ function functionalWrapper(Component) {
     Ctor.options = {
         functional: true,
         render: function render(h, props) {
-            var data = props.parent.$data;
-            var _props = _extends({
-                // children: props.children,
-                _context: {
-                    data: {
-                        get: function get$$1(name) {
-                            if (name != null) {
-                                return _get(data, name);
-                            } else {
-                                return data;
-                            }
-                        },
-                        set: function set$$1(name, value) {
-                            _set(data, name, value);
-                        }
-                    }
-                }
-            }, normalizeProps({
+            var _props = normalizeProps({
                 // fake
                 componentOptions: {
                     Ctor: Component,
                     listeners: props.listeners
                 },
                 data: props.data,
-                slots: props.slots()
-            }));
+                slots: props.slots(),
+                context: {
+                    data: props.parent.$data
+                }
+            });
             var vNode = Component(_props, true /* is in vue */);
             if (Array.isArray(vNode)) {
                 throw new Error('Array children does not be supported.');

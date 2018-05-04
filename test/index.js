@@ -498,6 +498,21 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('should get context data', (done) => {
+            render('<div><IntactComponent ref="test" /></div>', {
+                IntactComponent: ChildrenIntactComponent,
+            }, {test: 1});
+
+            vm.$nextTick(() => {
+                const _context = vm.$refs.test.get('_context');
+                expect(_context).to.be.a('object');
+                expect(_context.data.get('test')).to.eql(1);
+                _context.data.set('test', 2);
+                expect(vm.test).to.eql(2);
+                done();
+            });
+        });
     });
 
     describe('Demo', () => {

@@ -325,6 +325,30 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('should watch vue component nested into intact component', () => {
+            render('<C><D :a="a" /><div @click="add">click</div></C>', {
+                C: ChildrenIntactComponent,
+                // C: {template: '<div><slot></slot></div>'},
+                D: {
+                    template: '<div>{{ a.join(",") }}</div>',
+                    props: {
+                        a: {
+                            default: [],
+                            type: Array,
+                        }
+                    },
+                    watch: {
+                        a: {
+                            immediate: true,
+                            handler() {
+                                console.log('test');
+                            }
+                        }
+                    }
+                }
+            }, {a: [2]}, {add() { this.a.push(2) }});
+        })
     });
 
     describe('Lifecycle', () => {

@@ -659,7 +659,7 @@ var IntactVue = function (_Intact) {
         var options = this.$options;
         var refElm = options._refElm;
         if (refElm) {
-            options._parentElm.replaceChild(this.$el, refElm);
+            options._parentElm.insertBefore(this.$el, refElm);
         } else {
             options._parentElm.appendChild(this.$el);
         }

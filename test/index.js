@@ -291,6 +291,20 @@ describe('Unit test', () => {
             });
         });
 
+        it('insert keyed child before non-keyed child', (done) => {
+            render('<div><div v-if="show"><C>1</C></div><div v-else><C key="1">2</C><D /></div></div>', {
+                C: ChildrenIntactComponent,
+                D: SimpleIntactComponent
+            }, {show: true});
+
+            vm.show = false;
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div><div><div>2</div><div>Intact Component</div></div></div>');
+                done();
+            });
+        });
+
         it('diff IntactComponent with vue element', function(done) {
             this.enableTimeouts(false);
             render('<C><C v-if="show">1</C><p v-else>2</p></C>', {

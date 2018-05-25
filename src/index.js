@@ -120,7 +120,7 @@ export default class IntactVue extends Intact {
         const options = this.$options;
         const refElm = options._refElm;
         if (refElm) {
-            options._parentElm.replaceChild(this.$el, refElm);
+            options._parentElm.insertBefore(this.$el, refElm);
         } else {
             options._parentElm.appendChild(this.$el);
         }

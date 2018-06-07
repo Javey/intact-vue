@@ -42,7 +42,7 @@ function dispatchEvent(target, eventName) {
 
 const simpleTemplate = '<div>Intact Component</div>';
 const SimpleIntactComponent = createIntactComponent(simpleTemplate);
-const ChildrenIntactComponent = createIntactComponent(`<div class={self.get('className')}>{self.get('children')}</div>`);
+const ChildrenIntactComponent = createIntactComponent(`<div class={self.get('className')} style={self.get('style')}>{self.get('children')}</div>`);
 const PropsIntactComponent = createIntactComponent(`<div>a: {self.get('a')} b: {self.get('b')}</div>`);
 
 function reset() {
@@ -363,6 +363,30 @@ describe('Unit test', () => {
                 }
             }, {a: [2]}, {add() { this.a.push(2) }});
         })
+    });
+
+    describe('v-show', () => {
+        it('should render v-show correctly', (done) => {
+            render(`<C>
+               <div v-show="show">show</div>
+               <C v-show="show">test</C>
+               <C v-show="show" style="font-size: 12px;">font-size</C>
+               <C v-show="show" :style="{fontSize: '12px'}">fontSize</C>
+            </C>`, {
+                C: ChildrenIntactComponent
+            }, {show: false});
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).eql('<div><div style="display: none;">show</div> <div style="display: none;">test</div> <div style="font-size: 12px; display: none;">font-size</div> <div style="font-size: 12px; display: none;">fontSize</div></div>');
+
+                vm.show = true;
+                vm.$nextTick(() => {
+                    expect(vm.$el.outerHTML).eql('<div><div style="">show</div> <div>test</div> <div style="font-size: 12px;">font-size</div> <div style="font-size: 12px;">fontSize</div></div>');
+
+                    done();
+                });
+            });
+        });
     });
 
     describe('Lifecycle', () => {

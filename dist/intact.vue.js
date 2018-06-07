@@ -164,15 +164,22 @@ function normalizeProps(vNode) {
     if (model) {
         props.value = model.value;
         props['v-model'] = model.expression;
-    } else if (data.directives) {
-        // for vue@2.1.8
+    }
+    if (data.directives) {
         var directives = data.directives;
         for (var i = 0; i < directives.length; i++) {
             var _model = directives[i];
             if (_model.name === 'model') {
+                // for vue@2.1.8
                 props.value = _model.value;
                 props['v-model'] = _model.expression;
                 break;
+            } else if (_model.name === 'show' && !_model.value) {
+                if (props.style) {
+                    props.style.display = 'none';
+                } else {
+                    props.style = { display: 'none' };
+                }
             }
         }
     }

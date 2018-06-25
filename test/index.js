@@ -469,6 +469,34 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('handle mountedQueue', done => {
+            render('<VueComponent :a="a" />', {
+                VueComponent: {
+                    props: ['a'],
+                    template: '<div><C :a="a" />{{ a }}</div>',
+                    components: {
+                        C: createIntactComponent(
+                            `<div>test</div>`,
+                            {
+                                _init() {
+                                    this.on('$change:a', () => {
+                                        this.update();
+                                    })
+                                }
+                            }
+                        ),
+                    }
+                }
+            }, {a: 1});
+
+            vm.a = 2;
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div><div>test</div>2</div>');
+                done();
+            });
+      
+        })
     });
 
     describe('vNode', () => {

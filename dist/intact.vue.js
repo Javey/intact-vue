@@ -652,6 +652,12 @@ var IntactVue = function (_Intact) {
 
         var element = update();
 
+        // if ignoreMountedQueue is true, then the mountedQueue will
+        // be set to null in Intact, we reset it here
+        if (ignoreMountedQueue) {
+            this.mountedQueue = mountedQueue;
+        }
+
         ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;

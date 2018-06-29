@@ -305,6 +305,26 @@ describe('Unit test', () => {
             });
         });
 
+        it('update keyed functional component children', (done) => {
+            const h = Intact.Vdt.miss.h;
+            render('<C><div><div v-if="show"><C key="a" ref="a">1</C></div><div v-else><C key="b" ref="b">2</C></div></div></C>', {
+                C: Intact.functionalWrapper(function Wrapper(props) {
+                    return h(ChildrenIntactComponent, props);
+                }),
+            }, {show: true});
+
+            vm.$nextTick(() => {
+                const a = vm.$refs.a;
+                vm.show = false;
+                vm.$nextTick(() => {
+                    const b = vm.$refs.b;
+                    expect(a === b).be.false;
+                    expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
+                    done();
+                });
+            });
+        });
+
         it('diff IntactComponent with vue element', function(done) {
             this.enableTimeouts(false);
             render('<C><C v-if="show">1</C><p v-else>2</p></C>', {

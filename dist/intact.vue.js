@@ -143,6 +143,8 @@ function normalizeProps(vNode) {
     // add key
     if (vNode.key) {
         props.key = vNode.key;
+    } else if (data.key) {
+        props.key = data.key;
     }
 
     // if exists scoped slots
@@ -291,7 +293,7 @@ function functionalWrapper(Component) {
             var attrs = {};
             var __props = { attrs: attrs };
             for (var key in vNode.props) {
-                if (~['children', '_context', 'className', 'style', 'ref'].indexOf(key)) continue;
+                if (~['children', '_context', 'className', 'style', 'ref', 'key'].indexOf(key)) continue;
                 attrs[key] = vNode.props[key];
             }
             if (props.data.ref) {
@@ -303,6 +305,7 @@ function functionalWrapper(Component) {
             if (vNode.props.style) {
                 __props.staticStyle = vNode.props.style;
             }
+            __props.key = vNode.props.key;
 
             return h(vNode.tag, __props, vNode.props.children);
         }

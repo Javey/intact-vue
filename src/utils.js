@@ -65,6 +65,8 @@ export function normalizeProps(vNode) {
     // add key
     if (vNode.key) {
         props.key = vNode.key;
+    } else if (data.key) {
+        props.key = data.key;
     }
 
     // if exists scoped slots
@@ -197,7 +199,7 @@ export function functionalWrapper(Component) {
             const attrs = {};
             const __props = {attrs};
             for (const key in vNode.props) {
-                if (~['children', '_context', 'className', 'style', 'ref'].indexOf(key)) continue;
+                if (~['children', '_context', 'className', 'style', 'ref', 'key'].indexOf(key)) continue;
                 attrs[key] = vNode.props[key];
             }
             if (props.data.ref) {
@@ -209,6 +211,7 @@ export function functionalWrapper(Component) {
             if (vNode.props.style) {
                 __props.staticStyle = vNode.props.style;
             }
+            __props.key = vNode.props.key;
 
             return h(
                 vNode.tag,

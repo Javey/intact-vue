@@ -670,7 +670,10 @@ var IntactVue = function (_Intact) {
         this.__initMountedQueue();
 
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        // disable intact async component
+        this.inited = true;
         this.$el = _Intact.prototype.init.call(this, null, this.vNode);
+        this.vNode.dom = this.$el;
         this._vnode = {};
         var options = this.$options;
         var refElm = options._refElm;

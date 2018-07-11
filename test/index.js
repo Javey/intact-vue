@@ -275,6 +275,23 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('render async intact component', done => {
+            render('<C />', {
+                C: createIntactComponent('<div>test</div>', {
+                    _init() {
+                        return new Promise((resolve) => {
+                            resolve();
+                        });
+                    }
+                })
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div>test</div>');
+                done();
+            });
+        });
     });
 
     describe('Update', () => {

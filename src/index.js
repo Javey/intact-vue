@@ -121,7 +121,10 @@ export default class IntactVue extends Intact {
         this.__initMountedQueue();
 
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        // disable intact async component
+        this.inited = true;
         this.$el = super.init(null, this.vNode);
+        this.vNode.dom = this.$el;
         this._vnode = {};
         const options = this.$options;
         const refElm = options._refElm;

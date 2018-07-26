@@ -373,7 +373,7 @@ function handleRef(vNode, props) {
             if (i) {
                 ref = i;
                 if (vNode.data.refInFor) {
-                    if (!Array.isArray(refs)) {
+                    if (!Array.isArray(refs[key])) {
                         refs[key] = [ref];
                     } else if (refs[key].indexOf(ref) < 0) {
                         refs[key].push(ref);

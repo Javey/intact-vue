@@ -1,6 +1,6 @@
 import Vue from 'vue';
 // for webpack alias Intact to IntactVue
-import Intact from 'intact/dist/intact';
+import Intact from 'intact/dist';
 import {
     normalizeChildren,
     normalize,

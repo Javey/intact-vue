@@ -1,4 +1,4 @@
-import Intact from 'intact/dist/intact';
+import Intact from 'intact/dist';
 import Vue from 'vue';
 
 const h = Intact.Vdt.miss.h;

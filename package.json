@@ -2,10 +2,10 @@
   "name": "intact-vue",
   "version": "0.2.28",
   "description": "A compatibility layer for running intact component in vue",
-  "main": "dist/intact.vue.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "karma start karma.config.js",
-    "build": "rollup -c rollup.config.js && uglifyjs dist/intact.vue.js -o dist/intact.vue.min.js -m",
+    "build": "rollup -c rollup.config.node.js && rollup -c rollup.config.js && uglifyjs dist/intact.vue.js -o dist/intact.vue.min.js -m",
     "release": "npm run release-patch",
     "prelease": "npm version prerelease && git push --tags --force && git push && npm publish",
     "release-patch": "npm version patch && git push --tags && git push && npm publish",

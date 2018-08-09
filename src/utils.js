@@ -72,9 +72,10 @@ export function normalizeProps(vNode) {
     // if exists scoped slots
     const scopedSlots = data.scopedSlots;
     if (scopedSlots) {
+        const blocks = props._blocks ? props._blocks : (props._blocks = {});
         for (const key in scopedSlots) {
-            props[key] = function() {
-                return normalizeChildren(scopedSlots[key].apply(this, arguments));
+            blocks[key] = function(parent, ...args) {
+                return normalizeChildren(scopedSlots[key].apply(this, args));
             };
         }
     }

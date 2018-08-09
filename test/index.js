@@ -222,7 +222,8 @@ describe('Unit test', () => {
 
         it('render with scoped slots', done => {
             render('<C><div slot-scope="scope">{{ scope }}</div></C>', {
-                C: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
+                // C: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
+                C: createIntactComponent(`<div><b:default args={['test']} /></div>`)
             });
 
             vm.$nextTick(() => {

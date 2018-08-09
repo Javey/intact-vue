@@ -150,9 +150,15 @@ function normalizeProps(vNode) {
     // if exists scoped slots
     var scopedSlots = data.scopedSlots;
     if (scopedSlots) {
+        var blocks = props._blocks ? props._blocks : props._blocks = {};
+
         var _loop = function _loop(_key) {
-            props[_key] = function () {
-                return normalizeChildren(scopedSlots[_key].apply(this, arguments));
+            blocks[_key] = function (parent) {
+                for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key2 = 1; _key2 < _len; _key2++) {
+                    args[_key2 - 1] = arguments[_key2];
+                }
+
+                return normalizeChildren(scopedSlots[_key].apply(this, args));
             };
         };
 
@@ -189,14 +195,14 @@ function normalizeProps(vNode) {
     // convert ref string to function
     handleRef(vNode, props);
 
-    for (var _key2 in componentOptions.listeners) {
+    for (var _key3 in componentOptions.listeners) {
         // is a v-model directive of vue
-        if (_key2 === 'input') {
+        if (_key3 === 'input') {
             props['ev-$change:value'] = function (c, v) {
                 componentOptions.listeners.input(v);
             };
         } else {
-            props['ev-' + _key2] = componentOptions.listeners[_key2];
+            props['ev-' + _key3] = componentOptions.listeners[_key3];
         }
     }
 

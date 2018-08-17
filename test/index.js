@@ -147,6 +147,37 @@ describe('Unit test', () => {
             });
         });
 
+        it('render Boolean type prop', done => {
+            const Component = createIntactComponent(`
+                var data = {
+                    a: self.get('a'),
+                    b: self.get('b'),
+                    c: self.get('c'),
+                    d: self.get('d')
+                };
+                <div>{JSON.stringify(data)}</div>`
+            );
+
+            Component.propTypes = {
+                a: Boolean,
+                b: {
+                    type: Boolean,
+                    required: true,
+                },
+                c: [Number, Boolean],
+                d: {
+                    type: [Number, Boolean],
+                    required: true,
+                }
+            };
+            render('<C a b c d />', {C: Component});
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div>{"a":true,"b":true,"c":true,"d":true}</div>');
+
+                done();
+            });
+        });
+
         it('render with v-model', done => {
             render('<C v-model="a" ref="a" />', {
                 C: createIntactComponent(`<div>{self.get('value')}</div>`)

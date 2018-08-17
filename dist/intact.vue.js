@@ -128,7 +128,16 @@ function normalizeProps(vNode) {
         for (var key in attrs) {
             if (~['staticClass', 'class', 'style', 'staticStyle'].indexOf(key)) continue;
             var value = attrs[key];
-            if (propTypes && propTypes[key] === Boolean && value === '') {
+            var tmp = void 0;
+            if (propTypes && (
+            // value is Boolean
+            (tmp = propTypes[key]) === Boolean || tmp && (
+            // value contains Boolean
+            Array.isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
+            // value.type is Boolean
+            tmp.type === Boolean ||
+            // value.type contains Boolean
+            Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && value === '') {
                 value = true;
             }
             props[key] = value;

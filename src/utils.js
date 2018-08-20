@@ -64,7 +64,7 @@ export function normalizeProps(vNode) {
                         Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
                     )
                 ) && 
-                value === ''
+                (value === '' || value === key)
             ) {
                 value = true;
             }

@@ -170,7 +170,7 @@ describe('Unit test', () => {
                     required: true,
                 }
             };
-            render('<C a b c d />', {C: Component});
+            render('<C a b c d="d" />', {C: Component});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql('<div>{"a":true,"b":true,"c":true,"d":true}</div>');
 

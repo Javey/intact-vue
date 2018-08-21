@@ -135,7 +135,7 @@ function normalizeProps(vNode) {
             // value.type is Boolean
             tmp.type === Boolean ||
             // value.type contains Boolean
-            Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && value === '') {
+            Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
                 value = true;
             }
             props[key] = value;

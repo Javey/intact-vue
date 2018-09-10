@@ -9,6 +9,7 @@ import {
 } from './utils';
 
 const {init, $nextTick, _updateFromParent} = Vue.prototype;
+const extend = Intact.utils.extend;
 
 let activeInstance;
 let mountedQueue;
@@ -17,7 +18,7 @@ let ignoreMountedQueue = false;
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
 
-    static options = Object.assign({}, Vue.options);
+    static options = extend({}, Vue.options);
 
     static functionalWrapper = functionalWrapper;
 

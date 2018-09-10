@@ -88,10 +88,13 @@ var patch = Vue.prototype.__patch__;
 var _Intact$utils = Intact.utils;
 var _get = _Intact$utils.get;
 var _set = _Intact$utils.set;
+var extend$1 = _Intact$utils.extend;
+var isArray = _Intact$utils.isArray;
+var create = _Intact$utils.create;
 
 
 function normalizeChildren(vNodes) {
-    if (Array.isArray(vNodes)) {
+    if (isArray(vNodes)) {
         var ret = [];
         vNodes.forEach(function (vNode) {
             ret.push(normalize(vNode));
@@ -133,11 +136,11 @@ function normalizeProps(vNode) {
             // value is Boolean
             (tmp = propTypes[key]) === Boolean || tmp && (
             // value contains Boolean
-            Array.isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
+            isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
             // value.type is Boolean
             tmp.type === Boolean ||
             // value.type contains Boolean
-            Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
+            isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
                 value = true;
             }
             props[key] = value;
@@ -227,7 +230,7 @@ function normalizeProps(vNode) {
 
     props.children = children;
     if (props._blocks) {
-        Object.assign(props._blocks, _blocks);
+        extend$1(props._blocks, _blocks);
     } else {
         props._blocks = _blocks;
     }
@@ -301,7 +304,7 @@ function functionalWrapper(Component) {
                 }
             });
             var vNode = Component(_props, true /* is in vue */);
-            if (Array.isArray(vNode)) {
+            if (isArray(vNode)) {
                 throw new Error('Array children does not be supported.');
             }
 
@@ -388,7 +391,7 @@ function handleRef(vNode, props) {
             if (i) {
                 ref = i;
                 if (vNode.data.refInFor) {
-                    if (!Array.isArray(refs[key])) {
+                    if (!isArray(refs[key])) {
                         refs[key] = [ref];
                     } else if (refs[key].indexOf(ref) < 0) {
                         refs[key].push(ref);
@@ -397,7 +400,7 @@ function handleRef(vNode, props) {
                     refs[key] = ref;
                 }
             } else {
-                if (Array.isArray(refs[key])) {
+                if (isArray(refs[key])) {
                     var index = refs[key].indexOf(ref);
                     if (~index) {
                         refs[key].splice(index, 1);
@@ -431,7 +434,7 @@ function handleClassName(vNode) {
 
 function stringifyClass(className) {
     if (className == null) return '';
-    if (Array.isArray(className)) {
+    if (isArray(className)) {
         return stringifyArray(className);
     }
     if ((typeof className === 'undefined' ? 'undefined' : _typeof(className)) === 'object') {
@@ -475,7 +478,7 @@ function handleStyle(vNode) {
     if (data) {
         style = getStyleBinding(data.style);
         if (data.staticStyle) {
-            return Object.assign(data.staticStyle, style);
+            return extend$1(data.staticStyle, style);
         }
     }
 
@@ -485,7 +488,7 @@ function handleStyle(vNode) {
 function getStyleBinding(style) {
     if (!style) return style;
 
-    if (Array.isArray(style)) {
+    if (isArray(style)) {
         return toObject(style);
     }
     if (typeof style === 'string') {
@@ -499,14 +502,14 @@ function toObject(arr) {
     var res = {};
     for (var i = 0; i < arr.length; i++) {
         if (arr[i]) {
-            Object.assign(res, arr[i]);
+            extend$1(res, arr[i]);
         }
     }
 
     return res;
 }
 
-var cache = Object.create(null);
+var cache = create(null);
 function parseStyleText(cssText) {
     var hit = cache[cssText];
     if (hit) return hit;
@@ -574,6 +577,7 @@ var init = _Vue$prototype.init;
 var $nextTick = _Vue$prototype.$nextTick;
 var _updateFromParent = _Vue$prototype._updateFromParent;
 
+var extend = Intact.utils.extend;
 
 var activeInstance = void 0;
 var mountedQueue = void 0;
@@ -787,7 +791,7 @@ var IntactVue = function (_Intact) {
 }(Intact);
 
 IntactVue.cid = 'IntactVue';
-IntactVue.options = Object.assign({}, Vue.options);
+IntactVue.options = extend({}, Vue.options);
 IntactVue.functionalWrapper = functionalWrapper;
 IntactVue.normalize = normalizeChildren;
 IntactVue.prototype.$nextTick = $nextTick;

@@ -3,10 +3,10 @@ import Vue from 'vue';
 
 const h = Intact.Vdt.miss.h;
 const patch = Vue.prototype.__patch__;
-const {get, set} = Intact.utils;
+const {get, set, extend, isArray, create} = Intact.utils;
 
 export function normalizeChildren(vNodes) {
-    if (Array.isArray(vNodes)) {
+    if (isArray(vNodes)) {
         const ret = [];
         vNodes.forEach(vNode => {
             ret.push(normalize(vNode));
@@ -57,11 +57,11 @@ export function normalizeProps(vNode) {
                     (tmp = propTypes[key]) === Boolean ||
                     tmp && (
                         // value contains Boolean
-                        Array.isArray(tmp) && tmp.indexOf(Boolean) > -1 || 
+                        isArray(tmp) && tmp.indexOf(Boolean) > -1 || 
                         // value.type is Boolean
                         tmp.type === Boolean ||
                         // value.type contains Boolean
-                        Array.isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
+                        isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
                     )
                 ) && 
                 (value === '' || value === key)
@@ -141,7 +141,7 @@ export function normalizeProps(vNode) {
     // In this case, we should merge them 
     props.children = children;
     if (props._blocks) {
-        Object.assign(props._blocks, _blocks);
+        extend(props._blocks, _blocks);
     } else {
         props._blocks = _blocks;
     }
@@ -208,7 +208,7 @@ export function functionalWrapper(Component) {
                 },
             });
             const vNode = Component(_props, true /* is in vue */);
-            if (Array.isArray(vNode)) {
+            if (isArray(vNode)) {
                 throw new Error('Array children does not be supported.');
             }
 
@@ -291,7 +291,7 @@ function handleRef(vNode, props) {
             if (i) {
                 ref = i;
                 if (vNode.data.refInFor) {
-                    if (!Array.isArray(refs[key])) {
+                    if (!isArray(refs[key])) {
                         refs[key] = [ref];
                     } else if (refs[key].indexOf(ref) < 0) {
                         refs[key].push(ref);
@@ -300,7 +300,7 @@ function handleRef(vNode, props) {
                     refs[key] = ref; 
                 }
             } else {
-                if (Array.isArray(refs[key])) {
+                if (isArray(refs[key])) {
                     var index = refs[key].indexOf(ref);
                     if (~index) {
                         refs[key].splice(index, 1);
@@ -334,7 +334,7 @@ function handleClassName(vNode) {
 
 function stringifyClass(className) {
     if (className == null) return '';
-    if (Array.isArray(className)) {
+    if (isArray(className)) {
         return stringifyArray(className);
     }
     if (typeof className === 'object') {
@@ -378,7 +378,7 @@ function handleStyle(vNode) {
     if (data) {
         style = getStyleBinding(data.style);
         if (data.staticStyle) {
-            return Object.assign(data.staticStyle, style);
+            return extend(data.staticStyle, style);
         }
     }
 
@@ -388,7 +388,7 @@ function handleStyle(vNode) {
 function getStyleBinding(style) {
     if (!style) return style;
 
-    if (Array.isArray(style)) {
+    if (isArray(style)) {
         return toObject(style);
     }
     if (typeof style === 'string') {
@@ -402,7 +402,7 @@ function toObject(arr) {
     const res = {};
     for (let i = 0; i < arr.length; i++) {
         if (arr[i]) {
-            Object.assign(res, arr[i]);
+            extend(res, arr[i]);
         }
     }
 
@@ -410,7 +410,7 @@ function toObject(arr) {
 }
 
 
-const cache = Object.create(null);
+const cache = create(null);
 function parseStyleText(cssText) {
     const hit = cache[cssText];
     if (hit) return hit;

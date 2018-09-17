@@ -123,15 +123,22 @@ export function normalizeProps(vNode) {
     // convert ref string to function
     handleRef(vNode, props);
 
-    for (let key in componentOptions.listeners) {
+    const listeners = componentOptions.listeners;
+    for (let key in listeners) {
         // is a v-model directive of vue
         if (key === 'input') {
-            props[`ev-$change:value`] = function(c, v) {
-                componentOptions.listeners.input(v);
-            }
+            continue;
         } else {
-            props[`ev-${key}`] = componentOptions.listeners[key];
+            props[`ev-${key}`] = listeners[key];
         }
+    }
+    if (listeners.input) {
+        // support v-model and $chagne:value exist simultaneously, #2
+        const oCb = props[`ev-$change:value`];
+        const nCb = function(c, v) {
+            listeners.input(v);
+        };
+        props[`ev-$change:value`] = oCb ? [nCb, oCb] : nCb;
     }
 
     // handle children and blocks

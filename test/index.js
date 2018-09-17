@@ -198,6 +198,25 @@ describe('Unit test', () => {
             });
         });
 
+        it('render v-model with $change:value', done =>{
+            const change = sinon.spy();
+            render('<C v-model="a" @$change:value="change" ref="a"/>', {
+                C: createIntactComponent(`<div>{self.get('value')}</div>`)
+            }, {a: 1}, {
+                add() {
+                    this.$refs.a.set('value', 2);
+                },
+
+                change
+            });
+
+            vm.add();
+            vm.$nextTick(() => {
+                expect(change.callCount).to.eql(1);
+                done();
+            })
+        });
+
         it('render with event', done => {
             render('<div><C @click="onClick" />{{ a }}</div>', {
                 C: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {

@@ -124,21 +124,23 @@ export function normalizeProps(vNode) {
     handleRef(vNode, props);
 
     const listeners = componentOptions.listeners;
-    for (let key in listeners) {
-        // is a v-model directive of vue
-        if (key === 'input') {
-            continue;
-        } else {
-            props[`ev-${key}`] = listeners[key];
+    if (listeners) {
+        for (let key in listeners) {
+            // is a v-model directive of vue
+            if (key === 'input') {
+                continue;
+            } else {
+                props[`ev-${key}`] = listeners[key];
+            }
         }
-    }
-    if (listeners.input) {
-        // support v-model and $chagne:value exist simultaneously, #2
-        const oCb = props[`ev-$change:value`];
-        const nCb = function(c, v) {
-            listeners.input(v);
-        };
-        props[`ev-$change:value`] = oCb ? [nCb, oCb] : nCb;
+        if (listeners.input) {
+            // support v-model and $chagne:value exist simultaneously, #2
+            const oCb = props[`ev-$change:value`];
+            const nCb = function(c, v) {
+                listeners.input(v);
+            };
+            props[`ev-$change:value`] = oCb ? [nCb, oCb] : nCb;
+        }
     }
 
     // handle children and blocks

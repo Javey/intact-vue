@@ -126,20 +126,26 @@ export function normalizeProps(vNode) {
     const listeners = componentOptions.listeners;
     if (listeners) {
         for (let key in listeners) {
-            // is a v-model directive of vue
+            let _cb = listeners[key];
+            let cb = _cb;
+
             if (key === 'input') {
-                continue;
-            } else {
-                props[`ev-${key}`] = listeners[key];
+                // is a v-model directive of vue
+                key = `$change:value`;
+                cb = (c, v) => _cb(v);
+            } else if (key.substr(0, 7) === 'update:') {
+                // delegate update:prop(sync modifier) to $change:prop
+                key = `$change:${key.substr(7)}`;
+                cb = (c, v) => _cb(v);
             }
-        }
-        if (listeners.input) {
-            // support v-model and $chagne:value exist simultaneously, #2
-            const oCb = props[`ev-$change:value`];
-            const nCb = function(c, v) {
-                listeners.input(v);
-            };
-            props[`ev-$change:value`] = oCb ? [nCb, oCb] : nCb;
+
+            // if there is a $change:prop originally, set it as array
+            const name = `ev-${key}`;
+            if (props[name]) {
+                props[name] = [props[name], cb]
+            } else {
+                props[name] = cb;
+            }
         }
     }
 

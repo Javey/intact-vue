@@ -718,6 +718,24 @@ describe('Unit test', () => {
         });
     });
 
+    describe('Modifier', () => {
+        it('sync', (done) => {
+            const test = sinon.spy();
+            render('<C a="a" :b.sync="b" ref="test" @$change:b="test"/>', {
+                C: PropsIntactComponent
+            }, {b: 1}, {test});
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div>a: a b: 1</div>');
+                
+                vm.$refs.test.set('b', 2);
+                expect(vm.b).eql(2);
+                expect(test.callCount).eql(1);
+                done();
+            });
+        });
+    });
+
     describe('Demo', () => {
         it('demo', () => {
             class IntactComponent extends Intact {

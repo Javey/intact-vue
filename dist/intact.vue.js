@@ -209,21 +209,36 @@ function normalizeProps(vNode) {
 
     var listeners = componentOptions.listeners;
     if (listeners) {
-        for (var _key3 in listeners) {
-            // is a v-model directive of vue
-            if (_key3 === 'input') {
-                continue;
-            } else {
-                props['ev-' + _key3] = listeners[_key3];
+        var _loop2 = function _loop2(_key4) {
+            var _cb = listeners[_key4];
+            var cb = _cb;
+
+            if (_key4 === 'input') {
+                // is a v-model directive of vue
+                _key4 = '$change:value';
+                cb = function cb(c, v) {
+                    return _cb(v);
+                };
+            } else if (_key4.substr(0, 7) === 'update:') {
+                // delegate update:prop(sync modifier) to $change:prop
+                _key4 = '$change:' + _key4.substr(7);
+                cb = function cb(c, v) {
+                    return _cb(v);
+                };
             }
-        }
-        if (listeners.input) {
-            // support v-model and $chagne:value exist simultaneously, #2
-            var oCb = props['ev-$change:value'];
-            var nCb = function nCb(c, v) {
-                listeners.input(v);
-            };
-            props['ev-$change:value'] = oCb ? [nCb, oCb] : nCb;
+
+            // if there is a $change:prop originally, set it as array
+            var name = 'ev-' + _key4;
+            if (props[name]) {
+                props[name] = [props[name], cb];
+            } else {
+                props[name] = cb;
+            }
+            _key3 = _key4;
+        };
+
+        for (var _key3 in listeners) {
+            _loop2(_key3);
         }
     }
 
@@ -275,14 +290,14 @@ function getChildrenAndBlocks(slots) {
     if (rest) {
         blocks = {};
 
-        var _loop2 = function _loop2(key) {
+        var _loop3 = function _loop3(key) {
             blocks[key] = function () {
                 return normalizeChildren(rest[key]);
             };
         };
 
         for (var key in rest) {
-            _loop2(key);
+            _loop3(key);
         }
     }
 
@@ -556,8 +571,8 @@ function resolveSlots(children) {
             delete data.attrs.slot;
         }
         if (data && data.slot != null) {
-            var name = data.slot;
-            var slot = slots[name] || (slots[name] = []);
+            var _name = data.slot;
+            var slot = slots[_name] || (slots[_name] = []);
             if (child.tag === 'template') {
                 slot.push.apply(slot, child.children || []);
             } else {
@@ -568,9 +583,9 @@ function resolveSlots(children) {
         }
     }
     // ignore slots that contains only whitespace
-    for (var _name in slots) {
-        if (slots[_name].every(isWhitespace)) {
-            delete slots[_name];
+    for (var _name2 in slots) {
+        if (slots[_name2].every(isWhitespace)) {
+            delete slots[_name2];
         }
     }
     return slots;

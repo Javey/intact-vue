@@ -450,7 +450,23 @@ describe('Unit test', () => {
                     }
                 }
             }, {a: [2]}, {add() { this.a.push(2) }});
-        })
+        });
+
+        it('should update correctly even if intact has changed type of element', (done) => {
+            render(`<div><div v-if="show"><C :total="total" /></div><div v-else></div></div>`, {
+                C: createIntactComponent(`if (!self.get('total')) return; <div>component</div>`)
+            }, {show: true, total: 0});
+
+            vm.total = 1;
+            vm.$nextTick(() => {
+                vm.show = false;
+                vm.$nextTick(() => {
+                    expect(vm.$el.outerHTML).eql('<div><div></div></div>');
+
+                    done();
+                });
+            });
+        });
     });
 
     describe('v-show', () => {

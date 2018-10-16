@@ -741,7 +741,8 @@ var IntactVue = function (_Intact) {
 
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
-        _Intact.prototype.update.call(this, lastVNode, vNode);
+        // Intact can change element when update, so we should re-assign it to elm, #4
+        this.$vnode.elm = _Intact.prototype.update.call(this, lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined

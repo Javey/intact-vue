@@ -152,7 +152,8 @@ export default class IntactVue extends Intact {
 
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
-        super.update(lastVNode, vNode);
+        // Intact can change element when update, so we should re-assign it to elm, #4
+        this.$vnode.elm = super.update(lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined

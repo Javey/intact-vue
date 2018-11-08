@@ -282,6 +282,17 @@ describe('Unit test', () => {
             });
         });
 
+        it('ignore empty slot in vue, this is default behavior of vue', done => {
+            render('<C><template slot="slot"></template></C>', {
+                C: createIntactComponent(`<div><b:slot>test</b:slot></div>`)
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).be.eql('<div>test</div>');
+                done();
+            });
+        });
+
         it('render functional component which wrap intact component', done => {
             const h = Intact.Vdt.miss.h;
             const Component = Intact.functionalWrapper(function(props) {

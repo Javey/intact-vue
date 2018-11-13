@@ -780,7 +780,7 @@ var IntactVue = function (_Intact) {
         this._shouldTrigger = false;
         if (!mountedQueue) {
             this._shouldTrigger = true;
-            if (!this.mountedQueue) {
+            if (!this.mountedQueue || this.mountedQueue.done) {
                 _Intact.prototype._initMountedQueue.call(this);
             }
             mountedQueue = this.mountedQueue;

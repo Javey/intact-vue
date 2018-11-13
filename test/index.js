@@ -179,7 +179,7 @@ describe('Unit test', () => {
         });
 
         it('render with v-model', done => {
-            render('<C v-model="a" ref="a" />', {
+            render('<C v-model.trim="a" ref="a" />', {
                 C: createIntactComponent(`<div>{self.get('value')}</div>`)
             }, {a: 1}, {
                 add() {
@@ -187,12 +187,16 @@ describe('Unit test', () => {
                 }
             });
 
+            window.vm = vm;
             vm.add();
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql('<div>2</div>');
 
                 vm.$refs.a.set('value', 3);
                 expect(vm.a).to.eql(3);
+
+                vm.$refs.a.set('value', '  4 ');
+                expect(vm.a).to.eql('4');
 
                 done();
             });
@@ -747,8 +751,8 @@ describe('Unit test', () => {
 
     describe('Modifier', () => {
         it('sync', (done) => {
-            const test = sinon.spy();
-            render('<C a="a" :b.sync="b" ref="test" @$change:b="test"/>', {
+            const test = sinon.spy(function() {console.log(arguments)});
+            render('<C a="a" :b.sync="b" ref="test" @$change:b="test(1, ...arguments)"/>', {
                 C: PropsIntactComponent
             }, {b: 1}, {test});
 

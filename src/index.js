@@ -189,7 +189,7 @@ export default class IntactVue extends Intact {
         this._shouldTrigger = false;
         if (!mountedQueue) {
             this._shouldTrigger = true;
-            if (!this.mountedQueue) {
+            if (!this.mountedQueue || this.mountedQueue.done) {
                 super._initMountedQueue();
             }
             mountedQueue = this.mountedQueue;

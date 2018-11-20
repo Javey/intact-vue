@@ -605,7 +605,6 @@ var extend = Intact.utils.extend;
 
 var activeInstance = void 0;
 var mountedQueue = void 0;
-var ignoreMountedQueue = false;
 
 var IntactVue = function (_Intact) {
     inherits(IntactVue, _Intact);
@@ -658,17 +657,9 @@ var IntactVue = function (_Intact) {
 
         if (!this._isVue) return init();
 
-        var prevIgnoreMountedQueue = ignoreMountedQueue;
-        if (!nextVNode) {
-            ignoreMountedQueue = true;
-        }
-        if (!ignoreMountedQueue) {
-            mountedQueue = this.mountedQueue;
-        }
+        mountedQueue = this.mountedQueue;
 
         var element = init();
-
-        ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;
     };
@@ -688,28 +679,20 @@ var IntactVue = function (_Intact) {
 
         if (!this._isVue) return update();
 
-        var prevIgnoreMountedQueue = ignoreMountedQueue;
-        if (!nextVNode && !fromPending && this._updateCount === 0) {
-            ignoreMountedQueue = true;
-        }
-        if (!ignoreMountedQueue) {
-            mountedQueue = this.mountedQueue;
-        }
+        // maybe update in updating
+        var oldTriggerFlag = this._shouldTrigger;
+        this.__initMountedQueue();
 
         var element = update();
 
-        // if ignoreMountedQueue is true, then the mountedQueue will
-        // be set to null in Intact, we reset it here
-        if (ignoreMountedQueue) {
-            this.mountedQueue = mountedQueue;
-        }
-
-        ignoreMountedQueue = prevIgnoreMountedQueue;
+        this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
 
         return element;
     };
 
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
+        var oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
@@ -727,11 +710,13 @@ var IntactVue = function (_Intact) {
         }
 
         this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {
+        var oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
         this._prevActiveInstance = activeInstance;
@@ -766,6 +751,7 @@ var IntactVue = function (_Intact) {
         }
 
         this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
 
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
@@ -780,7 +766,7 @@ var IntactVue = function (_Intact) {
 
     IntactVue.prototype.__initMountedQueue = function __initMountedQueue() {
         this._shouldTrigger = false;
-        if (!mountedQueue) {
+        if (!mountedQueue || mountedQueue.done) {
             this._shouldTrigger = true;
             if (!this.mountedQueue || this.mountedQueue.done) {
                 _Intact.prototype._initMountedQueue.call(this);
@@ -792,18 +778,21 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.__triggerMountedQueue = function __triggerMountedQueue() {
+        var _this4 = this;
+
         if (this._shouldTrigger) {
-            _Intact.prototype._triggerMountedQueue.call(this);
+            if (this.mounted) {
+                _Intact.prototype._triggerMountedQueue.call(this);
+            } else {
+                this.$nextTick(function () {
+                    if (_this4.destroyed) return;
+                    _Intact.prototype._triggerMountedQueue.call(_this4);
+                });
+            }
             mountedQueue = null;
             this._shouldTrigger = false;
         }
     };
-
-    // wrapp vm._c to return Intact vNode.
-    // __c(...args) {
-    // const vNode = vm._c(...args); 
-
-    // }
 
     // mock api
 

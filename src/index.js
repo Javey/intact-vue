@@ -13,7 +13,6 @@ const extend = Intact.utils.extend;
 
 let activeInstance;
 let mountedQueue;
-let ignoreMountedQueue = false;
 
 export default class IntactVue extends Intact {
     static cid = 'IntactVue';
@@ -69,17 +68,9 @@ export default class IntactVue extends Intact {
 
         if (!this._isVue) return init();
 
-        const prevIgnoreMountedQueue = ignoreMountedQueue;
-        if (!nextVNode) {
-            ignoreMountedQueue = true;
-        }
-        if (!ignoreMountedQueue) {
-            mountedQueue = this.mountedQueue;
-        }
+        mountedQueue = this.mountedQueue;
 
         const element = init();
-        
-        ignoreMountedQueue = prevIgnoreMountedQueue;
 
         return element;
     }
@@ -97,28 +88,20 @@ export default class IntactVue extends Intact {
 
         if (!this._isVue) return update(); 
 
-        const prevIgnoreMountedQueue = ignoreMountedQueue;
-        if (!nextVNode && !fromPending && this._updateCount === 0) {
-            ignoreMountedQueue = true;
-        }
-        if (!ignoreMountedQueue) {
-            mountedQueue = this.mountedQueue;
-        }
-
+        // maybe update in updating
+        const oldTriggerFlag = this._shouldTrigger;
+        this.__initMountedQueue();
+        
         const element = update();
 
-        // if ignoreMountedQueue is true, then the mountedQueue will
-        // be set to null in Intact, we reset it here
-        if (ignoreMountedQueue) {
-            this.mountedQueue = mountedQueue;
-        }
-
-        ignoreMountedQueue = prevIgnoreMountedQueue;
+        this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
 
         return element;
     }
 
     $mount(el, hydrating) {
+        const oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
@@ -136,11 +119,13 @@ export default class IntactVue extends Intact {
         }
 
         this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
     }
 
     $forceUpdate() {
+        const oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
         this._prevActiveInstance = activeInstance;
@@ -175,6 +160,7 @@ export default class IntactVue extends Intact {
         }
 
         this.__triggerMountedQueue();
+        this._shouldTrigger = oldTriggerFlag;
 
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
@@ -187,7 +173,7 @@ export default class IntactVue extends Intact {
     // we should promise that all intact components have been mounted
     __initMountedQueue() {
         this._shouldTrigger = false;
-        if (!mountedQueue) {
+        if (!mountedQueue || mountedQueue.done) {
             this._shouldTrigger = true;
             if (!this.mountedQueue || this.mountedQueue.done) {
                 super._initMountedQueue();
@@ -200,17 +186,18 @@ export default class IntactVue extends Intact {
 
     __triggerMountedQueue() {
         if (this._shouldTrigger) {
-            super._triggerMountedQueue();
+            if (this.mounted) {
+                super._triggerMountedQueue();
+            } else {
+                this.$nextTick(() => {
+                    if (this.destroyed) return;
+                    super._triggerMountedQueue();
+                });
+            }
             mountedQueue = null;
             this._shouldTrigger = false;
         }
     }
-
-    // wrapp vm._c to return Intact vNode.
-    // __c(...args) {
-        // const vNode = vm._c(...args); 
-
-    // }
 
     // mock api
     $on() {}

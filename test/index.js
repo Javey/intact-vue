@@ -569,8 +569,12 @@ describe('Unit test', () => {
         });
 
         it('lifecycle of mounted nested intact component', done => {
-            const mounted1 = sinon.spy(() => console.log(1));
-            const mounted2 = sinon.spy(() => console.log(2));
+            const mounted1 = sinon.spy(() => {
+                console.log(1)
+            });
+            const mounted2 = sinon.spy(() => {
+                console.log(2)
+            });
 
             render('<div<C><div><D /></div></C></div>', {
                 C: createIntactComponent('<div>{self.get("children")}</div>', {
@@ -614,8 +618,42 @@ describe('Unit test', () => {
                 expect(vm.$el.outerHTML).to.eql('<div><div>test</div>2</div>');
                 done();
             });
-      
-        })
+        });
+
+        it('call method of Intact component to show nested Intact component', () => {
+            function Test(isShow) {
+                return new Promise(resolve => {
+                    render('<div><IntactComponent ref="a"><div><C /></div></IntactComponent></div>', {
+                        IntactComponent: createIntactComponent(
+                            `<div v-if={self.get('show')}>{self.get('children')}</div>`,
+                            {
+                                defaults() {
+                                    return {show: !!isShow};
+                                },
+                                show() {
+                                    this.set('show', true);
+                                }
+                            }
+                        ),
+                        C: createIntactComponent(`<Test />`, {
+                            _init() {
+                                this.Test = createIntactComponent(`<div>test</div>`, {
+                                    _mount() {
+                                        expect(vm.$el.outerHTML).eql('<div><div><div><div>test</div></div></div></div>');
+                                        resolve();
+                                    }
+                                });
+                            }
+                        })
+                    });
+                });
+            }
+
+            return Test(true).then(() => {
+                Test(false);
+                vm.$refs.a.show();
+            });
+        });
     });
 
     describe('vNode', () => {

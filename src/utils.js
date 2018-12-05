@@ -73,9 +73,15 @@ export function normalizeProps(vNode) {
     }
 
     // add className
-    props.className = handleClassName(vNode);
+    const className = handleClassName(vNode);
+    if (className !== undefined) {
+        props.className = className;
+    }
     // add style
-    props.style = handleStyle(vNode);
+    const style = handleStyle(vNode);
+    if (style !== undefined) {
+        props.style = style;
+    }
 
     // add key
     if (vNode.key) {

@@ -819,6 +819,10 @@ IntactVue.prototype._updateFromParent = _updateFromParent;
 // for compatibilty of IE <= 10
 if (!Object.setPrototypeOf) {
     extend(IntactVue, Intact);
+    // for Intact <= 2.4.4
+    if (!IntactVue.template) {
+        IntactVue.template = Intact.template;
+    }
 }
 
 module.exports = IntactVue;

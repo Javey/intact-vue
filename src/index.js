@@ -207,3 +207,8 @@ export default class IntactVue extends Intact {
 IntactVue.prototype.$nextTick = $nextTick;
 // for vue@2.1.8
 IntactVue.prototype._updateFromParent = _updateFromParent;
+
+// for compatibilty of IE <= 10
+if (!Object.setPrototypeOf) {
+    extend(IntactVue, Intact);
+}

@@ -709,10 +709,15 @@ var IntactVue = function (_Intact) {
         this._vnode = {};
         var options = this.$options;
         var refElm = options._refElm;
-        if (refElm) {
-            options._parentElm.insertBefore(this.$el, refElm);
-        } else {
-            options._parentElm.appendChild(this.$el);
+        var parentElm = options._parentElm;
+        // vue@2.5.18 and above does not need append the dom
+        // vue will do this by itself
+        if (parentElm) {
+            if (refElm) {
+                parentElm.insertBefore(this.$el, refElm);
+            } else {
+                parentElm.appendChild(this.$el);
+            }
         }
 
         this.__triggerMountedQueue();

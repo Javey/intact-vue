@@ -55,6 +55,7 @@ describe('Unit test', () => {
     describe('Render', () => {
         it('render intact component in vue', (done) => {
             render('<C/>', {C: SimpleIntactComponent});
+            // render('<C/>', {C: {template: '<div>test</div>'}});
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql(simpleTemplate);
                 done();

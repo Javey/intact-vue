@@ -107,7 +107,7 @@ export default class IntactVue extends Intact {
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         // disable intact async component
         this.inited = true;
-        this.$el = super.init(null, this.vNode);
+        this.$el = this.init(null, this.vNode);
         this.vNode.dom = this.$el;
         this._vnode = {};
         const options = this.$options;
@@ -143,7 +143,7 @@ export default class IntactVue extends Intact {
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         // Intact can change element when update, so we should re-assign it to elm, #4
-        this.$vnode.elm = super.update(lastVNode, vNode);
+        this.$vnode.elm = this.update(lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -181,7 +181,7 @@ export default class IntactVue extends Intact {
         if (!mountedQueue || mountedQueue.done) {
             this._shouldTrigger = true;
             if (!this.mountedQueue || this.mountedQueue.done) {
-                super._initMountedQueue();
+                this._initMountedQueue();
             }
             mountedQueue = this.mountedQueue;
         } else {
@@ -192,11 +192,11 @@ export default class IntactVue extends Intact {
     __triggerMountedQueue() {
         if (this._shouldTrigger) {
             if (this.mounted) {
-                super._triggerMountedQueue();
+                this._triggerMountedQueue();
             } else {
                 this.$nextTick(() => {
                     if (this.destroyed) return;
-                    super._triggerMountedQueue();
+                    this._triggerMountedQueue();
                 });
             }
             mountedQueue = null;

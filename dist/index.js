@@ -702,7 +702,7 @@ var IntactVue = function (_Intact) {
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         // disable intact async component
         this.inited = true;
-        this.$el = _Intact.prototype.init.call(this, null, this.vNode);
+        this.$el = this.init(null, this.vNode);
         this.vNode.dom = this.$el;
         this._vnode = {};
         var options = this.$options;
@@ -738,7 +738,7 @@ var IntactVue = function (_Intact) {
         this.vNode = vNode;
         this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
         // Intact can change element when update, so we should re-assign it to elm, #4
-        this.$vnode.elm = _Intact.prototype.update.call(this, lastVNode, vNode);
+        this.$vnode.elm = this.update(lastVNode, vNode);
 
         // force vue update intact component
         // reset it, because vue may set it to undefined
@@ -778,7 +778,7 @@ var IntactVue = function (_Intact) {
         if (!mountedQueue || mountedQueue.done) {
             this._shouldTrigger = true;
             if (!this.mountedQueue || this.mountedQueue.done) {
-                _Intact.prototype._initMountedQueue.call(this);
+                this._initMountedQueue();
             }
             mountedQueue = this.mountedQueue;
         } else {
@@ -791,11 +791,11 @@ var IntactVue = function (_Intact) {
 
         if (this._shouldTrigger) {
             if (this.mounted) {
-                _Intact.prototype._triggerMountedQueue.call(this);
+                this._triggerMountedQueue();
             } else {
                 this.$nextTick(function () {
                     if (_this4.destroyed) return;
-                    _Intact.prototype._triggerMountedQueue.call(_this4);
+                    _this4._triggerMountedQueue();
                 });
             }
             mountedQueue = null;

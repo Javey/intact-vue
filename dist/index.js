@@ -329,6 +329,7 @@ function functionalWrapper(Component) {
                 slots: props.slots(),
                 context: {
                     $data: props.parent.$data
+                    // $refs: props.parent.$refs,
                 }
             });
             var vNode = Component(_props, true /* is in vue */);
@@ -416,6 +417,8 @@ function handleRef(vNode, props) {
         var refs = vNode.context.$refs;
         var ref = void 0;
         props.ref = function (i) {
+            // if we pass the ref to intact component, ignore it directlty
+            if (!refs) return;
             if (i) {
                 ref = i;
                 if (vNode.data.refInFor) {
@@ -793,10 +796,15 @@ var IntactVue = function (_Intact) {
             if (this.mounted) {
                 this._triggerMountedQueue();
             } else {
-                this.$nextTick(function () {
-                    if (_this4.destroyed) return;
+                // vue will call mouted hook after append the element
+                // so we push to the queue to make it to be called immediately
+                this.$options.mounted.push(function () {
                     _this4._triggerMountedQueue();
                 });
+                // this.$nextTick(() => {
+                // if (this.destroyed) return;
+                // this._triggerMountedQueue();
+                // });
             }
             mountedQueue = null;
             this._shouldTrigger = false;

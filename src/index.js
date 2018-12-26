@@ -194,10 +194,15 @@ export default class IntactVue extends Intact {
             if (this.mounted) {
                 this._triggerMountedQueue();
             } else {
-                this.$nextTick(() => {
-                    if (this.destroyed) return;
+                // vue will call mouted hook after append the element
+                // so we push to the queue to make it to be called immediately
+                this.$options.mounted.push(() => {
                     this._triggerMountedQueue();
                 });
+                // this.$nextTick(() => {
+                    // if (this.destroyed) return;
+                    // this._triggerMountedQueue();
+                // });
             }
             mountedQueue = null;
             this._shouldTrigger = false;

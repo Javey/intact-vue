@@ -640,7 +640,7 @@ describe('Unit test', () => {
                             _init() {
                                 this.Test = createIntactComponent(`<div>test</div>`, {
                                     _mount() {
-                                        expect(vm.$el.outerHTML).eql('<div><div><div><div>test</div></div></div></div>');
+                                        expect(document.body.contains(this.element)).to.be.true;
                                         resolve();
                                     }
                                 });

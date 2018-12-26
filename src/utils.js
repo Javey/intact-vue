@@ -226,6 +226,7 @@ export function functionalWrapper(Component) {
                 slots: props.slots(),
                 context: {
                     $data: props.parent.$data,
+                    // $refs: props.parent.$refs,
                 },
             });
             const vNode = Component(_props, true /* is in vue */);
@@ -309,6 +310,8 @@ function handleRef(vNode, props) {
         const refs = vNode.context.$refs;
         let ref;
         props.ref = function(i) { 
+            // if we pass the ref to intact component, ignore it directlty
+            if (!refs) return;
             if (i) {
                 ref = i;
                 if (vNode.data.refInFor) {

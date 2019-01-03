@@ -1,9 +1,47 @@
 import Intact from 'intact/dist';
 import Vue from 'vue';
 
-const h = Intact.Vdt.miss.h;
+const {h, hooks} = Intact.Vdt.miss;
 const patch = Vue.prototype.__patch__;
 const {get, set, extend, isArray, create} = Intact.utils;
+
+// for scoped style
+if (hooks) {
+    hooks.beforeInsert = function(vNode) {
+        const dom = vNode.dom;
+        let parent = vNode.parentVNode;
+        let i;
+        let j;
+        while (parent) {
+            if (
+                (i = parent.tag) && 
+                (i.cid === 'IntactVue') &&
+                (i = parent.children.$options)
+            ) {
+                if (
+                    (i = j = i.parent) && 
+                    (i = i.$options) &&
+                    (i = i._scopeId)
+                ) {
+                    dom.setAttribute(i, '');
+                }
+                if (j) {
+                    // find vue component parent while we has found the intact component
+                    parent = j.$parent;
+                    while (parent) {
+                        if ((i = parent.$options) && (i = i._scopeId)) {
+                            dom.setAttribute(i, '');
+                        }
+                        parent = parent.$parent;
+                    }
+                }
+                break;
+            } else {
+                parent = parent.parentVNode;
+            }
+        }
+    };
+}
 
 export function normalizeChildren(vNodes) {
     if (isArray(vNodes)) {

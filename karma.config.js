@@ -21,6 +21,10 @@ module.exports = function(config) {
                     {
                         test: /\.vdt$/,
                         loader: 'vdt-loader'
+                    },
+                    {
+                        test: /\.vue$/,
+                        loader: 'vue-loader'
                     }
                 ]
             },

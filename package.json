@@ -29,7 +29,7 @@
   "homepage": "https://github.com/Javey/intact-vue#readme",
   "peerDependencies": {
     "vue": "^2.5.9",
-    "intact": "^2.4.1"
+    "intact": "^2.4.7"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

@@ -1,5 +1,6 @@
 import Intact from '../src';
 import Vue from 'vue';
+import Test1 from './test1.vue';
 
 let vm;
 
@@ -801,6 +802,21 @@ describe('Unit test', () => {
                 vm.$refs.test.set('b', 2);
                 expect(vm.b).eql(2);
                 expect(test.callCount).eql(1);
+                done();
+            });
+        });
+    });
+
+    describe('Scoped style', () => {
+        it('render scoped intact component', (done) => {
+            render('<Test1><C /><D><C /></D></Test1>', {
+                C: SimpleIntactComponent,
+                D: ChildrenIntactComponent,
+                Test1
+            }); 
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div data-v-68694da0="" class="test1"><div data-v-68694da0="" class="test2"><span>test2</span> <i data-v-68694da0="">test1</i> <div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b> <div data-v-6830ef9c="" data-v-68694da0="" class="test3"><span data-v-6830ef9c="">test3</span> <div data-v-6830ef9c="" data-v-68694da0="">intact component in vue<b data-v-68694da0="" data-v-6830ef9c="">test</b></div></div></div></div></div>');
+
                 done();
             });
         });

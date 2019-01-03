@@ -83,7 +83,10 @@ var possibleConstructorReturn = function (self, call) {
   return call && (typeof call === "object" || typeof call === "function") ? call : self;
 };
 
-var h = Intact.Vdt.miss.h;
+var _Intact$Vdt$miss = Intact.Vdt.miss;
+var h = _Intact$Vdt$miss.h;
+var hooks = _Intact$Vdt$miss.hooks;
+
 var patch = Vue.prototype.__patch__;
 var _Intact$utils = Intact.utils;
 var _get = _Intact$utils.get;
@@ -92,6 +95,36 @@ var extend$1 = _Intact$utils.extend;
 var isArray = _Intact$utils.isArray;
 var create = _Intact$utils.create;
 
+// for scoped style
+
+if (hooks) {
+    hooks.beforeInsert = function (vNode) {
+        var dom = vNode.dom;
+        var parent = vNode.parentVNode;
+        var i = void 0;
+        var j = void 0;
+        while (parent) {
+            if ((i = parent.tag) && i.cid === 'IntactVue' && (i = parent.children.$options)) {
+                if ((i = j = i.parent) && (i = i.$options) && (i = i._scopeId)) {
+                    dom.setAttribute(i, '');
+                }
+                if (j) {
+                    // find vue component parent while we has found the intact component
+                    parent = j.$parent;
+                    while (parent) {
+                        if ((i = parent.$options) && (i = i._scopeId)) {
+                            dom.setAttribute(i, '');
+                        }
+                        parent = parent.$parent;
+                    }
+                }
+                break;
+            } else {
+                parent = parent.parentVNode;
+            }
+        }
+    };
+}
 
 function normalizeChildren(vNodes) {
     if (isArray(vNodes)) {

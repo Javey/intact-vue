@@ -773,6 +773,19 @@ describe('Unit test', () => {
             });
         });
 
+        it('should get parentVNode of inserted Component which nested in vue element in updating', () => {
+            render('<C><div><E /></div><div v-if="show"><D /></div></C>', {
+                C: ChildrenIntactComponent,
+                D: createIntactComponent('<span>test</span>', {
+                    _mount() {
+                        expect(this.parentVNode.tag === ChildrenIntactComponent).to.be.true;
+                    }
+                }),
+                E: SimpleIntactComponent,
+            }, {show: false}); 
+            vm.show = true;
+        });
+
         it('should get context data', (done) => {
             render('<div><IntactComponent ref="test" /></div>', {
                 IntactComponent: ChildrenIntactComponent,

@@ -53,15 +53,13 @@ export default class IntactVue extends Intact {
         } else {
             super(options);
         }
-        this._prevActiveInstance = activeInstance;
-        activeInstance = this;
     }
 
     init(lastVNode, nextVNode) {
         const init = () => {
+            this.__pushActiveInstance();
             var element = super.init(lastVNode, nextVNode);
-            activeInstance = this._prevActiveInstance;
-            this._prevActiveInstance = null;
+            this.__popActiveInstance();
 
             return element;
         };
@@ -77,11 +75,9 @@ export default class IntactVue extends Intact {
 
     update(lastVNode, nextVNode, fromPending) {
         const update = () => {
-            this._prevActiveInstance = activeInstance;
-            activeInstance = this;
+            this.__pushActiveInstance();
             const element = super.update(lastVNode, nextVNode, fromPending);
-            activeInstance = this._prevActiveInstance;
-            this._prevActiveInstance = null;
+            this.__popActiveInstance();
 
             return element;
         };
@@ -104,7 +100,7 @@ export default class IntactVue extends Intact {
         const oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
         // disable intact async component
         this.inited = true;
         this.$el = this.init(null, this.vNode);
@@ -133,15 +129,12 @@ export default class IntactVue extends Intact {
         const oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
-        this._prevActiveInstance = activeInstance;
-        activeInstance = this;
-
         const vNode = normalize(this.$vnode);
         const lastVNode = this.vNode;
         vNode.children = this;
 
         this.vNode = vNode;
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
         // Intact can change element when update, so we should re-assign it to elm, #4
         this.$vnode.elm = this.update(lastVNode, vNode);
 
@@ -166,9 +159,6 @@ export default class IntactVue extends Intact {
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
-
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
     }
 
     $destroy() {
@@ -207,6 +197,16 @@ export default class IntactVue extends Intact {
             mountedQueue = null;
             this._shouldTrigger = false;
         }
+    }
+
+    __pushActiveInstance() {
+        this._prevActiveInstance = activeInstance;
+        activeInstance = this;
+    }
+
+    __popActiveInstance() {
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     }
 
     // mock api

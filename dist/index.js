@@ -679,8 +679,6 @@ var IntactVue = function (_Intact) {
         } else {
             var _this = possibleConstructorReturn(this, _Intact.call(this, options));
         }
-        _this._prevActiveInstance = activeInstance;
-        activeInstance = _this;
         return possibleConstructorReturn(_this);
     }
 
@@ -688,9 +686,9 @@ var IntactVue = function (_Intact) {
         var _this2 = this;
 
         var init = function init() {
+            _this2.__pushActiveInstance();
             var element = _Intact.prototype.init.call(_this2, lastVNode, nextVNode);
-            activeInstance = _this2._prevActiveInstance;
-            _this2._prevActiveInstance = null;
+            _this2.__popActiveInstance();
 
             return element;
         };
@@ -708,11 +706,9 @@ var IntactVue = function (_Intact) {
         var _this3 = this;
 
         var update = function update() {
-            _this3._prevActiveInstance = activeInstance;
-            activeInstance = _this3;
+            _this3.__pushActiveInstance();
             var element = _Intact.prototype.update.call(_this3, lastVNode, nextVNode, fromPending);
-            activeInstance = _this3._prevActiveInstance;
-            _this3._prevActiveInstance = null;
+            _this3.__popActiveInstance();
 
             return element;
         };
@@ -735,7 +731,7 @@ var IntactVue = function (_Intact) {
         var oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
         // disable intact async component
         this.inited = true;
         this.$el = this.init(null, this.vNode);
@@ -764,15 +760,12 @@ var IntactVue = function (_Intact) {
         var oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
-        this._prevActiveInstance = activeInstance;
-        activeInstance = this;
-
         var vNode = normalize(this.$vnode);
         var lastVNode = this.vNode;
         vNode.children = this;
 
         this.vNode = vNode;
-        this.parentVNode = this.vNode.parentVNode = this._prevActiveInstance && this._prevActiveInstance.vNode;
+        this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
         // Intact can change element when update, so we should re-assign it to elm, #4
         this.$vnode.elm = this.update(lastVNode, vNode);
 
@@ -797,9 +790,6 @@ var IntactVue = function (_Intact) {
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
-
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
     };
 
     IntactVue.prototype.$destroy = function $destroy() {
@@ -842,6 +832,16 @@ var IntactVue = function (_Intact) {
             mountedQueue = null;
             this._shouldTrigger = false;
         }
+    };
+
+    IntactVue.prototype.__pushActiveInstance = function __pushActiveInstance() {
+        this._prevActiveInstance = activeInstance;
+        activeInstance = this;
+    };
+
+    IntactVue.prototype.__popActiveInstance = function __popActiveInstance() {
+        activeInstance = this._prevActiveInstance;
+        this._prevActiveInstance = null;
     };
 
     // mock api

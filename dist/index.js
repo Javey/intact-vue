@@ -752,8 +752,6 @@ var IntactVue = function (_Intact) {
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
     };
 
     IntactVue.prototype.$forceUpdate = function $forceUpdate() {

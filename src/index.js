@@ -121,8 +121,6 @@ export default class IntactVue extends Intact {
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
-        activeInstance = this._prevActiveInstance;
-        this._prevActiveInstance = null;
     }
 
     $forceUpdate() {

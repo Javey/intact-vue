@@ -62,8 +62,7 @@ resolve: {
     <IntactComponent @click.native="onClick" />
     ```
 
-2. ~~Intact does not support `scoped`. You should avoid using them. ~~
-~~Use className to limit style instead of.~~
+2. ~~Intact does not support `scoped`. You should avoid using them. Use className to limit style instead of.~~
 
 3. [Multiple values][3] style is not supported.
 

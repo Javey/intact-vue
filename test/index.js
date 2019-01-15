@@ -11,7 +11,7 @@ function render(template, components, data = {}, methods = {}) {
         el: container,
         data,
         methods,
-        template,
+        [typeof template === 'function' ? 'render' : 'template']: template,
         components,
     }));
 }
@@ -360,6 +360,26 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('render nested array children', done => {
+            render(function(h) {
+                const content = Intact.normalize([
+                    h('div', null, '1'),
+                    [
+                        h('div', null, '2'),
+                        h('div', null, '3')
+                    ]
+                ]);
+                return h('C', {attrs: {content}});
+            }, {
+                C: createIntactComponent(`<div>{self.get('content')}</div>`)
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div><div>1</div><div>2</div><div>3</div></div>');
+                done();
+            });
+        });
     });
 
     describe('Update', () => {
@@ -655,6 +675,10 @@ describe('Unit test', () => {
                 Test(false);
                 vm.$refs.a.show();
             });
+        });
+
+        it('mount test', () => {
+
         });
     });
 

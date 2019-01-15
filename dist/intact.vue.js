@@ -130,7 +130,11 @@ function normalizeChildren(vNodes) {
     if (isArray(vNodes)) {
         var ret = [];
         vNodes.forEach(function (vNode) {
-            ret.push(normalize(vNode));
+            if (isArray(vNode)) {
+                ret.push.apply(ret, normalizeChildren(vNode));
+            } else {
+                ret.push(normalize(vNode));
+            }
         });
         return ret;
     }

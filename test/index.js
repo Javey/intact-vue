@@ -504,6 +504,21 @@ describe('Unit test', () => {
                 });
             });
         });
+
+        it('update vue element which has been reused across multiple renders', (done) => {
+            render(`<C ref="c"><div>test</div></C>`, {
+                C: createIntactComponent(`<div>{self.get('children')}{self.get('children')}</div>`)
+            });
+            vm.$forceUpdate();
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
+
+                vm.$refs.c.update();
+                expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
+
+                done();
+            });
+        });
     });
 
     describe('v-show', () => {

@@ -4,6 +4,8 @@ import Vue from 'vue';
 const {h, hooks} = Intact.Vdt.miss;
 const patch = Vue.prototype.__patch__;
 const {get, set, extend, isArray, create} = Intact.utils;
+const _textVNode = Vue.prototype._v('');
+const VueVNode = _textVNode.constructor;
 
 // for scoped style
 if (hooks) {
@@ -78,6 +80,7 @@ export function normalize(vNode) {
     if (vNode.text !== undefined) {
         return vNode.text;
     }
+
     return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode));
 }
 
@@ -343,6 +346,11 @@ class Wrapper {
                 data.attrs[key] = prop;
             }
         }
+
+        // if we reuse the vNode, clone it
+        if (vueVNode.elm) {
+            props.vueVNode = cloneVNode(vueVNode);
+        }
     }
 }
 
@@ -538,4 +546,31 @@ function resolveSlots(children) {
 
 function isWhitespace(node) {
       return (node.isComment && !node.asyncFactory) || node.text === ' ';
+}
+
+// copy from vue/src/core/vdom/vnode.js
+function cloneVNode (vnode) {
+    var cloned = new VueVNode(
+        vnode.tag,
+        vnode.data,
+        // #7975
+        // clone children array to avoid mutating original in case of cloning
+        // a child.
+        vnode.children && vnode.children.slice(),
+        vnode.text,
+        vnode.elm,
+        vnode.context,
+        vnode.componentOptions,
+        vnode.asyncFactory
+    );
+    cloned.ns = vnode.ns;
+    cloned.isStatic = vnode.isStatic;
+    cloned.key = vnode.key;
+    cloned.isComment = vnode.isComment;
+    cloned.fnContext = vnode.fnContext;
+    cloned.fnOptions = vnode.fnOptions;
+    cloned.fnScopeId = vnode.fnScopeId;
+    cloned.asyncMeta = vnode.asyncMeta;
+    cloned.isCloned = true;
+    return cloned
 }

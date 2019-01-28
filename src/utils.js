@@ -218,7 +218,8 @@ export function normalizeProps(vNode) {
 }
 
 function normalizeContext(vNode, props) {
-    const $data = vNode.context.$data;
+    const context = vNode.context;
+    const $data = context.$data;
     props._context = {
         data: {
             get(name) {
@@ -230,7 +231,8 @@ function normalizeContext(vNode, props) {
             },
             set(name, value) {
                 set($data, name, value);
-            }
+            },
+            $router: get(context._routerRoot, '_router'),
         }
     };
 }

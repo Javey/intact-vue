@@ -232,7 +232,7 @@ function normalizeContext(vNode, props) {
             set(name, value) {
                 set($data, name, value);
             },
-            $router: get(context._routerRoot, '_router'),
+            $router: get(context, '_routerRoot._router'),
         }
     };
 }

@@ -326,7 +326,7 @@ function normalizeContext(vNode, props) {
                 _set($data, name, value);
             },
 
-            $router: _get(context._routerRoot, '_router')
+            $router: _get(context, '_routerRoot._router')
         }
     };
 }

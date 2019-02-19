@@ -708,6 +708,9 @@ var IntactVue = function (_Intact) {
             _this.$vnode = parentVNode;
             _this._isVue = true;
 
+            // for compitibility of vue@2.6
+            _this.$scopedSlots = { $stable: true };
+
             _this.vNode = vNode;
             vNode.children = _this;
         } else {

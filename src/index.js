@@ -48,6 +48,9 @@ export default class IntactVue extends Intact {
             this.$vnode = parentVNode; 
             this._isVue = true;
 
+            // for compitibility of vue@2.6
+            this.$scopedSlots = {$stable: true};
+
             this.vNode = vNode;
             vNode.children = this;
         } else {

@@ -714,21 +714,31 @@ describe('Unit test', () => {
                 _changeProps() {
                     const children = this.get('children.0');
                     children.props['ev-click'] = this.onClick.bind(this);
+                    children.props.className = children.className + ' test';
+                }
+
+                _remove() {
+                    const children = this.get('children.0');
+                    children.props.className = '';
                 }
             }
             IntactComponent.prototype.onClick = onClick;
 
-            render('<C><div>click</div></C>', {
+            render('<C ref="c"><div class="a" :class="{b: true}">click</div></C>', {
                 C: IntactComponent,
             });
 
             vm.$nextTick(() => {
                 dispatchEvent(vm.$el.firstChild, 'click');
+                expect(vm.$el.innerHTML).eql('<div class="a b test">click</div>');
                 expect(onClick.callCount).be.eql(1);
-                vm.$forceUpdate();
+                // vm.$forceUpdate();
+                vm.$refs.c._remove();
+                vm.$refs.c.update();
                 vm.$nextTick(() => {
                     dispatchEvent(vm.$el.firstChild, 'click');
                     expect(onClick.callCount).be.eql(2);
+                    expect(vm.$el.innerHTML).eql('<div class="">click</div>');
                     done();
                 });
             });

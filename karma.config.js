@@ -8,6 +8,7 @@ module.exports = function(config) {
             './test/index.js': ['webpack', 'sourcemap'],
         },
         webpack: {
+            mode: 'development',
             module: {
                 rules: [
                     {

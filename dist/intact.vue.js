@@ -408,6 +408,8 @@ function functionalWrapper(Component) {
     return Ctor;
 }
 
+var ignorePropRegExp = /_ev[A-Z]/;
+
 var Wrapper = function () {
     function Wrapper() {
         classCallCheck(this, Wrapper);
@@ -439,11 +441,15 @@ var Wrapper = function () {
         var vueVNode = props.vueVNode;
         for (var key in props) {
             if (key === 'vueVNode') continue;
+            if (ignorePropRegExp.test(key)) continue;
             if (!vueVNode.data) vueVNode.data = {};
             var data = vueVNode.data;
             var prop = props[key];
             // is event
-            if (key.substr(0, 3) === 'ev-') {
+            if (key === 'className') {
+                data.staticClass = prop;
+                delete data.class;
+            } else if (key.substr(0, 3) === 'ev-') {
                 if (!data.on) data.on = {};
                 data.on[key.substr(3)] = prop;
             } else {

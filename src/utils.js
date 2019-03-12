@@ -311,6 +311,7 @@ export function functionalWrapper(Component) {
     return Ctor;
 }
 
+const ignorePropRegExp = /_ev[A-Z]/;
 class Wrapper {
     init(lastVNode, nextVNode) {
         // let the component destroy by itself
@@ -336,11 +337,15 @@ class Wrapper {
         const vueVNode = props.vueVNode;
         for (let key in props) {
             if (key === 'vueVNode') continue;
+            if (ignorePropRegExp.test(key)) continue;
             if (!vueVNode.data) vueVNode.data = {};
             const data = vueVNode.data;
             const prop = props[key];
             // is event
-            if (key.substr(0, 3) === 'ev-') {
+            if (key === 'className') {
+                data.staticClass = prop;
+                delete data.class;
+            } else if (key.substr(0, 3) === 'ev-') {
                 if (!data.on) data.on = {};
                 data.on[key.substr(3)] = prop;
             } else {

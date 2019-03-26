@@ -56,9 +56,11 @@ export default class IntactVue extends Intact {
 
             // for devtools
             const parent = options.parent;
-            this.$parent = parent;
-            this.$root = parent.$root;
-            parent.$children.push(this);
+            if (parent) {
+                this.$parent = parent;
+                this.$root = parent.$root;
+                parent.$children.push(this);
+            }
             this.$children = [];
             this._data = this.props;
             this.$refs = {};

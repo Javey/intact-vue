@@ -719,6 +719,17 @@ var IntactVue = function (_Intact) {
 
             _this.vNode = vNode;
             vNode.children = _this;
+
+            // for devtools
+            var parent = options.parent;
+            _this.$parent = parent;
+            _this.$root = parent.$root;
+            parent.$children.push(_this);
+            _this.$children = [];
+            _this._data = _this.props;
+            _this.$refs = {};
+            _this._uid = _this.uniqueId;
+            options.name = _this.displayName || _this.constructor.name;
         } else {
             var _this = possibleConstructorReturn(this, _Intact.call(this, options));
         }
@@ -793,6 +804,8 @@ var IntactVue = function (_Intact) {
             }
         }
 
+        this.$el.__vue__ = this;
+
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
     };
@@ -834,6 +847,17 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.$destroy = function $destroy() {
+        delete this.$el.__vue__;
+        var parent = this.$parent;
+        if (parent) {
+            var children = parent.$children;
+            if (children.length) {
+                var index = children.indexOf(this);
+                if (~index) {
+                    children.splice(index, 1);
+                }
+            }
+        }
         this.destroy();
     };
 

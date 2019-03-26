@@ -11,6 +11,7 @@
                 </Test3>
             </IntactComponent>
         </Test2>
+        <slot></slot>
     </div>
 </template>
 <style scoped></style>

@@ -53,6 +53,17 @@ export default class IntactVue extends Intact {
 
             this.vNode = vNode;
             vNode.children = this;
+
+            // for devtools
+            const parent = options.parent;
+            this.$parent = parent;
+            this.$root = parent.$root;
+            parent.$children.push(this);
+            this.$children = [];
+            this._data = this.props;
+            this.$refs = {};
+            this._uid = this.uniqueId;
+            options.name = this.displayName || this.constructor.name;
         } else {
             super(options);
         }
@@ -122,6 +133,8 @@ export default class IntactVue extends Intact {
             }
         }
 
+        this.$el.__vue__ = this;
+
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
     }
@@ -163,6 +176,17 @@ export default class IntactVue extends Intact {
     }
 
     $destroy() {
+        delete this.$el.__vue__;
+        const parent = this.$parent;
+        if (parent) {
+            const children = parent.$children;
+            if (children.length) {
+                const index = children.indexOf(this);
+                if (~index) {
+                    children.splice(index, 1);
+                }
+            }
+        }
         this.destroy();
     }
 

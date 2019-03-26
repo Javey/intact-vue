@@ -724,9 +724,11 @@ var IntactVue = function (_Intact) {
 
             // for devtools
             var parent = options.parent;
-            _this.$parent = parent;
-            _this.$root = parent.$root;
-            parent.$children.push(_this);
+            if (parent) {
+                _this.$parent = parent;
+                _this.$root = parent.$root;
+                parent.$children.push(_this);
+            }
             _this.$children = [];
             _this._data = _this.props;
             _this.$refs = {};

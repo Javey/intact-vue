@@ -469,32 +469,31 @@ function handleRef(vNode, props) {
     var key = vNode.data.ref;
     if (key) {
         var refs = vNode.context.$refs;
-        var ref = void 0;
-        props.ref = function (i) {
+        props.ref = function (i, isRemove) {
             // if we pass the ref to intact component, ignore it directlty
             if (!refs) return;
-            if (i) {
-                ref = i;
+            if (!isRemove) {
                 if (vNode.data.refInFor) {
                     if (!isArray(refs[key])) {
-                        refs[key] = [ref];
-                    } else if (refs[key].indexOf(ref) < 0) {
-                        refs[key].push(ref);
+                        refs[key] = [i];
+                    } else if (refs[key].indexOf(i) < 0) {
+                        refs[key].push(i);
                     }
                 } else {
-                    refs[key] = ref;
+                    refs[key] = i;
                 }
             } else {
                 if (isArray(refs[key])) {
-                    var index = refs[key].indexOf(ref);
+                    var index = refs[key].indexOf(i);
                     if (~index) {
                         refs[key].splice(index, 1);
                     }
                 } else {
-                    refs[key] = ref = undefined;
+                    refs[key] = undefined;
                 }
             }
         };
+        props.ref.key = key;
     }
 }
 
@@ -835,9 +834,11 @@ var IntactVue = function (_Intact) {
         // handle it there
         var lastRef = lastVNode.ref;
         var nextRef = vNode.ref;
-        if (lastRef !== nextRef) {
+        if (lastRef !== nextRef &&
+        // if the string of the key is the same, do nothing
+        !(lastRef && nextRef && lastRef.key === nextRef.key)) {
             if (lastRef) {
-                lastRef(null);
+                lastRef(this, true);
             }
             if (nextRef) {
                 nextRef(this);

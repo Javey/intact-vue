@@ -493,8 +493,6 @@ describe('Unit test', () => {
                     });
                 });
             });
-
-            window.i = vm;
         });
 
         it('should watch vue component nested into intact component', () => {

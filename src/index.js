@@ -164,9 +164,12 @@ export default class IntactVue extends Intact {
         // handle it there
         const lastRef = lastVNode.ref;
         const nextRef = vNode.ref;
-        if (lastRef !== nextRef) {
+        if (lastRef !== nextRef && 
+            // if the string of key is the same, do nothing
+            !(lastRef && nextRef && lastRef.key === nextRef.key)
+        ) {
             if (lastRef) {
-                lastRef(null);
+                lastRef(this, true);
             }
             if (nextRef) {
                 nextRef(this);

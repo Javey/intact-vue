@@ -465,6 +465,38 @@ describe('Unit test', () => {
             });
         });
 
+        it('should update ref in for', done => {
+            render(`
+                <div>
+                    <C v-for="(item, index) in data" 
+                        :key="index" 
+                        ref="test"
+                        :index="item.value"    
+                    >{{ item.value }}</C>
+                </div>
+            `, {
+                C: ChildrenIntactComponent
+            }, {data: []}, {add(index) {
+                this.data.push({value: this.data.length + 1});
+            }});
+
+            vm.data.push({value: 1});
+            vm.$nextTick(() => {
+                vm.data.push({value: 2});
+                vm.$nextTick(() => {
+                    vm.data.push({value: 3});
+                    vm.$nextTick(() => {
+                        vm.$refs.test.forEach((item, index) => {
+                            expect(item.get('index')).to.eql(index + 1); 
+                        });
+                        done();
+                    });
+                });
+            });
+
+            window.i = vm;
+        });
+
         it('should watch vue component nested into intact component', () => {
             render('<C><D :a="a" /><div @click="add">click</div></C>', {
                 C: ChildrenIntactComponent,

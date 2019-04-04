@@ -365,32 +365,31 @@ function handleRef(vNode, props) {
     const key = vNode.data.ref;
     if (key) {
         const refs = vNode.context.$refs;
-        let ref;
-        props.ref = function(i) { 
+        props.ref = function(i, isRemove) { 
             // if we pass the ref to intact component, ignore it directlty
             if (!refs) return;
-            if (i) {
-                ref = i;
+            if (!isRemove) {
                 if (vNode.data.refInFor) {
                     if (!isArray(refs[key])) {
-                        refs[key] = [ref];
-                    } else if (refs[key].indexOf(ref) < 0) {
-                        refs[key].push(ref);
+                        refs[key] = [i];
+                    } else if (refs[key].indexOf(i) < 0) {
+                        refs[key].push(i);
                     }
                 } else {
-                    refs[key] = ref; 
+                    refs[key] = i; 
                 }
             } else {
                 if (isArray(refs[key])) {
-                    var index = refs[key].indexOf(ref);
+                    var index = refs[key].indexOf(i);
                     if (~index) {
                         refs[key].splice(index, 1);
                     }
                 } else {
-                    refs[key] = ref = undefined;
+                    refs[key] = undefined;
                 }
             }
         };
+        props.ref.key = key;
     }
 }
 

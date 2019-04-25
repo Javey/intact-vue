@@ -549,6 +549,21 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('call intact show method to create elements that contains vue component, should get the $parent in vue component', (done) => {
+            render(`<C ref="c"><V /></C>`, {
+                C: createIntactComponent(`<div>{self.get('show') ? self.get('children') : undefined}</div>`),
+                V: {
+                    template: `<div>test</div>`,
+                    beforeCreate() {
+                        expect(this.$parent === vm).to.be.true;
+                        done();
+                    }
+                }
+            });
+
+            vm.$refs.c.set('show', true);
+        });
     });
 
     describe('v-show', () => {

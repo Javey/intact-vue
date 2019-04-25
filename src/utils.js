@@ -2,7 +2,6 @@ import Intact from 'intact/dist';
 import Vue from 'vue';
 
 const {h, hooks} = Intact.Vdt.miss;
-const patch = Vue.prototype.__patch__;
 const {get, set, extend, isArray, create} = Intact.utils;
 const _textVNode = Vue.prototype._v('');
 const VueVNode = _textVNode.constructor;
@@ -44,6 +43,15 @@ if (hooks) {
         }
     };
 }
+
+// for get $parent
+Vue.mixin({
+    beforeCreate() {
+        if (!this.$parent && this.$vnode) {
+            this.$parent = this.$vnode.context;
+        }
+    }
+});
 
 export function normalizeChildren(vNodes) {
     if (isArray(vNodes)) {
@@ -312,6 +320,8 @@ export function functionalWrapper(Component) {
 }
 
 const ignorePropRegExp = /_ev[A-Z]/;
+const patch = Vue.prototype.__patch__;
+// const update = Vue.prototype._update;
 class Wrapper {
     init(lastVNode, nextVNode) {
         // let the component destroy by itself

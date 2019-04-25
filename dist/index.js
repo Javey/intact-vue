@@ -84,8 +84,6 @@ var possibleConstructorReturn = function (self, call) {
 var _Intact$Vdt$miss = Intact.Vdt.miss;
 var h = _Intact$Vdt$miss.h;
 var hooks = _Intact$Vdt$miss.hooks;
-
-var patch = Vue.prototype.__patch__;
 var _Intact$utils = Intact.utils;
 var _get = _Intact$utils.get;
 var _set = _Intact$utils.set;
@@ -125,6 +123,15 @@ if (hooks) {
         }
     };
 }
+
+// for get $parent
+Vue.mixin({
+    beforeCreate: function beforeCreate() {
+        if (!this.$parent && this.$vnode) {
+            this.$parent = this.$vnode.context;
+        }
+    }
+});
 
 function normalizeChildren(vNodes) {
     if (isArray(vNodes)) {
@@ -407,6 +414,8 @@ function functionalWrapper(Component) {
 }
 
 var ignorePropRegExp = /_ev[A-Z]/;
+var patch = Vue.prototype.__patch__;
+// const update = Vue.prototype._update;
 
 var Wrapper = function () {
     function Wrapper() {

@@ -317,18 +317,18 @@ function normalizeProps(vNode) {
 
 function normalizeContext(vNode, props) {
     var context = vNode.context;
-    var $data = context.$data;
     props._context = {
         data: {
             get: function get$$1(name) {
                 if (name != null) {
-                    return _get($data, name);
+                    // for get both props and data
+                    return _get(context, name);
                 } else {
-                    return $data;
+                    return context.$data;
                 }
             },
             set: function set$$1(name, value) {
-                _set($data, name, value);
+                _set(context, name, value);
             },
 
             $router: _get(context, '_routerRoot._router')
@@ -377,10 +377,7 @@ function functionalWrapper(Component) {
                 },
                 data: props.data,
                 slots: props.slots(),
-                context: {
-                    $data: props.parent.$data
-                    // $refs: props.parent.$refs,
-                }
+                context: props.parent
             });
             var vNode = Component(_props, true /* is in vue */);
             if (isArray(vNode)) {

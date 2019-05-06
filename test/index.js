@@ -899,6 +899,28 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('should get context props', (done) => {
+            render('<VueComponent :data="data" ref="test" />', {
+                VueComponent: {
+                    template: `<IntactComponent ref="test" />`,
+                    props: {
+                        data: Object
+                    },
+                    components: {
+                        IntactComponent: SimpleIntactComponent
+                    }
+                }
+            }, {data: {a: 1}});
+            vm.$nextTick(() => {
+                const _context = vm.$refs.test.$refs.test.get('_context');
+                expect(_context.data.get('data')).to.eql({a: 1});
+                expect(_context.data.get('data.a')).to.eql(1);
+                _context.data.set('data.a', 2);
+                expect(vm.data.a).to.eql(2);
+                done();
+            });
+        });
     });
 
     describe('Modifier', () => {

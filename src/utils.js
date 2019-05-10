@@ -263,6 +263,33 @@ export function getChildrenAndBlocks(slots) {
     };
 }
 
+function toVueVNode(h, vNode, props) {
+    const attrs = {};
+    const __props = {attrs};
+    for (const key in vNode.props) {
+        if (~['children', '_context', 'className', 'style', 'ref', 'key'].indexOf(key)) continue;
+        attrs[key] = vNode.props[key];
+    }
+    if (vNode.ref) {
+        __props.ref = props.data.ref;
+    }
+    if (vNode.props.className) {
+        __props.staticClass = vNode.props.className;
+    }
+    if (vNode.props.style) {
+        __props.staticStyle = vNode.props.style;
+    }
+    if (vNode.key != null) {
+        __props.key = vNode.props.key;
+    }
+
+    return h(
+        vNode.tag,
+        __props,
+        vNode.props.children,
+    );
+}
+
 export function functionalWrapper(Component) {
     function Ctor(props) {
         return Component(props);
@@ -283,31 +310,9 @@ export function functionalWrapper(Component) {
             });
             const vNode = Component(_props, true /* is in vue */);
             if (isArray(vNode)) {
-                throw new Error('Array children does not be supported.');
+                return vNode.map(vNode => toVueVNode(h, vNode, props));
             }
-
-            const attrs = {};
-            const __props = {attrs};
-            for (const key in vNode.props) {
-                if (~['children', '_context', 'className', 'style', 'ref', 'key'].indexOf(key)) continue;
-                attrs[key] = vNode.props[key];
-            }
-            if (props.data.ref) {
-                __props.ref = props.data.ref;
-            }
-            if (vNode.props.className) {
-                __props.staticClass = vNode.props.className;
-            }
-            if (vNode.props.style) {
-                __props.staticStyle = vNode.props.style;
-            }
-            __props.key = vNode.props.key;
-
-            return h(
-                vNode.tag,
-                __props,
-                vNode.props.children,
-            );
+            return toVueVNode(h, vNode, props);
         }
     }
 

@@ -314,6 +314,25 @@ describe('Unit test', () => {
             });
         });
 
+        it('render functional component which return multiple vNodes', done => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(function(props) {
+                return [
+                    h(ChildrenIntactComponent, props), 
+                    h(ChildrenIntactComponent, null, 'two')
+                ];
+            });
+            render('<div><C class="a" :a="1" ref="a" key="a">test</C></div>', {
+                C: Component
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$refs.a.element.innerHTML).to.eql('test');
+                expect(vm.$el.outerHTML).be.eql('<div><div class="a">test</div><div>two</div></div>');
+                done();
+            });
+        });
+
         it('render blocks in functional component', done => {
             const h = Intact.Vdt.miss.h;
             const Component = Intact.functionalWrapper(props => {

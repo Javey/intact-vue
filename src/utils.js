@@ -368,7 +368,7 @@ class Wrapper {
 
         // if we reuse the vNode, clone it
         if (vueVNode.elm) {
-            props.vueVNode = cloneVNode(vueVNode);
+            vNode.props = {...props, vueVNode: cloneVNode(vueVNode)};
         }
     }
 }

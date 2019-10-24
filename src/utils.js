@@ -359,7 +359,11 @@ class Wrapper {
         // for Intact reusing the dom
         this.vdt = {vNode};
         const props = vNode.props;
-        const vueVNode = props.vueVNode;
+        let vueVNode = props.vueVNode;
+        // if we reuse the vNode, clone it
+        if (vueVNode.elm) {
+            vueVNode = cloneVNode(vueVNode);
+        }
         for (let key in props) {
             if (key === 'vueVNode') continue;
             if (ignorePropRegExp.test(key)) continue;
@@ -370,6 +374,8 @@ class Wrapper {
             if (key === 'className') {
                 data.staticClass = prop;
                 delete data.class;
+            } else if (key === 'style') {
+                data.staticStyle = prop;
             } else if (key.substr(0, 3) === 'ev-') {
                 if (!data.on) data.on = {};
                 data.on[key.substr(3)] = prop;
@@ -379,10 +385,7 @@ class Wrapper {
             }
         }
 
-        // if we reuse the vNode, clone it
-        if (vueVNode.elm) {
-            vNode.props = {...props, vueVNode: cloneVNode(vueVNode)};
-        }
+        vNode.props = {...props, vueVNode};
     }
 }
 
@@ -583,7 +586,8 @@ function isWhitespace(node) {
 function cloneVNode (vnode) {
     var cloned = new VueVNode(
         vnode.tag,
-        vnode.data,
+        // clone data
+        vnode.data ? {...vnode.data} : vnode.data,
         // #7975
         // clone children array to avoid mutating original in case of cloning
         // a child.

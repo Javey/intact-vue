@@ -790,11 +790,13 @@ describe('Unit test', () => {
                     const children = this.get('children');
                     children.props['ev-click'] = this.onClick.bind(this);
                     children.props.className = children.className + ' test';
+                    children.props.style = {display: 'block'};
                 }
 
                 _remove() {
                     const children = this.get('children');
                     children.props.className = '';
+                    children.props.style = null;
                 }
             }
             IntactComponent.prototype.onClick = onClick;
@@ -805,7 +807,7 @@ describe('Unit test', () => {
 
             vm.$nextTick(() => {
                 dispatchEvent(vm.$el.firstChild, 'click');
-                expect(vm.$el.innerHTML).eql('<div class="a b test">click</div>');
+                expect(vm.$el.innerHTML).eql('<div class="a b test" style="display: block;">click</div>');
                 expect(onClick.callCount).be.eql(1);
                 // vm.$forceUpdate();
                 vm.$refs.c._remove();
@@ -813,7 +815,7 @@ describe('Unit test', () => {
                 vm.$nextTick(() => {
                     dispatchEvent(vm.$el.firstChild, 'click');
                     expect(onClick.callCount).be.eql(2);
-                    expect(vm.$el.innerHTML).eql('<div class="">click</div>');
+                    expect(vm.$el.innerHTML).eql('<div class="" style="">click</div>');
                     done();
                 });
             });

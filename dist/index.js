@@ -148,18 +148,26 @@ Vue.mixin({
 });
 
 function normalizeChildren(vNodes) {
-    if (isArray(vNodes)) {
-        var ret = [];
-        vNodes.forEach(function (vNode) {
-            if (isArray(vNode)) {
-                ret.push.apply(ret, normalizeChildren(vNode));
-            } else {
-                ret.push(normalize(vNode));
-            }
-        });
-        return ret;
+    var loop = function loop(vNodes) {
+        if (isArray(vNodes)) {
+            var _ret = [];
+            vNodes.forEach(function (vNode) {
+                if (isArray(vNode)) {
+                    _ret.push.apply(_ret, loop(vNode));
+                } else {
+                    _ret.push(normalize(vNode));
+                }
+            });
+            return _ret;
+        }
+        return normalize(vNodes);
+    };
+    var ret = loop(vNodes);
+    if (Array.isArray(ret)) {
+        var l = ret.length;
+        return l === 0 ? undefined : l === 1 ? ret[0] : ret;
     }
-    return normalize(vNodes);
+    return ret;
 }
 
 function normalize(vNode) {
@@ -378,24 +386,29 @@ function getChildrenAndBlocks(slots) {
 function toVueVNode(h, vNode, props) {
     var attrs = {};
     var __props = { attrs: attrs };
-    for (var key in vNode.props) {
+    var vNodeProps = vNode.props;
+    for (var key in vNodeProps) {
         if (~['children', '_context', 'className', 'style', 'ref', 'key'].indexOf(key)) continue;
-        attrs[key] = vNode.props[key];
+        attrs[key] = vNodeProps[key];
     }
     if (vNode.ref) {
         __props.ref = props.data.ref;
     }
-    if (vNode.props.className) {
-        __props.staticClass = vNode.props.className;
+    if (vNodeProps.className) {
+        __props.staticClass = vNodeProps.className;
     }
     if (vNode.props.style) {
-        __props.staticStyle = vNode.props.style;
+        __props.staticStyle = vNodeProps.style;
     }
     if (vNode.key != null) {
-        __props.key = vNode.props.key;
+        __props.key = vNodeProps.key;
+    }
+    var children = vNodeProps.children;
+    if (children && !Array.isArray(children)) {
+        children = [children];
     }
 
-    return h(vNode.tag, __props, vNode.props.children);
+    return h(vNode.tag, __props, children);
 }
 
 function functionalWrapper(Component) {

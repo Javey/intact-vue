@@ -494,7 +494,11 @@ var Wrapper = function () {
                 data.staticClass = prop;
                 delete data.class;
             } else if (key === 'style') {
-                data.staticStyle = prop;
+                if (data.staticStyle) {
+                    data.staticStyle = _extends({}, data.staticStyle, prop);
+                } else {
+                    data.staticStyle = prop;
+                }
             } else if (key.substr(0, 3) === 'ev-') {
                 if (!data.on) data.on = {};
                 data.on[key.substr(3)] = prop;

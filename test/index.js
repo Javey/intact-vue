@@ -796,18 +796,18 @@ describe('Unit test', () => {
                 _remove() {
                     const children = this.get('children');
                     children.props.className = '';
-                    children.props.style = null;
+                    children.props.style = {display: undefined};
                 }
             }
             IntactComponent.prototype.onClick = onClick;
 
-            render('<C ref="c"><div class="a" :class="{b: true}">click</div></C>', {
+            render('<C ref="c"><div class="a" :class="{b: true}" style="font-size: 12px;">click</div></C>', {
                 C: IntactComponent,
             });
 
             vm.$nextTick(() => {
                 dispatchEvent(vm.$el.firstChild, 'click');
-                expect(vm.$el.innerHTML).eql('<div class="a b test" style="display: block;">click</div>');
+                expect(vm.$el.innerHTML).eql('<div class="a b test" style="font-size: 12px; display: block;">click</div>');
                 expect(onClick.callCount).be.eql(1);
                 // vm.$forceUpdate();
                 vm.$refs.c._remove();
@@ -815,7 +815,7 @@ describe('Unit test', () => {
                 vm.$nextTick(() => {
                     dispatchEvent(vm.$el.firstChild, 'click');
                     expect(onClick.callCount).be.eql(2);
-                    expect(vm.$el.innerHTML).eql('<div class="" style="">click</div>');
+                    expect(vm.$el.innerHTML).eql('<div class="" style="font-size: 12px;">click</div>');
                     done();
                 });
             });

@@ -100,6 +100,7 @@ var possibleConstructorReturn = function (self, call) {
 var _Intact$Vdt$miss = Intact.Vdt.miss;
 var h = _Intact$Vdt$miss.h;
 var hooks = _Intact$Vdt$miss.hooks;
+var config = _Intact$Vdt$miss.config;
 var _Intact$utils = Intact.utils;
 var _get = _Intact$utils.get;
 var _set = _Intact$utils.set;
@@ -138,6 +139,11 @@ if (hooks) {
             }
         }
     };
+}
+
+// disable delegate events
+if (config) {
+    config.disableDelegate = true;
 }
 
 // for get $parent

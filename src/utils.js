@@ -1,7 +1,7 @@
 import Intact from 'intact/dist';
 import Vue from 'vue';
 
-const {h, hooks} = Intact.Vdt.miss;
+const {h, hooks, config} = Intact.Vdt.miss;
 const {get, set, extend, isArray, create} = Intact.utils;
 const _textVNode = Vue.prototype._v('');
 const VueVNode = _textVNode.constructor;
@@ -42,6 +42,11 @@ if (hooks) {
             }
         }
     };
+}
+
+// disable delegate events
+if (config) {
+    config.disableDelegate = true;
 }
 
 // for get $parent

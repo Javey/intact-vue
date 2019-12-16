@@ -34,12 +34,13 @@ export default class IntactVue extends Intact {
             // we call __patch__ to render it, and it will lead to call mounted hooks
             // but this component has not been appended
             // so we do it nextTick
-            options.mounted = [activeInstance ? 
-                () => {
-                    this.$nextTick(this.mount);
-                } :
-                this.mount
-            ];
+            // options.mounted = [
+                // activeInstance ? 
+                // () => {
+                    // this.$nextTick(this.mount);
+                // } :
+                // this.mount
+            // ];
 
             // force vue update intact component
             options._renderChildren = true;
@@ -137,6 +138,10 @@ export default class IntactVue extends Intact {
 
         this.$el.__vue__ = this;
 
+        this.mountedQueue.push(() => {
+            this.mount();
+        });
+
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
     }
@@ -216,9 +221,9 @@ export default class IntactVue extends Intact {
             } else {
                 // vue will call mouted hook after append the element
                 // so we push to the queue to make it to be called immediately
-                this.$options.mounted.push(() => {
-                    this._triggerMountedQueue();
-                });
+                this.$options.mounted = [
+                    this._triggerMountedQueue
+                ];
                 // this.$nextTick(() => {
                     // if (this.destroyed) return;
                     // this._triggerMountedQueue();

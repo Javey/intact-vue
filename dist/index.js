@@ -755,13 +755,17 @@ var IntactVue = function (_Intact) {
             // we call __patch__ to render it, and it will lead to call mounted hooks
             // but this component has not been appended
             // so we do it nextTick
-            var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
-
-            options.mounted = [activeInstance ? function () {
-                _this.$nextTick(_this.mount);
-            } : _this.mount];
+            // options.mounted = [
+            // activeInstance ? 
+            // () => {
+            // this.$nextTick(this.mount);
+            // } :
+            // this.mount
+            // ];
 
             // force vue update intact component
+            var _this = possibleConstructorReturn(this, _Intact.call(this, vNode.props));
+
             options._renderChildren = true;
 
             _this.$options = options;
@@ -838,6 +842,8 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.$mount = function $mount(el, hydrating) {
+        var _this4 = this;
+
         var oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
 
@@ -861,6 +867,10 @@ var IntactVue = function (_Intact) {
         }
 
         this.$el.__vue__ = this;
+
+        this.mountedQueue.push(function () {
+            _this4.mount();
+        });
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
@@ -936,17 +946,13 @@ var IntactVue = function (_Intact) {
     };
 
     IntactVue.prototype.__triggerMountedQueue = function __triggerMountedQueue() {
-        var _this4 = this;
-
         if (this._shouldTrigger) {
             if (this.mounted) {
                 this._triggerMountedQueue();
             } else {
                 // vue will call mouted hook after append the element
                 // so we push to the queue to make it to be called immediately
-                this.$options.mounted.push(function () {
-                    _this4._triggerMountedQueue();
-                });
+                this.$options.mounted = [this._triggerMountedQueue];
                 // this.$nextTick(() => {
                 // if (this.destroyed) return;
                 // this._triggerMountedQueue();

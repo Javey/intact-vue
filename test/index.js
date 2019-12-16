@@ -687,12 +687,19 @@ describe('Unit test', () => {
             const mounted2 = sinon.spy(() => {
                 console.log(2)
             });
+            const mounted3 = sinon.spy(() => {
+                console.log(3);
+            });
+            const E = createIntactComponent(`<div></div>`, {_mount: mounted3});
 
             render('<div<C><div><D /></div></C></div>', {
                 C: createIntactComponent('<div>{self.get("children")}</div>', {
                     _mount: mounted1,
                 }),
-                D: createIntactComponent('<div></div>', {
+                D: createIntactComponent('<div><E /></div>', {
+                    _init() {
+                        this.E = E;
+                    },
                     _mount: mounted2
                 })
             });
@@ -700,7 +707,8 @@ describe('Unit test', () => {
             vm.$nextTick(() => {
                 expect(mounted1.callCount).be.eql(1);
                 expect(mounted2.callCount).be.eql(1);
-                expect(mounted2.calledAfter(mounted1)).be.true;
+                expect(mounted2.calledBefore(mounted1)).be.true;
+                expect(mounted3.calledBefore(mounted2)).be.true;
                 done();
             });
         });
@@ -767,8 +775,48 @@ describe('Unit test', () => {
             });
         });
 
-        it('mount test', () => {
+        it('should call mount method when we update data in vue mounted lifecycle method', (done) => {
+            class IntactComponent extends Intact {
+                @Intact.template()
+                static template = `<div>{self.get('value') ? self.get('children') : null}</div>`;
+            };
+            const mount = sinon.spy(() => console.log('mount'));
+            class IntactChildrenComponent extends Intact {
+                @Intact.template()
+                static template = `<div>{self.get('children')}</div>`;
 
+                _mount() {
+                    mount();
+                }
+            };
+            const Test = {
+                template: `
+                    <IntactChildrenComponent ref="b">
+                        {{ value }}
+                    </IntactChildrenComponent>
+                `,
+                components: {
+                    IntactChildrenComponent,
+                },
+                data() {
+                    return {value: 1}
+                },
+                mounted() {
+                    this.value= 2; 
+                }
+            };
+            render(`<IntactComponent v-model="show" ref="a"><Test ref="c" /></IntactComponent>`, {
+                IntactComponent, Test,
+            }, {show: false});
+
+            vm.show = true;
+            vm.$nextTick(() => {
+                expect(mount.callCount).to.eql(1);
+                expect(vm.$refs.a.mountedQueue.done).to.be.true;
+                expect(vm.$refs.c.$refs.b.mountedQueue.done).to.be.true;
+
+                done();
+            });
         });
     });
 

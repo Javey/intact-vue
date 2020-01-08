@@ -107,6 +107,7 @@ var _set = _Intact$utils.set;
 var extend$1 = _Intact$utils.extend;
 var isArray = _Intact$utils.isArray;
 var create = _Intact$utils.create;
+var hasOwn = _Intact$utils.hasOwn;
 
 var _textVNode = Vue.prototype._v('');
 var VueVNode = _textVNode.constructor;
@@ -206,17 +207,23 @@ function normalizeProps(vNode) {
         for (var key in attrs) {
             if (~['staticClass', 'class', 'style', 'staticStyle'].indexOf(key)) continue;
             var value = attrs[key];
-            var tmp = void 0;
-            if (propTypes && (
-            // value is Boolean
-            (tmp = propTypes[key]) === Boolean || tmp && (
-            // value contains Boolean
-            isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
-            // value.type is Boolean
-            tmp.type === Boolean ||
-            // value.type contains Boolean
-            isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
-                value = true;
+            if (propTypes) {
+                var camelizedKey = camelize(key);
+                if (hasOwn.call(propTypes, camelizedKey)) {
+                    key = camelizedKey;
+                    var tmp = void 0;
+                    if ((
+                    // value is Boolean
+                    (tmp = propTypes[key]) === Boolean || tmp && (
+                    // value contains Boolean
+                    isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
+                    // value.type is Boolean
+                    tmp.type === Boolean ||
+                    // value.type contains Boolean
+                    isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
+                        value = true;
+                    }
+                }
             }
             props[key] = value;
         }
@@ -302,14 +309,14 @@ function normalizeProps(vNode) {
                 };
             } else if (_key4.substr(0, 7) === 'update:') {
                 // delegate update:prop(sync modifier) to $change:prop
-                _key4 = '$change:' + _key4.substr(7);
+                _key4 = '$change:' + camelize(_key4.substr(7));
                 cb = function cb(c, v) {
                     return _cb(v);
                 };
             }
 
             // if there is a $change:prop originally, set it as array
-            var name = 'ev-' + _key4;
+            var name = 'ev-' + camelize(_key4);
             if (props[name]) {
                 props[name] = [props[name], cb];
             } else {
@@ -730,6 +737,24 @@ function cloneVNode(vnode) {
     cloned.isCloned = true;
     return cloned;
 }
+
+function cached(fn) {
+    var cache = Object.create(null);
+    return function (str) {
+        var hit = cache[str];
+        return hit || (cache[str] = fn(str));
+    };
+}
+
+/**
+ * Camelize a hyphen-delimited string.
+ */
+var camelizeRE = /-(\w)/g;
+var camelize = cached(function (str) {
+    return str.replace(camelizeRE, function (_, c) {
+        return c ? c.toUpperCase() : '';
+    });
+});
 
 // for webpack alias Intact to IntactVue
 var _Vue$prototype = Vue.prototype;

@@ -2,7 +2,7 @@ import Intact from 'intact/dist';
 import Vue from 'vue';
 
 const {h, hooks, config} = Intact.Vdt.miss;
-const {get, set, extend, isArray, create} = Intact.utils;
+const {get, set, extend, isArray, create, hasOwn} = Intact.utils;
 const _textVNode = Vue.prototype._v('');
 const VueVNode = _textVNode.constructor;
 
@@ -113,26 +113,32 @@ export function normalizeProps(vNode) {
     const props = {};
 
     if (attrs) {
-        for (const key in attrs) {
+        for (let key in attrs) {
             if (~['staticClass', 'class', 'style', 'staticStyle'].indexOf(key)) continue;
             let value = attrs[key];
-            let tmp;
-            if (propTypes && 
-                (
-                    // value is Boolean
-                    (tmp = propTypes[key]) === Boolean ||
-                    tmp && (
-                        // value contains Boolean
-                        isArray(tmp) && tmp.indexOf(Boolean) > -1 || 
-                        // value.type is Boolean
-                        tmp.type === Boolean ||
-                        // value.type contains Boolean
-                        isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
-                    )
-                ) && 
-                (value === '' || value === key)
-            ) {
-                value = true;
+            if (propTypes) {
+                let camelizedKey = camelize(key);
+                if (hasOwn.call(propTypes, camelizedKey)) {
+                    key = camelizedKey;
+                    let tmp;
+                    if (
+                        (
+                            // value is Boolean
+                            (tmp = propTypes[key]) === Boolean ||
+                            tmp && (
+                                // value contains Boolean
+                                isArray(tmp) && tmp.indexOf(Boolean) > -1 || 
+                                // value.type is Boolean
+                                tmp.type === Boolean ||
+                                // value.type contains Boolean
+                                isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
+                            )
+                        ) && 
+                        (value === '' || value === key)
+                    ) {
+                        value = true;
+                    }
+                }
             }
             props[key] = value; 
         }
@@ -207,12 +213,12 @@ export function normalizeProps(vNode) {
                 cb = (c, v) => _cb(v);
             } else if (key.substr(0, 7) === 'update:') {
                 // delegate update:prop(sync modifier) to $change:prop
-                key = `$change:${key.substr(7)}`;
+                key = `$change:${camelize(key.substr(7))}`;
                 cb = (c, v) => _cb(v);
             }
 
             // if there is a $change:prop originally, set it as array
-            const name = `ev-${key}`;
+            const name = `ev-${camelize(key)}`;
             if (props[name]) {
                 props[name] = [props[name], cb]
             } else {
@@ -618,3 +624,19 @@ function cloneVNode (vnode) {
     cloned.isCloned = true;
     return cloned
 }
+
+function cached(fn) {
+    const cache = Object.create(null);
+    return function(str) {
+        const hit = cache[str];
+        return hit || (cache[str] = fn(str));
+    };
+}
+
+/**
+ * Camelize a hyphen-delimited string.
+ */
+const camelizeRE = /-(\w)/g
+const camelize = cached((str) => {
+    return str.replace(camelizeRE, (_, c) => c ? c.toUpperCase() : '');
+});

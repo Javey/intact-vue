@@ -399,6 +399,27 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('render props which name is hyphenated style', done => {
+            const Component = createIntactComponent(`<div ev-click={self.click}>{self.get('userName')}</div>`, {
+                click() {
+                    this.trigger('clickComponent');
+                }
+            });
+            Component.propTypes = {userName: String};
+            const click = sinon.spy();
+            render('<C user-name="Javey" @click-component="click" />', {
+                C: Component,
+            }, {}, {click});
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div>Javey</div>');
+                vm.$el.click();
+                expect(click.callCount).to.eql(1);
+
+                done();
+            });
+        });
     });
 
     describe('Update', () => {

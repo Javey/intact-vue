@@ -213,7 +213,11 @@ export function normalizeProps(vNode) {
                 cb = (c, v) => _cb(v);
             } else if (key.substr(0, 7) === 'update:') {
                 // delegate update:prop(sync modifier) to $change:prop
-                key = `$change:${camelize(key.substr(7))}`;
+                // propName has been camelized by Vue, don't do this again
+                // key = `$change:${camelize(key.substr(7))}`;
+                const name = key.substr(7);
+                if (name.indexOf('-') > -1) continue;
+                key = `$change:${name}`;
                 cb = (c, v) => _cb(v);
             }
 

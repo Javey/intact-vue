@@ -309,7 +309,11 @@ function normalizeProps(vNode) {
                 };
             } else if (_key4.substr(0, 7) === 'update:') {
                 // delegate update:prop(sync modifier) to $change:prop
-                _key4 = '$change:' + camelize(_key4.substr(7));
+                // propName has been camelized by Vue, don't do this again
+                // key = `$change:${camelize(key.substr(7))}`;
+                var _name = _key4.substr(7);
+                if (_name.indexOf('-') > -1) return 'continue';
+                _key4 = '$change:' + _name;
                 cb = function cb(c, v) {
                     return _cb(v);
                 };
@@ -326,7 +330,9 @@ function normalizeProps(vNode) {
         };
 
         for (var _key3 in listeners) {
-            _loop2(_key3);
+            var _ret3 = _loop2(_key3);
+
+            if (_ret3 === 'continue') continue;
         }
     }
 
@@ -693,8 +699,8 @@ function resolveSlots(children) {
             delete data.attrs.slot;
         }
         if (data && data.slot != null) {
-            var _name = data.slot;
-            var slot = slots[_name] || (slots[_name] = []);
+            var _name2 = data.slot;
+            var slot = slots[_name2] || (slots[_name2] = []);
             if (child.tag === 'template') {
                 slot.push.apply(slot, child.children || []);
             } else {
@@ -705,9 +711,9 @@ function resolveSlots(children) {
         }
     }
     // ignore slots that contains only whitespace
-    for (var _name2 in slots) {
-        if (slots[_name2].every(isWhitespace)) {
-            delete slots[_name2];
+    for (var _name3 in slots) {
+        if (slots[_name3].every(isWhitespace)) {
+            delete slots[_name3];
         }
     }
     return slots;

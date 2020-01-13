@@ -1040,6 +1040,24 @@ describe('Unit test', () => {
                 done();
             });
         });
+
+        it('sync with hyphen-delimited name', (done) => {
+            const Component = createIntactComponent(
+                `<div>{self.get('userName')}</div>`, 
+            );
+            Component.propTypes = {userName: String};
+            const spy = sinon.spy();
+            render('<C ref="test" :user-name.sync="name" @$change:user-name="onChange" />', {
+                C: Component,
+            }, {name: 'Javey'}, {onChange: spy});
+
+            vm.$nextTick(() => {
+                vm.$refs.test.set('userName', 'test');
+                expect(vm.name).eql('test');
+                expect(spy.callCount).eql(1);
+                done();
+            });
+        });
     });
 
     describe('Scoped style', () => {

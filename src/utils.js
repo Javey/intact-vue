@@ -102,7 +102,7 @@ export function normalize(vNode) {
         return vNode.text;
     }
 
-    return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode));
+    return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode), vNode.key);
 }
 
 export function normalizeProps(vNode) {

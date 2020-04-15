@@ -191,7 +191,7 @@ function normalize(vNode) {
         return vNode.text;
     }
 
-    return h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode));
+    return h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode), vNode.key);
 }
 
 function normalizeProps(vNode) {

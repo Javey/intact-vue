@@ -450,6 +450,26 @@ describe('Unit test', () => {
             });
         });
 
+        it('insert keyed vue element before non-keyed element in Intact component', (done) => {
+            const IntactComponent = createIntactComponent(`
+                <div>{self.get('children')}<C ref="c" /></div>
+            `, {_init() {
+                this.C = SimpleIntactComponent;
+            }});
+            render(`
+                <C ref="c">
+                    <div key="test" v-if="show">test2</div>
+                </C>
+            `, {C: IntactComponent}, {show: false});
+
+            vm.$refs.c.refs.c.test = true;
+            vm.show = true;
+            vm.$nextTick(() => {
+                expect(vm.$refs.c.refs.c.test).to.be.true;
+                done();
+            });
+        });
+
         it('update keyed functional component children', (done) => {
             const h = Intact.Vdt.miss.h;
             render(`

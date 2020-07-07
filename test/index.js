@@ -1,6 +1,7 @@
 import Intact from '../src';
 import Vue from 'vue';
 import Test1 from './test1.vue';
+import Normalize from './normalize.vue';
 
 let vm;
 
@@ -87,7 +88,7 @@ describe('Unit test', () => {
                 done();
             });
         });
-        
+
         it('render vue element in intact', done => {
             render('<C><div>vue</div></C>', {C: ChildrenIntactComponent});
             vm.$nextTick(() => {
@@ -95,7 +96,7 @@ describe('Unit test', () => {
                 done();
             });
         });
-        
+
         it('render vue component in intact', done => {
             render('<C><VueComponent /></C>', {
                 C: ChildrenIntactComponent,
@@ -235,7 +236,7 @@ describe('Unit test', () => {
                     this.a++;
                 }
             });
-            
+
             vm.$nextTick(() => {
                 dispatchEvent(vm.$el.firstChild.firstChild, 'click');
                 vm.$nextTick(() => {
@@ -318,7 +319,7 @@ describe('Unit test', () => {
             const h = Intact.Vdt.miss.h;
             const Component = Intact.functionalWrapper(function(props) {
                 return [
-                    h(ChildrenIntactComponent, props), 
+                    h(ChildrenIntactComponent, props),
                     h(ChildrenIntactComponent, null, 'two')
                 ];
             });
@@ -398,6 +399,17 @@ describe('Unit test', () => {
                 expect(vm.$el.outerHTML).to.eql('<div><div>1</div><div>2</div><div>3</div></div>');
                 done();
             });
+        });
+
+        it('render normalize vNode with propperty', done => {
+            // no [Vue warn]
+            render(function(h) {
+                return h('C');
+            }, {
+                C: Normalize
+            });
+
+            done();
         });
 
         it('render props which name is hyphenated style', done => {
@@ -525,7 +537,7 @@ describe('Unit test', () => {
             render('<div><C v-if="show">1</C><C ref="a" v-else>2</C></div>', {
                 // C: Vue.extend({
                     // template: '<div><template slots="default"></template></div>'
-                // }) 
+                // })
                 C: ChildrenIntactComponent
             }, {show: true});
 
@@ -539,10 +551,10 @@ describe('Unit test', () => {
         it('should update ref in for', done => {
             render(`
                 <div>
-                    <C v-for="(item, index) in data" 
-                        :key="index" 
+                    <C v-for="(item, index) in data"
+                        :key="index"
                         ref="test"
-                        :index="item.value"    
+                        :index="item.value"
                     >{{ item.value }}</C>
                 </div>
             `, {
@@ -558,7 +570,7 @@ describe('Unit test', () => {
                     vm.data.push({value: 3});
                     vm.$nextTick(() => {
                         vm.$refs.test.forEach((item, index) => {
-                            expect(item.get('index')).to.eql(index + 1); 
+                            expect(item.get('index')).to.eql(index + 1);
                         });
                         done();
                     });
@@ -671,7 +683,7 @@ describe('Unit test', () => {
                 C: createIntactComponent('<div></div>', {
                     _create,
                     _mount,
-                    _update, 
+                    _update,
                     _destroy
                 })
             }, {a: 1, show: true});
@@ -843,7 +855,7 @@ describe('Unit test', () => {
                     return {value: 1}
                 },
                 mounted() {
-                    this.value= 2; 
+                    this.value= 2;
                 }
             };
             render(`<IntactComponent v-model="show" ref="a"><Test ref="c" /></IntactComponent>`, {
@@ -1002,7 +1014,7 @@ describe('Unit test', () => {
                     }
                 }),
                 E: SimpleIntactComponent,
-            }, {show: false}); 
+            }, {show: false});
             vm.show = true;
         });
 
@@ -1053,7 +1065,7 @@ describe('Unit test', () => {
 
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql('<div>a: a b: 1</div>');
-                
+
                 vm.$refs.test.set('b', 2);
                 expect(vm.b).eql(2);
                 expect(test.callCount).eql(1);
@@ -1063,7 +1075,7 @@ describe('Unit test', () => {
 
         it('sync with hyphen-delimited name', (done) => {
             const Component = createIntactComponent(
-                `<div>{self.get('userName')}</div>`, 
+                `<div>{self.get('userName')}</div>`,
             );
             Component.propTypes = {userName: String};
             const spy = sinon.spy();
@@ -1086,7 +1098,7 @@ describe('Unit test', () => {
                 C: SimpleIntactComponent,
                 D: ChildrenIntactComponent,
                 Test1
-            }); 
+            });
             vm.$nextTick(() => {
                 expect(vm.$el.outerHTML).to.eql('<div data-v-68694da0="" class="test1"><div data-v-68694da0="" class="test2"><span>test2</span> <i data-v-68694da0="">test1</i> <div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b> <div data-v-6830ef9c="" data-v-68694da0="" class="test3"><span data-v-6830ef9c="">test3</span> <div data-v-6830ef9c="" data-v-68694da0="">intact component in vue<b data-v-68694da0="" data-v-6830ef9c="">test</b></div></div></div></div> <div data-v-68694da0="">Intact Component</div><div data-v-68694da0=""><div data-v-68694da0="">Intact Component</div></div></div>');
 

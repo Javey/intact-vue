@@ -15,12 +15,12 @@ if (hooks) {
         let j;
         while (parent) {
             if (
-                (i = parent.tag) && 
+                (i = parent.tag) &&
                 (i.cid === 'IntactVue') &&
                 (i = parent.children.$options)
             ) {
                 if (
-                    (i = j = i.parent) && 
+                    (i = j = i.parent) &&
                     (i = i.$options) &&
                     (i = i._scopeId)
                 ) {
@@ -87,9 +87,13 @@ export function normalize(vNode) {
     if (type === 'string' || type === 'number') return vNode;
     // is a intact vnode
     if (vNode.type) return vNode;
+    if (vNode.text !== undefined) {
+        return vNode.text;
+    }
+
     if (isIntactComponent(vNode)) {
         const options = vNode.componentOptions;
-        return h(
+        vNode = h(
             options.Ctor,
             normalizeProps(vNode),
             null,
@@ -97,12 +101,12 @@ export function normalize(vNode) {
             vNode.key,
             vNode.ref
         );
-    }
-    if (vNode.text !== undefined) {
-        return vNode.text;
+    } else {
+        vNode = h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode), vNode.key);
     }
 
-    return h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode), vNode.key);
+    vNode._isVue = true; // let vue don't observe it when it is used as property
+    return vNode;
 }
 
 export function normalizeProps(vNode) {
@@ -127,20 +131,20 @@ export function normalizeProps(vNode) {
                             (tmp = propTypes[key]) === Boolean ||
                             tmp && (
                                 // value contains Boolean
-                                isArray(tmp) && tmp.indexOf(Boolean) > -1 || 
+                                isArray(tmp) && tmp.indexOf(Boolean) > -1 ||
                                 // value.type is Boolean
                                 tmp.type === Boolean ||
                                 // value.type contains Boolean
                                 isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1
                             )
-                        ) && 
+                        ) &&
                         (value === '' || value === key)
                     ) {
                         value = true;
                     }
                 }
             }
-            props[key] = value; 
+            props[key] = value;
         }
     }
 
@@ -235,7 +239,7 @@ export function normalizeProps(vNode) {
     const slots = vNode.slots || resolveSlots(componentOptions.children);
     const {children, _blocks} = getChildrenAndBlocks(slots);
     // for Intact Functional component, the blocks has been handled
-    // In this case, we should merge them 
+    // In this case, we should merge them
     props.children = children;
     if (props._blocks) {
         extend(props._blocks, _blocks);
@@ -269,7 +273,7 @@ function normalizeContext(vNode, props) {
 }
 
 export function getChildrenAndBlocks(slots) {
-    const {default: d, ...rest} = slots; 
+    const {default: d, ...rest} = slots;
     let blocks;
     if (rest) {
         blocks = {};
@@ -355,7 +359,7 @@ const patch = Vue.prototype.__patch__;
 class Wrapper {
     init(lastVNode, nextVNode) {
         // let the component destroy by itself
-        this.destroyed = true; 
+        this.destroyed = true;
         this._addProps(nextVNode);
         return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
     }
@@ -412,7 +416,7 @@ function handleRef(vNode, props) {
     const key = vNode.data.ref;
     if (key) {
         const refs = vNode.context.$refs;
-        props.ref = function(i, isRemove) { 
+        props.ref = function(i, isRemove) {
             // if we pass the ref to intact component, ignore it directlty
             if (!refs) return;
             if (!isRemove) {
@@ -423,7 +427,7 @@ function handleRef(vNode, props) {
                         refs[key].push(i);
                     }
                 } else {
-                    refs[key] = i; 
+                    refs[key] = i;
                 }
             } else {
                 if (isArray(refs[key])) {

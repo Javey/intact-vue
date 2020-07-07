@@ -183,15 +183,19 @@ function normalize(vNode) {
     if (type === 'string' || type === 'number') return vNode;
     // is a intact vnode
     if (vNode.type) return vNode;
-    if (isIntactComponent(vNode)) {
-        var options = vNode.componentOptions;
-        return h(options.Ctor, normalizeProps(vNode), null, null, vNode.key, vNode.ref);
-    }
     if (vNode.text !== undefined) {
         return vNode.text;
     }
 
-    return h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode), vNode.key);
+    if (isIntactComponent(vNode)) {
+        var options = vNode.componentOptions;
+        vNode = h(options.Ctor, normalizeProps(vNode), null, null, vNode.key, vNode.ref);
+    } else {
+        vNode = h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode), vNode.key);
+    }
+
+    vNode._isVue = true; // let vue don't observe it when it is used as property
+    return vNode;
 }
 
 function normalizeProps(vNode) {
@@ -341,7 +345,7 @@ function normalizeProps(vNode) {
         children = _getChildrenAndBlocks.children,
         _blocks = _getChildrenAndBlocks._blocks;
     // for Intact Functional component, the blocks has been handled
-    // In this case, we should merge them 
+    // In this case, we should merge them
 
 
     props.children = children;

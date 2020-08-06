@@ -35,7 +35,7 @@ export default class IntactVue extends Intact {
             // but this component has not been appended
             // so we do it nextTick
             // options.mounted = [
-                // activeInstance ? 
+                // activeInstance ?
                 // () => {
                     // this.$nextTick(this.mount);
                 // } :
@@ -46,7 +46,7 @@ export default class IntactVue extends Intact {
             options._renderChildren = true;
 
             this.$options = options;
-            this.$vnode = parentVNode; 
+            this.$vnode = parentVNode;
             this._isVue = true;
 
             // for compitibility of vue@2.6
@@ -99,16 +99,19 @@ export default class IntactVue extends Intact {
             return element;
         };
 
-        if (!this._isVue) return update(); 
+        if (!this._isVue) return update();
 
         // maybe update in updating
         const oldTriggerFlag = this._shouldTrigger;
         this.__initMountedQueue();
-        
+
         const element = update();
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
+
+        // should update elm of vnode of Vue to let Vue hanlde dom correctly
+        this.$vnode.elm = element;
 
         return element;
     }
@@ -169,7 +172,7 @@ export default class IntactVue extends Intact {
         // handle it there
         const lastRef = lastVNode.ref;
         const nextRef = vNode.ref;
-        if (lastRef !== nextRef && 
+        if (lastRef !== nextRef &&
             // if the string of the key is the same, do nothing
             !(lastRef && nextRef && lastRef.key === nextRef.key)
         ) {

@@ -791,7 +791,7 @@ var IntactVue = function (_Intact) {
             // but this component has not been appended
             // so we do it nextTick
             // options.mounted = [
-            // activeInstance ? 
+            // activeInstance ?
             // () => {
             // this.$nextTick(this.mount);
             // } :
@@ -872,6 +872,9 @@ var IntactVue = function (_Intact) {
 
         this.__triggerMountedQueue();
         this._shouldTrigger = oldTriggerFlag;
+
+        // should update elm of vnode of Vue to let Vue hanlde dom correctly
+        this.$vnode.elm = element;
 
         return element;
     };

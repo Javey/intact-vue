@@ -647,6 +647,36 @@ describe('Unit test', () => {
 
             vm.$refs.c.set('show', true);
         });
+
+        it('should update vNode.elm of Vue if Intact component updated and return the different dom', (done) => {
+            const C = createIntactComponent(`
+                const show = self.get('show');
+                if (!show) return;
+                <div>show</div>
+            `, {
+                defaults() {
+                    return {show: true};
+                },
+
+                hide() {
+                    this.set('show', false);
+                    this.trigger('hide');
+                }
+            });
+
+            render(`<div><C v-if="show" ref="c" @hide="hide" /></div>`, {C}, {show: true}, {
+                hide() {
+                    this.show = false;
+                }
+            });
+
+            vm.$refs.c.hide();
+
+            vm.$nextTick(() => {
+                expect(vm.$el.innerHTML).to.eql('<!---->');
+                done();
+            });
+        });
     });
 
     describe('v-show', () => {

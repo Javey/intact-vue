@@ -246,6 +246,50 @@ describe('Unit test', () => {
             });
         });
 
+        it('render with multiple events which event names are the same', done => {
+            const click = sinon.spy(() => console.log('click'));
+            const IntactComponent = createIntactComponent(`<div ev-click={self.onClick}>{self.get('value')}</div>`, {
+                onClick() {
+                    this.set('value', 'click');
+                    this.trigger('click');
+                }
+            });
+            render('<div><C @click="click" v-model="value" />{{ value }}</div>', {
+                C: {
+                    template: '<IntactComponent v-on="$listeners" v-model="value1" @click="click" />',
+                    components: {
+                        IntactComponent
+                    },
+                    methods: {click},
+                    props: {
+                        value: {
+                            required: true
+                        }
+                    },
+                    data() {
+                        return {
+                            value1: this.value
+                        }
+                    },
+                    watch: {
+                        value1(v) {
+                            this.value = v;
+                            this.$emit('input', v);
+                        }
+                    }
+                }
+            }, {value: "test"}, {click});
+
+            vm.$nextTick(() => {
+                dispatchEvent(vm.$el.firstChild, 'click');
+                vm.$nextTick(() => {
+                    expect(vm.$el.outerHTML).to.eql('<div><div>click</div>click</div>');
+                    expect(click.callCount).to.eql(2);
+                    done();
+                });
+            });
+        });
+
         it('render with slots', done => {
             render('<C><div slot="footer">footer</div><div>children</div></C>', {
                 C: createIntactComponent(`<div>{self.get('children')}<b:footer></b:footer></div>`)

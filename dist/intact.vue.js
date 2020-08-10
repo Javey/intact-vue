@@ -108,6 +108,7 @@ var extend$1 = _Intact$utils.extend;
 var isArray = _Intact$utils.isArray;
 var create = _Intact$utils.create;
 var hasOwn = _Intact$utils.hasOwn;
+var each = _Intact$utils.each;
 
 var _textVNode = Vue.prototype._v('');
 var VueVNode = _textVNode.constructor;
@@ -304,13 +305,21 @@ function normalizeProps(vNode) {
         var _loop2 = function _loop2(_key4) {
             var _cb = listeners[_key4];
             var cb = _cb;
+            var _isArray = isArray(_cb);
+            var callCb = function callCb(c, v) {
+                if (_isArray) {
+                    each(_cb, function (cb) {
+                        return cb(v);
+                    });
+                } else {
+                    _cb(v);
+                }
+            };
 
             if (_key4 === 'input') {
                 // is a v-model directive of vue
                 _key4 = '$change:value';
-                cb = function cb(c, v) {
-                    return _cb(v);
-                };
+                cb = callCb;
             } else if (_key4.substr(0, 7) === 'update:') {
                 // delegate update:prop(sync modifier) to $change:prop
                 // propName has been camelized by Vue, don't do this again
@@ -318,15 +327,13 @@ function normalizeProps(vNode) {
                 var _name = _key4.substr(7);
                 if (_name.indexOf('-') > -1) return 'continue';
                 _key4 = '$change:' + _name;
-                cb = function cb(c, v) {
-                    return _cb(v);
-                };
+                cb = callCb;
             }
 
             // if there is a $change:prop originally, set it as array
             var name = 'ev-' + camelize(_key4);
             if (props[name]) {
-                props[name] = [props[name], cb];
+                props[name] = [].concat(props[name], cb);
             } else {
                 props[name] = cb;
             }

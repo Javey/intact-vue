@@ -250,6 +250,10 @@ export default class IntactVue extends Intact {
     // mock api
     $on() {}
     $off() {}
+    // for vue-devtools
+    $set(obj, key, value) {
+        this.set(key, value);
+    }
 }
 
 IntactVue.prototype.$nextTick = $nextTick;

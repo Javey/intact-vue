@@ -5,6 +5,9 @@ const {h, hooks, config} = Intact.Vdt.miss;
 const {get, set, extend, isArray, create, hasOwn, each} = Intact.utils;
 const _textVNode = Vue.prototype._v('');
 const VueVNode = _textVNode.constructor;
+const _testData = {};
+const _vm = new Vue({data: _testData});
+const __ob__ = _testData.__ob__;
 
 // for scoped style
 if (hooks) {
@@ -105,7 +108,9 @@ export function normalize(vNode) {
         vNode = h(Wrapper, {vueVNode: vNode}, null, handleClassName(vNode), vNode.key);
     }
 
-    vNode._isVue = true; // let vue don't observe it when it is used as property
+    // let vue don't observe it when it is used as property, ksc-fe/kpc#500
+    // we can not use `vNode._isVue = true`, because it will affect vue-devtools. ksc-fe/kpc#512
+    vNode.__ob__ = __ob__;
     return vNode;
 }
 

@@ -110,6 +110,9 @@ var each = _Intact$utils.each;
 
 var _textVNode = Vue.prototype._v('');
 var VueVNode = _textVNode.constructor;
+var _testData = {};
+var _vm = new Vue({ data: _testData });
+var __ob__ = _testData.__ob__;
 
 // for scoped style
 if (hooks) {
@@ -195,7 +198,9 @@ function normalize(vNode) {
         vNode = h(Wrapper, { vueVNode: vNode }, null, handleClassName(vNode), vNode.key);
     }
 
-    vNode._isVue = true; // let vue don't observe it when it is used as property
+    // let vue don't observe it when it is used as property, ksc-fe/kpc#500
+    // we can not use `vNode._isVue = true`, because it will affect vue-devtools. ksc-fe/kpc#512
+    vNode.__ob__ = __ob__;
     return vNode;
 }
 
@@ -1024,6 +1029,12 @@ var IntactVue = function (_Intact) {
     IntactVue.prototype.$on = function $on() {};
 
     IntactVue.prototype.$off = function $off() {};
+    // for vue-devtools
+
+
+    IntactVue.prototype.$set = function $set(obj, key, value) {
+        this.set(key, value);
+    };
 
     return IntactVue;
 }(Intact);

@@ -456,6 +456,22 @@ describe('Unit test', () => {
             done();
         });
 
+        it('render vue vNodes as children', done => {
+            render('<C :children="children" />', {
+                C: ChildrenIntactComponent
+            }, function() {
+                const h = this.$createElement;
+                return {
+                    children: Intact.normalize(h('div', null, 'test'))
+                }
+            });
+
+            vm.$nextTick(() => {
+                expect(vm.$el.outerHTML).to.eql('<div><div>test</div></div>');
+                done();
+            });
+        });
+
         it('render props which name is hyphenated style', done => {
             const Component = createIntactComponent(`<div ev-click={self.click}>{self.get('userName')}</div>`, {
                 click() {

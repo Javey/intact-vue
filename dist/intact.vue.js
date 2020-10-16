@@ -360,9 +360,12 @@ function normalizeProps(vNode) {
         _blocks = _getChildrenAndBlocks._blocks;
     // for Intact Functional component, the blocks has been handled
     // In this case, we should merge them
+    // maybe children has been set as property
 
 
-    props.children = children;
+    if (!hasOwn.call(props, 'children')) {
+        props.children = children;
+    }
     if (props._blocks) {
         extend$1(props._blocks, _blocks);
     } else {

@@ -1,4 +1,6 @@
 const webpack = require('webpack');
+const {VueLoaderPlugin} = require('vue-loader');
+const path = require('path');
 
 module.exports = function(config) {
     config.set({
@@ -14,6 +16,8 @@ module.exports = function(config) {
                     {
                         test: /\.js$/,
                         loader: 'babel-loader',
+                        // exclude: [path.resolve(__dirname, 'node_modules/core-js')],
+                        exclude: /node_modules/,
                     },
                     {
                         test: /\.css$/,
@@ -32,9 +36,12 @@ module.exports = function(config) {
             devtool: '#inline-source-map',
             resolve: {
                 alias: {
-                    'vue$': 'vue/dist/vue.esm.js',
+                    'vue$': 'vue/dist/vue.esm-bundler.js',
                 }
-            }
+            },
+            plugins: [
+                new VueLoaderPlugin(),
+            ],
         },
         frameworks: [
             'mocha',

@@ -11,12 +11,43 @@ export default class IntactVue extends Intact {
 
         return {
             setup(props, ctx) {
+                // return proxy;
+                // return Promise.resolve().then(() => {
                 const vNode = createVNodeBySetupContext(Component, ctx);
                 const instance = new Component(vNode.props);
                 instance.vNode = vNode;
                 instance._isVue = true;
                 vNode.children = instance;
-                return {instance};
+                const setupState = {instance};
+                const proxy = new Proxy(setupState, {
+                    get({instance}, key) {
+                        // console.log('get', key);
+                        if (key === '__v_isReactive') return true;
+                        return instance[key];
+                    },
+
+                    set({instance}, key, value) {
+                        // console.log('set', key);
+                        return Reflect.set(instance, key, value);
+                    },
+
+                    getOwnPropertyDescriptor({instance}, key) {
+                        // console.log('hasOwn', key);
+                        return {
+                            value: undefined,
+                            writable: true,
+                            enumerable: true,
+                            configurable: true,
+                        };
+                    },
+
+                    ownKeys() {
+                        // console.log('Object.keys()');
+                        return [];
+                    }
+                });
+                return proxy;
+                // });
             },
 
             render() {
@@ -24,7 +55,11 @@ export default class IntactVue extends Intact {
             },
 
             beforeMount() {
-                const instance = this.instance;
+                const instance = this; //.instance;
+                // this.vueInstance = this;
+                // flush pending emit queue
+                // this._flushEmit();
+
                 instance._oldTriggerFlag = instance._shouldTrigger;
                 instance.__initMountedQueue();
                 instance.parentVNode = instance.vNode.parentVNode = activeInstance && activeInstance.vNode;
@@ -37,27 +72,35 @@ export default class IntactVue extends Intact {
                 });
             },
 
-
             mounted() {
-                const instance = this.instance;
+                const instance = this; // .instance;
                 const el = this.$el;
                 const dom = instance.dom;
                 el.parentElement.replaceChild(dom, el);
 
                 // update vnode.el
-                let vueInstance = this._;
+                let vueInstance = this.$;
                 let vnode;
                 do {
                     vnode = vueInstance.vnode;
-                    vnode.el = dom;
+                    vueInstance.subTree.el = vnode.el = dom;
                     vueInstance = vueInstance.parent;
                 } while (vueInstance && vueInstance.subTree === vnode);
 
                 instance.__triggerMountedQueue();
                 instance._shouldTrigger = instance._oldTriggerFlag;
+            },
+
+            beforeUpdate() {
+                debugger;
             }
         }
     }
+
+    // _constructor(props) {
+        // this._pendingEmitQueue = [];
+        // super._constructor(props);
+    // }
 
     init(lastVNode, nextVNode) {
         const init = () => {
@@ -102,6 +145,34 @@ export default class IntactVue extends Intact {
 
         return element;
     }
+
+    // trigger(eventName, component, ...args) {
+        // const changeEventPrefix = '$change:';
+        // const length = changeEventPrefix.length;
+        // if (eventName.substr(0, length) === changeEventPrefix) {
+            // let propName = eventName.substr(length);
+            // if (propName === 'value') propName = 'modelValue';
+            // this._emit(`update:${propName}`, ...args);
+        // }
+        // this._emit(eventName, component, ...args);
+        // super.trigger(eventName, component, ...args);
+    // }
+
+    // _emit(eventName, ...args) {
+        // const vueInstance = this.vueInstance;
+        // if (vueInstance) {
+            // vueInstance.$emit(eventName, ...args);
+        // } else {
+            // this._pendingEmitQueue.push([eventName, args]);
+        // }
+    // }
+
+    // _flushEmit() {
+        // let item;
+        // while (item = this._pendingEmitQueue.pop()) {
+            // this.vueInstance.$emit(item[0], ...item[1]);
+        // }
+    // }
 
     // we should promise that all intact components have been mounted
     __initMountedQueue() {

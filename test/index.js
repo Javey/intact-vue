@@ -83,7 +83,7 @@ describe('Unit test', () => {
 
     describe('Render', () => {
         it('render intact component in vue', async () => {
-            render('<C/>', {C: SimpleIntactComponent});
+            render('<C ref="a"/>', {C: SimpleIntactComponent});
             await nextTick();
             expect(vm.$el.outerHTML).to.eql(simpleTemplate);
         });
@@ -190,70 +190,41 @@ describe('Unit test', () => {
             expect(vm.$el.outerHTML).to.eql('<div>{"a":true,"b":true,"c":true,"d":true}</div>');
         });
 
-        // it('render with v-model', done => {
-            // render('<C v-model.trim="a" ref="a" />', {
-                // C: createIntactComponent(`<div>{self.get('value')}</div>`)
-            // }, {a: 1}, {
-                // add() {
-                    // this.a++;
-                // }
-            // });
-
-            // window.vm = vm;
-            // vm.add();
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div>2</div>');
-
-                // vm.$refs.a.set('value', 3);
-                // expect(vm.a).to.eql(3);
-
-                // vm.$refs.a.set('value', '  4 ');
-                // expect(vm.a).to.eql('4');
-
-                // done();
-            // });
-        // });
-
-        // it('render v-model with $change:value', done =>{
-            // const change = sinon.spy();
-            // render('<C v-model="a" @$change:value="change" ref="a"/>', {
-                // C: createIntactComponent(`<div>{self.get('value')}</div>`)
-            // }, {a: 1}, {
-                // add() {
-                    // this.$refs.a.set('value', 2);
-                // },
-
-                // change
-            // });
-
-            // vm.add();
-            // vm.$nextTick(() => {
-                // expect(change.callCount).to.eql(1);
-                // done();
-            // })
-        // });
-
-        // it('render with event', done => {
-            // render('<div><C @click="onClick" />{{ a }}</div>', {
-                // C: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {
-                    // onClick() {
-                        // this.trigger('click');
+        // it('render with v-model in vue', async () => {
+            // render('<C v-model.trim="a" />', {
+                // C: {
+                    // props: {
+                        // modelValue: String,
+                    // },
+                    // emits: ['update:modelValue'],
+                    // template: `<div @click="add">{{ modelValue }}</div>`,
+                    // methods: {
+                        // add() {
+                            // this.$emit('update:modelValue', ' aaaa ');
+                        // }
                     // }
-                // })
-            // }, {a: 1}, {
-                // onClick() {
-                    // this.a++;
                 // }
-            // });
+            // }, {a: 1});
+        // })
 
-            // vm.$nextTick(() => {
-                // dispatchEvent(vm.$el.firstChild.firstChild, 'click');
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).be.eql('<div><div>click</div>2</div>');
-                    // done();
-                // });
-            // });
-        // });
+        it('render with event', async () => {
+            render('<div><C @click="onClick" />{{ a }}</div>', {
+                C: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {
+                    onClick() {
+                        this.trigger('click');
+                    }
+                })
+            }, {a: 1}, {
+                onClick() {
+                    this.a++;
+                }
+            });
+
+            await nextTick();
+            dispatchEvent(vm.$el.firstChild.firstChild, 'click');
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div>click</div>2</div>');
+        });
 
         // it('render with multiple events which event names are the same', done => {
             // const click = sinon.spy(() => console.log('click'));
@@ -481,75 +452,72 @@ describe('Unit test', () => {
             // });
         // });
 
-        // it('render props which name is hyphenated style', done => {
-            // const Component = createIntactComponent(`<div ev-click={self.click}>{self.get('userName')}</div>`, {
-                // click() {
-                    // this.trigger('clickComponent');
-                // }
-            // });
-            // Component.propTypes = {userName: String};
-            // const click = sinon.spy();
-            // render('<C user-name="Javey" @click-component="click" />', {
-                // C: Component,
-            // }, {}, {click});
+        it('render props which name is hyphenated style', async () => {
+            const Component = createIntactComponent(`<div ev-click={self.click}>{self.get('userName')}</div>`, {
+                click() {
+                    this.trigger('clickComponent');
+                }
+            });
+            Component.propTypes = {userName: String};
+            const click = sinon.spy();
+            render('<C user-name="Javey" @click-component="click" />', {
+                C: Component,
+            }, {}, {click});
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div>Javey</div>');
-                // vm.$el.click();
-                // expect(click.callCount).to.eql(1);
-
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>Javey</div>');
+            vm.$el.click();
+            expect(click.callCount).to.eql(1);
+        });
     });
 
-    // describe('Update', () => {
-        // it('insert removed element should keep the original order', (done) => {
-            // render('<div><C v-if="show">1</C><C>2</C></div>', {
-                // C: ChildrenIntactComponent
-            // }, {show: false});
+    describe('Update', () => {
+        it('insert removed element should keep the original order', async () => {
+            render('<div><C v-if="show">1</C><C>2</C></div>', {
+                C: ChildrenIntactComponent
+            }, {show: false});
 
-            // vm.show = true;
+            vm.show = true;
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><div>1</div><div>2</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div>1</div><div>2</div></div>');
+        });
 
-        // it('insert keyed child before non-keyed child', (done) => {
-            // render('<div><div v-if="show"><C>1</C></div><div v-else><C key="1">2</C><D /></div></div>', {
-                // C: ChildrenIntactComponent,
-                // D: SimpleIntactComponent
-            // }, {show: true});
+        it('insert keyed child before non-keyed child', async () => {
+            render('<div><div v-if="show"><C>1</C></div><div v-else><C key="1">2</C><D /></div></div>', {
+                C: ChildrenIntactComponent,
+                D: SimpleIntactComponent
+            }, {show: true});
 
-            // vm.show = false;
+            vm.show = false;
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><div><div>2</div><div>Intact Component</div></div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div><div>2</div><div>Intact Component</div></div></div>');
+        });
 
-        // it('insert keyed vue element before non-keyed element in Intact component', (done) => {
-            // const IntactComponent = createIntactComponent(`
-                // <div>{self.get('children')}<C ref="c" /></div>
-            // `, {_init() {
-                // this.C = SimpleIntactComponent;
-            // }});
-            // render(`
-                // <C ref="c">
-                    // <div key="test" v-if="show">test2</div>
-                // </C>
-            // `, {C: IntactComponent}, {show: false});
+        it('insert keyed vue element before non-keyed element in Intact component', async () => {
+            const IntactComponent = createIntactComponent(`
+                <div>{self.get('children')}<C ref="c" /></div>
+            `, {_init() {
+                this.C = SimpleIntactComponent;
+            }});
+            render(`
+                <C ref="c">
+                    <div key="test" v-if="show">test2</div>
+                </C>
+            `, {
+                C: IntactComponent,
+                // C: {
+                    // template: `<div><slot></slot></div>`
+                // }
+            }, {show: false});
 
             // vm.$refs.c.refs.c.test = true;
-            // vm.show = true;
-            // vm.$nextTick(() => {
-                // expect(vm.$refs.c.refs.c.test).to.be.true;
-                // done();
-            // });
-        // });
+            vm.show = true;
+
+            await nextTick();
+            // expect(vm.$refs.c.refs.c.test).to.be.true;
+        });
 
         // it('update keyed functional component children', (done) => {
             // const h = Intact.Vdt.miss.h;
@@ -746,7 +714,7 @@ describe('Unit test', () => {
                 // done();
             // });
         // });
-    // });
+    });
 
     // describe('v-show', () => {
         // it('should render v-show correctly', (done) => {
@@ -1155,41 +1123,76 @@ describe('Unit test', () => {
         // });
     // });
 
-    // describe('Modifier', () => {
-        // it('sync', (done) => {
-            // const test = sinon.spy(function() {console.log(arguments)});
-            // render('<C a="a" :b.sync="b" ref="test" @$change:b="test(1, ...arguments)"/>', {
-                // C: PropsIntactComponent
-            // }, {b: 1}, {test});
+    describe('v-model', () => {
+        it('with modifier', async () => {
+            render('<C v-model.trim="a" ref="a" />', {
+                C: createIntactComponent(`<div>{self.get('value')}</div>`)
+            }, {a: '1'}, {
+                add() {
+                    this.a = String(++this.a);
+                }
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div>a: a b: 1</div>');
+            window.vm = vm;
+            vm.add();
 
-                // vm.$refs.test.set('b', 2);
-                // expect(vm.b).eql(2);
-                // expect(test.callCount).eql(1);
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>2</div>');
 
-        // it('sync with hyphen-delimited name', (done) => {
-            // const Component = createIntactComponent(
-                // `<div>{self.get('userName')}</div>`,
-            // );
-            // Component.propTypes = {userName: String};
-            // const spy = sinon.spy();
-            // render('<C ref="test" :user-name.sync="name" @$change:user-name="onChange" />', {
-                // C: Component,
-            // }, {name: 'Javey'}, {onChange: spy});
+            vm.$refs.a.set('value', '3');
+            expect(vm.a).to.eql('3');
 
-            // vm.$nextTick(() => {
-                // vm.$refs.test.set('userName', 'test');
-                // expect(vm.name).eql('test');
-                // expect(spy.callCount).eql(1);
-                // done();
-            // });
-        // });
-    // });
+            vm.$refs.a.set('value', '  4 ');
+            expect(vm.a).to.eql('4');
+        });
+
+        it('with $change:value', async () =>{
+            const change = sinon.spy();
+            render('<C v-model="a" @$change:value="change" ref="a"/>', {
+                C: createIntactComponent(`<div>{self.get('value')}</div>`)
+            }, {a: 1}, {
+                add() {
+                    this.$refs.a.set('value', 2);
+                },
+
+                change
+            });
+
+            vm.add();
+            await nextTick();
+            expect(change.callCount).to.eql(1);
+        });
+
+        it('with propName', async () => {
+            const test = sinon.spy(function() {console.log(arguments)});
+            render('<C a="a" v-model:b="b" ref="test" @$change:b="(c, v) => test(1, c, v)"/>', {
+                C: PropsIntactComponent
+            }, {b: 1}, {test});
+
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>a: a b: 1</div>');
+
+            vm.$refs.test.set('b', 2);
+            expect(vm.b).eql(2);
+            expect(test.callCount).eql(1);
+        });
+
+        it('with hyphen-delimited propName', async () => {
+            const Component = createIntactComponent(
+                `<div>{self.get('userName')}</div>`,
+            );
+            Component.propTypes = {userName: String};
+            const spy = sinon.spy();
+            render('<C ref="test" v-model:user-name="name" @$change:user-name="onChange" />', {
+                C: Component,
+            }, {name: 'Javey'}, {onChange: spy});
+
+            await nextTick();
+            vm.$refs.test.set('userName', 'test');
+            expect(vm.name).eql('test');
+            expect(spy.callCount).eql(1);
+        });
+    });
 
     // describe('Scoped style', () => {
         // it('render scoped intact component', (done) => {

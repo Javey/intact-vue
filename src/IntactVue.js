@@ -1,19 +1,31 @@
 import Intact from 'intact/dist';
-import {Comment, createVNode} from 'vue';
-import {createVNodeBySetupContext} from './normalize';
+import {Comment, createVNode, getCurrentInstance} from 'vue';
+import {createVNodeBySetupContext, normalize} from './normalize';
+import {enableTracking, resetTracking} from '@vue/reactivity';
+import functionalWrapper from './functionWrapper';
 
 let activeInstance;
 let mountedQueue;
 
 export default class IntactVue extends Intact {
+    static functionalWrapper = functionalWrapper;
+
     static get __vccOpts() {
         const Component = this;
 
-        return {
+        if (Component.__cache) {
+            return Component.__cache;
+        }
+
+        return Component.__cache = {
+            Component,
             setup(props, ctx) {
-                // return proxy;
-                // return Promise.resolve().then(() => {
-                const vNode = createVNodeBySetupContext(Component, ctx);
+                const vueInstance = getCurrentInstance();
+
+                enableTracking();
+                const vNode = normalize(vueInstance.vnode);
+                resetTracking();
+
                 const instance = new Component(vNode.props);
                 instance.vNode = vNode;
                 instance._isVue = true;
@@ -47,7 +59,6 @@ export default class IntactVue extends Intact {
                     }
                 });
                 return proxy;
-                // });
             },
 
             render() {
@@ -55,28 +66,21 @@ export default class IntactVue extends Intact {
             },
 
             beforeMount() {
-                const instance = this; //.instance;
-                // this.vueInstance = this;
-                // flush pending emit queue
-                // this._flushEmit();
-
-                instance._oldTriggerFlag = instance._shouldTrigger;
-                instance.__initMountedQueue();
-                instance.parentVNode = instance.vNode.parentVNode = activeInstance && activeInstance.vNode;
+                this._oldTriggerFlag = this._shouldTrigger;
+                this.__initMountedQueue();
+                this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
                 // disable intact async component
-                instance.inited = true;
-                instance.dom = instance.init(null, instance.vNode);
-                instance.vNode.dom = instance.dom;
-                instance.mountedQueue.push(() => {
-                    instance.mount();
+                this.inited = true;
+                this.vNode.dom = this.init(null, this.vNode);
+                this.mountedQueue.push(() => {
+                    this.mount();
                 });
             },
 
             mounted() {
-                const instance = this; // .instance;
                 const el = this.$el;
-                const dom = instance.dom;
-                el.parentElement.replaceChild(dom, el);
+                const dom = this.element;
+                el.parentNode.replaceChild(dom, el);
 
                 // update vnode.el
                 let vueInstance = this.$;
@@ -87,12 +91,27 @@ export default class IntactVue extends Intact {
                     vueInstance = vueInstance.parent;
                 } while (vueInstance && vueInstance.subTree === vnode);
 
-                instance.__triggerMountedQueue();
-                instance._shouldTrigger = instance._oldTriggerFlag;
+                this.__triggerMountedQueue();
+                this._shouldTrigger = this._oldTriggerFlag;
             },
 
             beforeUpdate() {
-                debugger;
+                const oldTriggerFlag = this._shouldTrigger;
+                this.__initMountedQueue();
+
+                const vNode = normalize(this.$.vnode);
+                const lastVNode = this.vNode;
+                vNode.children = this;
+
+                this.vNode = vNode;
+                this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
+
+                this.vNode.dom = this.update(lastVNode, vNode);
+            },
+
+            updated() {
+                this.__triggerMountedQueue();
+                this._shouldTrigger = this._oldTriggerFlag;
             }
         }
     }

@@ -1,10 +1,10 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
-import {camelize, Text} from 'vue';
+import {camelize, Text, Comment, Fragment} from 'vue';
+import {EMPTY_OBJ} from '@vue/shared';
 
 const {h} = Intact.Vdt.miss;
 const {hasOwn, isArray} = Intact.utils;
-const EMPTY_OBJ = {};
 
 export function normalize(vNode) {
     if (vNode == null) return vNode;
@@ -16,28 +16,29 @@ export function normalize(vNode) {
         return vNode.children;
     }
 
-    // if (isIntactComponent(vNode)) {
-        // const options = vNode.componentOptions;
-        // vNode = h(
-            // options.Ctor,
-            // normalizeProps(vNode),
-            // null,
-            // null,
-            // vNode.key,
+    if (isIntactComponent(vNode)) {
+        vNode = h(
+            vNode.type.Component,
+            normalizeProps(vNode),
+            null,
+            null,
+            vNode.key,
             // vNode.ref
-        // );
-    // } else {
+        );
+    } else {
+        // ignore comment vNode
+        if (vNode.type === Comment) return null;
+        // spread fragment
+        if (vNode.type === Fragment) {
+            return normalizeChildren(vNode.children);
+        }
         vNode = h(Wrapper, {vueVNode: vNode}, null, null, vNode.key);
-    // }
+    }
 
     return vNode;
 }
 
-export function createVNodeBySetupContext(Component, ctx) {
-    return h(Component, normalizeProps(Component, ctx));
-}
-
-function normalizeChildren(vNodes) {
+export function normalizeChildren(vNodes) {
     const loop = (vNodes) => {
         if (Array.isArray(vNodes)) {
             const ret = [];
@@ -60,7 +61,10 @@ function normalizeChildren(vNodes) {
     return ret;
 }
 
-function normalizeProps(Component, {attrs, slots}) {
+export function normalizeProps(vNode) {
+    const attrs = vNode.props;
+    const slots = vNode.children;
+    const Component = vNode.type.Component;
     const props = {};
     const propTypes = Component.propTypes;
     for (let key in attrs) {
@@ -89,9 +93,11 @@ function normalizeProps(Component, {attrs, slots}) {
         }
     }
 
-    const {children, _blocks} = normalizeSlots(slots);
-    props.children = children;
-    props._blocks = _blocks;
+    if (slots) {
+        const {children, _blocks} = normalizeSlots(slots);
+        props.children = children;
+        props._blocks = _blocks;
+    }
 
     return props;
 }
@@ -127,8 +133,8 @@ function normalizeSlots(slots) {
     if (rest) {
         blocks = {};
         for (const key in rest) {
-            blocks[key] = function() {
-                return normalizeChildren(rest[key]());
+            blocks[key] = function(parent, ...args) {
+                return normalizeChildren(rest[key](...args));
             }
         }
     }
@@ -174,3 +180,7 @@ function normalizeEvents(props, key, value) {
 
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);
+
+function isIntactComponent(vNode) {
+    return !!vNode.type.Component;
+}

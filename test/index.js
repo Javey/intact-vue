@@ -324,58 +324,52 @@ describe('Unit test', () => {
             // });
         // });
 
-        // it('render functional component which wrap intact component', done => {
-            // const h = Intact.Vdt.miss.h;
-            // const Component = Intact.functionalWrapper(function(props) {
-                // return h(ChildrenIntactComponent, props);
-            // });
-            // render('<C class="a" :a="1">test</C>', {
-                // C: Component
-            // });
+        it('render functional component which wrap intact component', async () => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(function(props) {
+                return h(ChildrenIntactComponent, props);
+            });
+            render('<C class="a" :a="1">test</C>', {
+                C: Component
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div class="a">test</div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div class="a">test</div>');
+        });
 
-        // it('render functional component which return multiple vNodes', done => {
-            // const h = Intact.Vdt.miss.h;
-            // const Component = Intact.functionalWrapper(function(props) {
-                // return [
-                    // h(ChildrenIntactComponent, props),
-                    // h(ChildrenIntactComponent, null, 'two')
-                // ];
-            // });
-            // render('<div><C class="a" :a="1" ref="a" key="a">test</C></div>', {
-                // C: Component
-            // });
+        it('render functional component which return multiple vNodes', async () => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(function(props) {
+                return [
+                    h(ChildrenIntactComponent, props),
+                    h(ChildrenIntactComponent, null, 'two')
+                ];
+            });
+            render('<div><C class="a" :a="1" ref="a" key="a">test</C></div>', {
+                C: Component
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$refs.a.element.innerHTML).to.eql('test');
-                // expect(vm.$el.outerHTML).be.eql('<div><div class="a">test</div><div>two</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$refs.a.element.innerHTML).to.eql('test');
+            expect(vm.$el.outerHTML).be.eql('<div><div class="a">test</div><div>two</div></div>');
+        });
 
-        // it('render blocks in functional component', done => {
-            // const h = Intact.Vdt.miss.h;
-            // const Component = Intact.functionalWrapper(props => {
-                // return h(createIntactComponent(`<div><b:test /></div>`), props);
-            // });
-            // render('<C ref="test"><span slot="test">test</span></C>', {
-                // C: Component
-            // }, {test: 1});
+        it('render blocks in functional component', async () => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(props => {
+                return h(createIntactComponent(`<div><b:test /></div>`), props);
+            });
+            render('<C ref="test"><template v-slot:test><span>test</span></template></C>', {
+                C: Component
+            }, {test: 1});
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
-                // const _context = vm.$refs.test.get('_context');
-                // expect(_context.data.get('test')).be.eql(1);
-                // _context.data.set('test', 2);
-                // expect(vm.test).be.eql(2);
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
+            // const _context = vm.$refs.test.get('_context');
+            // expect(_context.data.get('test')).be.eql(1);
+            // _context.data.set('test', 2);
+            // expect(vm.test).be.eql(2);
+        });
 
         // it('render style and class', done => {
             // render(`<C style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
@@ -507,19 +501,16 @@ describe('Unit test', () => {
                 </C>
             `, {
                 C: IntactComponent,
-                // C: {
-                    // template: `<div><slot></slot></div>`
-                // }
             }, {show: false});
 
-            // vm.$refs.c.refs.c.test = true;
+            vm.$refs.c.refs.c.test = true;
             vm.show = true;
 
             await nextTick();
-            // expect(vm.$refs.c.refs.c.test).to.be.true;
+            expect(vm.$refs.c.refs.c.test).to.be.true;
         });
 
-        // it('update keyed functional component children', (done) => {
+        // it('update keyed functional component children', async () => {
             // const h = Intact.Vdt.miss.h;
             // render(`
                 // <C>
@@ -538,16 +529,13 @@ describe('Unit test', () => {
                 // }),
             // }, {show: true});
 
-            // vm.$nextTick(() => {
-                // const a = vm.$refs.a;
-                // vm.show = false;
-                // vm.$nextTick(() => {
-                    // const b = vm.$refs.b;
-                    // // expect(a === b).be.false;
-                    // // expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
-                    // done();
-                // });
-            // });
+            // await nextTick();
+            // const a = vm.$refs.a;
+            // vm.show = false;
+            // await nextTick();
+            // const b = vm.$refs.b;
+            // // expect(a === b).be.false;
+            // // expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
         // });
 
         // it('diff IntactComponent with vue element', function(done) {

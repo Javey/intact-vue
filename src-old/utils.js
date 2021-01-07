@@ -251,7 +251,7 @@ export function normalizeProps(vNode) {
     // handle children and blocks
     const slots = vNode.slots || resolveSlots(componentOptions.children);
     const {children, _blocks} = getChildrenAndBlocks(slots);
-    // for Intact Functional component, the blocks has been handled
+    // for Intact Functional component, the blocks has been handled.
     // In this case, we should merge them
     // maybe children has been set as property
     if (!hasOwn.call(props, 'children')) {

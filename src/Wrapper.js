@@ -4,11 +4,11 @@ export default class Wrapper {
     init(lastVNode, nextVNode) {
         // let the component destroy by itself
         this.destroyed = true;
-        // this._addProps(nextVNode);
+        this._addProps(nextVNode);
 
-        // return patch(null, nextVNode.props.vueVNode, false, false, this.parentDom);
         const vueVNode = nextVNode.props.vueVNode;
-        render(vueVNode, this.parentDom);
+        const container = this.container = document.createDocumentFragment();
+        render(vueVNode, container);
         return vueVNode.el;
     }
 
@@ -19,13 +19,27 @@ export default class Wrapper {
     }
 
     destroy(vNode) {
-        // patch(vNode.props.vueVNode, null);
+        // render will doRemove in Vue, but Intact may repalce child with the dom
+        // so we hack the parentNode to let Vue does not remove the child
+        const vueNode = vNode.props.vueVNode;
+        const child = vueNode.el;
+        const parentNode = child.parentNode;
+        let lock = true;
+        Object.defineProperty(child, 'parentNode', {
+            get() {
+                if (lock) return null;
+                return child.parentElement;
+            }
+        });
+        render(null, this.container);
+        lock = false;
     }
 
     // maybe the props has been changed, so we change the vueVNode's data
     _addProps(vNode) {
         // for Intact reusing the dom
         this.vdt = {vNode};
+        return;
         const props = vNode.props;
         let vueVNode = props.vueVNode;
         // if we reuse the vNode, clone it

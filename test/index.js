@@ -3,12 +3,30 @@ import Intact from '../src/IntactVue';
 import App from './app.vue';
 // import IntactVue, {IntactComponent} from '../src/IntactVue';
 
-describe('Unit Test', () => {
-    it('test', () => {
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        createApp(App).mount(container);
-    });
+// describe('Vue Test', () => {
+    // it('test', () => {
+        // const container = document.createElement('div');
+        // document.body.appendChild(container);
+        // createApp(App).mount(container);
+    // });
+
+    // it('render with v-model in vue', async () => {
+        // render('<C v-model.trim="a" />', {
+            // C: {
+                // props: {
+                    // modelValue: String,
+                // },
+                // emits: ['update:modelValue'],
+                // template: `<div @click="add">{{ modelValue }}</div>`,
+                // methods: {
+                    // add() {
+                        // this.$emit('update:modelValue', ' aaaa ');
+                    // }
+                // }
+            // }
+        // }, {a: 1});
+    // })
+
 
     // it('test IntactVue', () => {
         // const container = document.createElement('div');
@@ -19,7 +37,7 @@ describe('Unit Test', () => {
             // components: {IntactComponent}
         // }).mount(container);
     // });
-});
+// });
 
 // import Vue from 'vue';
 // import Test1 from './test1.vue';
@@ -69,7 +87,7 @@ const ChildrenIntactComponent = createIntactComponent(`<div class={self.get('cla
 const PropsIntactComponent = createIntactComponent(`<div>a: {self.get('a')} b: {self.get('b')}</div>`);
 
 function reset() {
-    document.body.removeChild(vm.$el);
+    document.body.removeChild(vm.$el.parentElement);
 }
 
 function nextTick() {
@@ -78,8 +96,18 @@ function nextTick() {
     });
 }
 
-describe('Unit test', () => {
+describe('Unit Test', () => {
     // afterEach(reset);
+
+    describe('Vue Test', () => {
+        it('render emtpy slot', async () => {
+            render('<C><template v-slot:slot></template></C>', {
+                C: {
+                    template: `<div><slot name="slot">test</slot></div>`
+                }
+            });
+        });
+    });
 
     describe('Render', () => {
         it('render intact component in vue', async () => {
@@ -190,23 +218,6 @@ describe('Unit test', () => {
             expect(vm.$el.outerHTML).to.eql('<div>{"a":true,"b":true,"c":true,"d":true}</div>');
         });
 
-        // it('render with v-model in vue', async () => {
-            // render('<C v-model.trim="a" />', {
-                // C: {
-                    // props: {
-                        // modelValue: String,
-                    // },
-                    // emits: ['update:modelValue'],
-                    // template: `<div @click="add">{{ modelValue }}</div>`,
-                    // methods: {
-                        // add() {
-                            // this.$emit('update:modelValue', ' aaaa ');
-                        // }
-                    // }
-                // }
-            // }, {a: 1});
-        // })
-
         it('render with event', async () => {
             render('<div><C @click="onClick" />{{ a }}</div>', {
                 C: createIntactComponent(`<div ev-click={self.onClick.bind(self)}>click</div>`, {
@@ -226,103 +237,98 @@ describe('Unit test', () => {
             expect(vm.$el.outerHTML).be.eql('<div><div>click</div>2</div>');
         });
 
-        // it('render with multiple events which event names are the same', done => {
-            // const click = sinon.spy(() => console.log('click'));
-            // const IntactComponent = createIntactComponent(`<div ev-click={self.onClick}>{self.get('value')}</div>`, {
-                // onClick() {
-                    // this.set('value', 'click');
-                    // this.trigger('click');
-                // }
-            // });
-            // render('<div><C @click="click" v-model="value" />{{ value }}</div>', {
-                // C: {
-                    // template: '<IntactComponent v-on="$listeners" v-model="value1" @click="click" />',
-                    // components: {
-                        // IntactComponent
-                    // },
-                    // methods: {click},
-                    // props: {
-                        // value: {
-                            // required: true
-                        // }
-                    // },
-                    // data() {
-                        // return {
-                            // value1: this.value
-                        // }
-                    // },
-                    // watch: {
-                        // value1(v) {
-                            // this.value = v;
-                            // this.$emit('input', v);
-                        // }
-                    // }
-                // }
-            // }, {value: "test"}, {click});
+        it('render with multiple events which event names are the same', async () => {
+            const click = sinon.spy(() => console.log('click'));
+            const changeValue = sinon.spy();
+            const IntactComponent = createIntactComponent(`<div ev-click={self.onClick}>{self.get('value')}</div>`, {
+                onClick() {
+                    this.set('value', 'click');
+                    this.trigger('click');
+                }
+            });
+            render('<div><C @click="click" v-model="value" />{{ value }}</div>', {
+                C: {
+                    template: `<IntactComponent v-model="value1"
+                        @click="click"
+                        @update:modelValue="changeValue"
+                        @$change:value="changeValue"
+                    />`,
+                    components: {
+                        IntactComponent
+                    },
+                    methods: {click, changeValue},
+                    props: {
+                        modelValue: {
+                            required: true
+                        }
+                    },
+                    emits: ['update:modelValue'],
+                    data() {
+                        return {
+                            value1: this.value
+                        }
+                    },
+                    watch: {
+                        value1(v) {
+                            this.value = v;
+                            this.$emit('update:modelValue', v);
+                        }
+                    }
+                }
+            }, {value: "test"}, {click});
 
-            // vm.$nextTick(() => {
-                // dispatchEvent(vm.$el.firstChild, 'click');
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).to.eql('<div><div>click</div>click</div>');
-                    // expect(click.callCount).to.eql(2);
-                    // done();
-                // });
-            // });
-        // });
+            await nextTick();
+            dispatchEvent(vm.$el.firstChild, 'click');
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>click</div>click</div>');
+            expect(click.callCount).to.eql(2);
+            expect(changeValue.callCount).to.eql(2);
+        });
 
-        // it('render with slots', done => {
-            // render('<C><div slot="footer">footer</div><div>children</div></C>', {
-                // C: createIntactComponent(`<div>{self.get('children')}<b:footer></b:footer></div>`)
-            // });
+        it('render with slots', async () => {
+            render('<C><template #footer><div>footer</div></template><div>children</div></C>', {
+                C: createIntactComponent(`<div>{self.get('children')}<b:footer></b:footer></div>`)
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><div>children</div><div>footer</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div>children</div><div>footer</div></div>');
+        });
 
-        // it('render undefined slot', done => {
-            // render('<C><div slot="footer"><C>test</C></div></C>', {
-                // C: createIntactComponent(`<div>{self.get('children')}</div>`)
-            // });
+        it('render undefined slot', async () => {
+            render('<C><template #footer><div><C>test</C></div></template></C>', {
+                C: createIntactComponent(`<div>{self.get('children')}</div>`)
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div></div>');
-                // reset();
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div></div>');
+            reset();
 
-                // render('<C><C><div slot="footer">test</div></C></C>', {
-                    // C: createIntactComponent(`<div>{self.get('children')}</div>`)
-                // });
+            render('<C><C><template #footer><div>test</div></template></C></C>', {
+                C: createIntactComponent(`<div>{self.get('children')}</div>`)
+            });
 
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).be.eql('<div><div></div></div>');
-                    // done();
-                // });
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div></div></div>');
+        });
 
-        // it('render with scoped slots', done => {
-            // render('<C><div slot-scope="scope">{{ scope }}</div></C>', {
-                // // C: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
-                // C: createIntactComponent(`<div><b:default args={['test']} /></div>`)
-            // });
+        it('render with scoped slots', async () => {
+            render('<C><template v-slot="{test}"><div>{{ test }}</div></template></C>', {
+                // C: createIntactComponent(`<div>{self.get('default')('test')}</div>`)
+                C: createIntactComponent(`<div><b:default args={[{test: 'test'}]} /></div>`)
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><div>test</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div>test</div></div>');
+        });
 
-        // it('ignore empty slot in vue, this is default behavior of vue', done => {
-            // render('<C><template slot="slot"></template></C>', {
-                // C: createIntactComponent(`<div><b:slot>test</b:slot></div>`)
-            // });
+        it('ignore empty slot in vue, this is default behavior of vue', async () => {
+            render('<C><template v-slot:slot></template></C>', {
+                C: createIntactComponent(`<div><b:slot>test</b:slot></div>`)
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div>test</div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div>test</div>');
+        });
 
         it('render functional component which wrap intact component', async () => {
             const h = Intact.Vdt.miss.h;

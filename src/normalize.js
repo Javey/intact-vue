@@ -1,10 +1,10 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
-import {camelize, Text, Comment, Fragment} from 'vue';
+import {camelize, Text, Comment, Fragment, isVNode} from 'vue';
 import {EMPTY_OBJ} from '@vue/shared';
 
 const {h} = Intact.Vdt.miss;
-const {hasOwn, isArray, get, set} = Intact.utils;
+const {hasOwn, isArray, get, set, each} = Intact.utils;
 
 export function normalize(vNode) {
     if (vNode == null) return vNode;
@@ -127,17 +127,26 @@ function normalizeBoolean(propTypes, key, camelizedKey, value) {
 function normalizeSlots(slots, props) {
     if (!slots) return;
 
+    // the default slot maybe a scope slot, but we can not detect
+    // whether it is or not, so we try to normalize it as children and
+    // then treat it as a default scope slot too.
+    if (slots.default) {
+        const slot = slots.default;
+        try {
+            props.children = normalizeChildren(ensureValidVNode(slot()));
+        } catch (e) {  }
+    }
+
     let blocks;
     for (const key in slots) {
         const slot = slots[key];
-        if (key === 'default') {
-            props.children = normalizeChildren(slot());
-        } else {
-            if (!blocks) blocks = {};
-            blocks[key] = function(parent, ...args) {
-                return normalizeChildren(slot(...args));
-            };
-        }
+        if (!blocks) blocks = {};
+        blocks[key] = function(parent, ...args) {
+            // if the content is invalid, use parent instead
+            // this is the default behavior of Vue
+            const validSlotContent = ensureValidVNode(slot(...args));
+            return validSlotContent ?  normalizeChildren(validSlotContent) : parent();
+        };
     }
     if (blocks) {
         props._blocks = blocks;
@@ -147,6 +156,7 @@ function normalizeSlots(slots, props) {
 function normalizeEvents(props, key, value) {
     let name;
     let cb = value;
+    const _isArray = isArray(value);
     const changeCallback = (propName) => (c, v) => {
         const modifiersKey = `${propName === 'value' ? 'model' : propName}Modifiers`;
         const {number, trim} = props[modifiersKey] || EMPTY_OBJ;
@@ -155,7 +165,11 @@ function normalizeEvents(props, key, value) {
         } else if (number) {
             v = Number(v);
         }
-        value(v);
+        if (_isArray) {
+            each(value, value => value(v));
+        } else {
+            value(v);
+        }
     };
 
     if (key.startsWith('onUpdate:')) {
@@ -204,4 +218,19 @@ const isOn = (key) => onRE.test(key);
 
 function isIntactComponent(vNode) {
     return !!vNode.type.Component;
+}
+
+function ensureValidVNode(vNodes) {
+    return vNodes.some(child => {
+        if (!isVNode(child)) {
+            return true;
+        }
+        if (child.type === Comment) {
+            return false;
+        }
+        if (child.type === Fragment && !ensureValidVNode(child.children)) {
+            return false;
+        }
+        return true;
+    }) ? vNodes : null;
 }

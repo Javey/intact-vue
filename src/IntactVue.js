@@ -6,15 +6,11 @@ import functionalWrapper from './functionWrapper';
 
 let activeInstance;
 let mountedQueue;
-const ownerQueue = [];
 
 export default class IntactVue extends Intact {
     static functionalWrapper = functionalWrapper;
 
     static get __vccOpts() {
-        // push owner
-        ownerQueue.push(getCurrentInstance());
-
         const Component = this;
         if (Component.__cache) {
             return Component.__cache;
@@ -25,18 +21,13 @@ export default class IntactVue extends Intact {
             setup(props, ctx) {
                 const vueInstance = getCurrentInstance();
 
-                // shift owner
-                const owner = ownerQueue.shift();
-                // console.log(vueInstance);
-
                 enableTracking();
-                const vNode = normalize(vueInstance.vnode, owner);
+                const vNode = normalize(vueInstance.vnode);
                 resetTracking();
 
                 const instance = new Component(vNode.props);
                 instance.vNode = vNode;
                 instance._isVue = true;
-                instance._owner = owner;
                 vNode.children = instance;
                 const setupState = {instance};
                 const proxy = new Proxy(setupState, {
@@ -107,7 +98,7 @@ export default class IntactVue extends Intact {
                 const oldTriggerFlag = this._shouldTrigger;
                 this.__initMountedQueue();
 
-                const vNode = normalize(this.$.vnode, this._owner);
+                const vNode = normalize(this.$.vnode);
                 const lastVNode = this.vNode;
                 vNode.children = this;
 

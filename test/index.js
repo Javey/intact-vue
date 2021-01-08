@@ -35,11 +35,6 @@ function render(template, components, data = {}, methods = {}) {
         components,
         methods,
         [typeof template === 'function' ? 'render' : 'template']: template,
-        // provide() {
-            // return {
-                // _context: this,
-            // }
-        // }
     }).mount(container);
 }
 
@@ -370,10 +365,6 @@ describe('Unit test', () => {
 
             await nextTick();
             expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
-            const _context = vm.$refs.test.get('_context');
-            expect(_context.data.get('test')).be.eql(1);
-            _context.data.set('test', 2);
-            expect(vm.test).be.eql(2);
         });
 
         // it('render style and class', done => {
@@ -1077,89 +1068,6 @@ describe('Unit test', () => {
             // }, {show: false});
             // vm.show = true;
         // });
-
-        // it('should get context data', (done) => {
-            // render('<div><IntactComponent ref="test" /></div>', {
-                // IntactComponent: ChildrenIntactComponent,
-            // }, {test: 1});
-
-            // vm.$nextTick(() => {
-                // const _context = vm.$refs.test.get('_context');
-                // expect(_context).to.be.a('object');
-                // expect(_context.data.get('test')).to.eql(1);
-                // _context.data.set('test', 2);
-                // expect(vm.test).to.eql(2);
-                // done();
-            // });
-        // });
-
-        // it('should get context props', (done) => {
-            // render('<VueComponent :data="data" ref="test" />', {
-                // VueComponent: {
-                    // template: `<IntactComponent ref="test" />`,
-                    // props: {
-                        // data: Object
-                    // },
-                    // components: {
-                        // IntactComponent: SimpleIntactComponent
-                    // }
-                // }
-            // }, {data: {a: 1}});
-            // vm.$nextTick(() => {
-                // const _context = vm.$refs.test.$refs.test.get('_context');
-                // expect(_context.data.get('data')).to.eql({a: 1});
-                // expect(_context.data.get('data.a')).to.eql(1);
-                // _context.data.set('data.a', 2);
-                // expect(vm.data.a).to.eql(2);
-                // done();
-            // });
-        // });
-
-        it('should get context of Intact component that nests in Vue component', async () => {
-            render('<VueComponent ref="c"><IntactComponent ref="a" /></VueComponent>', {
-                VueComponent: {
-                    template: `<div><slot /><IntactComponent ref="b" /></div>`,
-                    components: {
-                        IntactComponent: SimpleIntactComponent,
-                    },
-                    data() {
-                        return {test: 2}
-                    }
-                },
-                IntactComponent: SimpleIntactComponent,
-            }, {test: 1});
-
-            await nextTick();
-            expect(vm.$refs.a.get('_context').data.get('test')).to.eql(1);
-            expect(vm.$refs.c.$refs.b.get('_context').data.get('test')).to.eql(2);
-        });
-
-        it('should get context of Intact functional component that nests in Vue component', async () => {
-            const h = Intact.Vdt.miss.h;
-            const results = [];
-            const Component = Intact.functionalWrapper(function(props) {
-                results.push(props._context.data.get('test'));
-                return h(SimpleIntactComponent, props);
-            });
-
-            render('<VueComponent ref="c"><IntactComponent ref="a" /></VueComponent>', {
-                VueComponent: {
-                    template: `<div><slot /><IntactComponent ref="b" /></div>`,
-                    components: {
-                        IntactComponent: Component
-                    },
-                    data() {
-                        return {test: 2}
-                    }
-                },
-                IntactComponent: Component
-            }, {test: 1});
-
-            await nextTick();
-            expect(vm.$refs.a.get('_context').data.get('test')).to.eql(1);
-            expect(vm.$refs.c.$refs.b.get('_context').data.get('test')).to.eql(2);
-            expect(results).to.eql([1, 2]);
-        });
     });
 
     describe('v-model', () => {

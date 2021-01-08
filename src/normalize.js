@@ -6,7 +6,7 @@ import {EMPTY_OBJ} from '@vue/shared';
 const {h} = Intact.Vdt.miss;
 const {hasOwn, isArray, get, set} = Intact.utils;
 
-export function normalize(vNode, owner) {
+export function normalize(vNode) {
     if (vNode == null) return vNode;
     const type = typeof vNode;
     if (type === 'string' || type === 'number') return vNode;
@@ -19,7 +19,7 @@ export function normalize(vNode, owner) {
     if (isIntactComponent(vNode)) {
         vNode = h(
             vNode.type.Component,
-            normalizeProps(vNode, owner),
+            normalizeProps(vNode),
             null,
             null,
             vNode.key,
@@ -61,7 +61,7 @@ export function normalizeChildren(vNodes) {
     return ret;
 }
 
-export function normalizeProps(vNode, owner) {
+export function normalizeProps(vNode) {
     const attrs = vNode.props;
     const slots = vNode.children;
     const Component = vNode.type.Component;
@@ -94,7 +94,7 @@ export function normalizeProps(vNode, owner) {
     }
 
     normalizeSlots(slots, props);
-    normalizeContext(owner, props);
+    // normalizeContext(owner, props);
 
     return props;
 }
@@ -177,27 +177,27 @@ function normalizeEvents(props, key, value) {
     }
 }
 
-function normalizeContext(owner, props) {
-    // if the vNode is returned by functionWrapper, then the _context has injected
-    if (props._context) return;
+// function normalizeContext(owner, props) {
+    // // if the vNode is returned by functionWrapper, then the _context has injected
+    // if (props._context) return;
 
-    const data = owner.data;
-    props._context = {
-        data: {
-            get(name) {
-                if (name != null) {
-                    return get(data, name);
-                } else {
-                    return data;
-                }
-            },
+    // const data = owner.data;
+    // props._context = {
+        // data: {
+            // get(name) {
+                // if (name != null) {
+                    // return get(data, name);
+                // } else {
+                    // return data;
+                // }
+            // },
 
-            set(name, value) {
-                set(data, name, value);
-            }
-        }
-    }
-}
+            // set(name, value) {
+                // set(data, name, value);
+            // }
+        // }
+    // }
+// }
 
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);

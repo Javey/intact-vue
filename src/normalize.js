@@ -4,9 +4,9 @@ import {camelize, Text, Comment, Fragment} from 'vue';
 import {EMPTY_OBJ} from '@vue/shared';
 
 const {h} = Intact.Vdt.miss;
-const {hasOwn, isArray} = Intact.utils;
+const {hasOwn, isArray, get, set} = Intact.utils;
 
-export function normalize(vNode) {
+export function normalize(vNode, owner) {
     if (vNode == null) return vNode;
     const type = typeof vNode;
     if (type === 'string' || type === 'number') return vNode;
@@ -19,7 +19,7 @@ export function normalize(vNode) {
     if (isIntactComponent(vNode)) {
         vNode = h(
             vNode.type.Component,
-            normalizeProps(vNode),
+            normalizeProps(vNode, owner),
             null,
             null,
             vNode.key,
@@ -61,7 +61,7 @@ export function normalizeChildren(vNodes) {
     return ret;
 }
 
-export function normalizeProps(vNode) {
+export function normalizeProps(vNode, owner) {
     const attrs = vNode.props;
     const slots = vNode.children;
     const Component = vNode.type.Component;
@@ -93,11 +93,8 @@ export function normalizeProps(vNode) {
         }
     }
 
-    if (slots) {
-        const {children, _blocks} = normalizeSlots(slots);
-        props.children = children;
-        props._blocks = _blocks;
-    }
+    normalizeSlots(slots, props);
+    normalizeContext(owner, props);
 
     return props;
 }
@@ -127,21 +124,23 @@ function normalizeBoolean(propTypes, key, camelizedKey, value) {
     return value;
 }
 
-function normalizeSlots(slots) {
-    const {default: d, ...rest} = slots;
+function normalizeSlots(slots, props) {
+    if (!slots) return;
+
     let blocks;
-    if (rest) {
-        blocks = {};
-        for (const key in rest) {
+    for (const key in slots) {
+        const slot = slots[key];
+        if (key === 'default') {
+            props.children = normalizeChildren(slot());
+        } else {
+            if (!blocks) blocks = {};
             blocks[key] = function(parent, ...args) {
-                return normalizeChildren(rest[key](...args));
-            }
+                return normalizeChildren(slot(...args));
+            };
         }
     }
-
-    return {
-        children: d ? normalizeChildren(d()) : undefined,
-        _blocks: blocks,
+    if (blocks) {
+        props._blocks = blocks;
     }
 }
 
@@ -175,6 +174,28 @@ function normalizeEvents(props, key, value) {
         props[name] = [].concat(props[name], cb);
     } else {
         props[name] = cb;
+    }
+}
+
+function normalizeContext(owner, props) {
+    // if the vNode is returned by functionWrapper, then the _context has injected
+    if (props._context) return;
+
+    const data = owner.data;
+    props._context = {
+        data: {
+            get(name) {
+                if (name != null) {
+                    return get(data, name);
+                } else {
+                    return data;
+                }
+            },
+
+            set(name, value) {
+                set(data, name, value);
+            }
+        }
     }
 }
 

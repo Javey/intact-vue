@@ -1,18 +1,21 @@
 import Intact from 'intact/dist';
-import {Comment, createVNode, getCurrentInstance} from 'vue';
+import {Comment, createVNode, getCurrentInstance, inject} from 'vue';
 import {createVNodeBySetupContext, normalize} from './normalize';
 import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
 
 let activeInstance;
 let mountedQueue;
+const ownerQueue = [];
 
 export default class IntactVue extends Intact {
     static functionalWrapper = functionalWrapper;
 
     static get __vccOpts() {
-        const Component = this;
+        // push owner
+        ownerQueue.push(getCurrentInstance());
 
+        const Component = this;
         if (Component.__cache) {
             return Component.__cache;
         }
@@ -22,13 +25,18 @@ export default class IntactVue extends Intact {
             setup(props, ctx) {
                 const vueInstance = getCurrentInstance();
 
+                // shift owner
+                const owner = ownerQueue.shift();
+                // console.log(vueInstance);
+
                 enableTracking();
-                const vNode = normalize(vueInstance.vnode);
+                const vNode = normalize(vueInstance.vnode, owner);
                 resetTracking();
 
                 const instance = new Component(vNode.props);
                 instance.vNode = vNode;
                 instance._isVue = true;
+                instance._owner = owner;
                 vNode.children = instance;
                 const setupState = {instance};
                 const proxy = new Proxy(setupState, {
@@ -99,7 +107,7 @@ export default class IntactVue extends Intact {
                 const oldTriggerFlag = this._shouldTrigger;
                 this.__initMountedQueue();
 
-                const vNode = normalize(this.$.vnode);
+                const vNode = normalize(this.$.vnode, this._owner);
                 const lastVNode = this.vNode;
                 vNode.children = this;
 

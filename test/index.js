@@ -1,14 +1,14 @@
 import {createApp} from 'vue';
 import Intact from '../src/IntactVue';
-// import App from './app.vue';
+import App from './app.vue';
 // import IntactVue, {IntactComponent} from '../src/IntactVue';
 
-// describe('Unit Test', () => {
-    // it('test', () => {
-        // const container = document.createElement('div');
-        // document.body.appendChild(container);
-        // createApp(App).mount(container);
-    // });
+describe('Unit Test', () => {
+    it('test', () => {
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        createApp(App).mount(container);
+    });
 
     // it('test IntactVue', () => {
         // const container = document.createElement('div');
@@ -19,7 +19,7 @@ import Intact from '../src/IntactVue';
             // components: {IntactComponent}
         // }).mount(container);
     // });
-// });
+});
 
 // import Vue from 'vue';
 // import Test1 from './test1.vue';
@@ -35,6 +35,11 @@ function render(template, components, data = {}, methods = {}) {
         components,
         methods,
         [typeof template === 'function' ? 'render' : 'template']: template,
+        // provide() {
+            // return {
+                // _context: this,
+            // }
+        // }
     }).mount(container);
 }
 
@@ -365,10 +370,10 @@ describe('Unit test', () => {
 
             await nextTick();
             expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
-            // const _context = vm.$refs.test.get('_context');
-            // expect(_context.data.get('test')).be.eql(1);
-            // _context.data.set('test', 2);
-            // expect(vm.test).be.eql(2);
+            const _context = vm.$refs.test.get('_context');
+            expect(_context.data.get('test')).be.eql(1);
+            _context.data.set('test', 2);
+            expect(vm.test).be.eql(2);
         });
 
         // it('render style and class', done => {
@@ -928,7 +933,7 @@ describe('Unit test', () => {
         // });
     // });
 
-    // describe('vNode', () => {
+    describe('vNode', () => {
         // it('change children\'s props of vue element', function(done) {
             // this.enableTimeouts(false);
             // const onClick = sinon.spy(() => console.log('click'));
@@ -1109,7 +1114,53 @@ describe('Unit test', () => {
                 // done();
             // });
         // });
-    // });
+
+        it('should get context of Intact component that nests in Vue component', async () => {
+            render('<VueComponent ref="c"><IntactComponent ref="a" /></VueComponent>', {
+                VueComponent: {
+                    template: `<div><slot /><IntactComponent ref="b" /></div>`,
+                    components: {
+                        IntactComponent: SimpleIntactComponent,
+                    },
+                    data() {
+                        return {test: 2}
+                    }
+                },
+                IntactComponent: SimpleIntactComponent,
+            }, {test: 1});
+
+            await nextTick();
+            expect(vm.$refs.a.get('_context').data.get('test')).to.eql(1);
+            expect(vm.$refs.c.$refs.b.get('_context').data.get('test')).to.eql(2);
+        });
+
+        it('should get context of Intact functional component that nests in Vue component', async () => {
+            const h = Intact.Vdt.miss.h;
+            const results = [];
+            const Component = Intact.functionalWrapper(function(props) {
+                results.push(props._context.data.get('test'));
+                return h(SimpleIntactComponent, props);
+            });
+
+            render('<VueComponent ref="c"><IntactComponent ref="a" /></VueComponent>', {
+                VueComponent: {
+                    template: `<div><slot /><IntactComponent ref="b" /></div>`,
+                    components: {
+                        IntactComponent: Component
+                    },
+                    data() {
+                        return {test: 2}
+                    }
+                },
+                IntactComponent: Component
+            }, {test: 1});
+
+            await nextTick();
+            expect(vm.$refs.a.get('_context').data.get('test')).to.eql(1);
+            expect(vm.$refs.c.$refs.b.get('_context').data.get('test')).to.eql(2);
+            expect(results).to.eql([1, 2]);
+        });
+    });
 
     describe('v-model', () => {
         it('with modifier', async () => {

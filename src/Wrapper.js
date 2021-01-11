@@ -1,4 +1,16 @@
-import {render} from 'vue';
+import {createApp, h, render, getCurrentInstance, KeepAlive} from 'vue';
+
+// we must use this hack method to get patch function
+let internals;
+createApp({
+    render() {
+        return h(KeepAlive, null, h(function() {
+            const instance = getCurrentInstance();
+            internals = instance.parent.ctx.renderer;
+        }));
+    }
+}).mount(document.createElement('div'));
+const {p: patch, um: unmount} = internals;
 
 export default class Wrapper {
     init(lastVNode, nextVNode) {
@@ -7,33 +19,37 @@ export default class Wrapper {
         this._addProps(nextVNode);
 
         const vueVNode = nextVNode.props.vueVNode;
-        const container = this.container = document.createDocumentFragment();
-        render(vueVNode, container);
+        const parentDom = this.parentDom || document.createDocumentFragment();
+        // const container = this.container = document.createDocumentFragment();
+        // render(vueVNode, container);
+        patch(null, vueVNode, parentDom, null);
         return vueVNode.el;
     }
 
     update(lastVNode, nextVNode) {
         this._addProps(nextVNode);
         const vueVNode = nextVNode.props.vueVNode;
-        render(vueVNode, this.container);
+        // render(vueVNode, this.container);
+        patch(lastVNode.props.vueVNode, vueVNode, this.parentDom, null);
         return vueVNode.el;
     }
 
     destroy(vNode) {
+        unmount(vNode.props.vueVNode, null, null, false);
         // render will doRemove in Vue, but Intact may repalce child with the dom
         // so we hack the parentNode to let Vue does not remove the child
-        const vueNode = vNode.props.vueVNode;
-        const child = vueNode.el;
-        const parentNode = child.parentNode;
-        let lock = true;
-        Object.defineProperty(child, 'parentNode', {
-            get() {
-                if (lock) return null;
-                return child.parentElement;
-            }
-        });
-        render(null, this.container);
-        lock = false;
+        // const vueNode = vNode.props.vueVNode;
+        // const child = vueNode.el;
+        // const parentNode = child.parentNode;
+        // let lock = true;
+        // Object.defineProperty(child, 'parentNode', {
+            // get() {
+                // if (lock) return null;
+                // return child.parentElement;
+            // }
+        // });
+        // render(null, this.container);
+        // lock = false;
     }
 
     // maybe the props has been changed, so we change the vueVNode's data
@@ -76,3 +92,7 @@ export default class Wrapper {
     }
 }
 
+function getParentComponent(instance) {
+    let parent = instance.parent;
+
+}

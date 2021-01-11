@@ -1,4 +1,4 @@
-import {createApp, h} from 'vue';
+import {createApp, h, getCurrentInstance} from 'vue';
 import Intact from '../src/IntactVue';
 import App from './app.vue';
 import Normalize from './normalize.vue';
@@ -99,16 +99,6 @@ function nextTick() {
 
 describe('Unit Test', () => {
     // afterEach(reset);
-
-    describe('Vue Test', () => {
-        it('render emtpy slot', async () => {
-            render('<C><template v-slot:slot></template></C>', {
-                C: {
-                    template: `<div><slot name="slot">test</slot></div>`
-                }
-            });
-        });
-    });
 
     describe('Render', () => {
         it('render intact component in vue', async () => {
@@ -352,12 +342,12 @@ describe('Unit Test', () => {
                     h(ChildrenIntactComponent, null, 'two')
                 ];
             });
-            render('<div><C class="a" :a="1" ref="a" key="a">test</C></div>', {
+            render('<div><C class="a" :a="1" :forwardRef="i => a = i" key="a">test</C></div>', {
                 C: Component
             });
 
             await nextTick();
-            expect(vm.$refs.a.element.innerHTML).to.eql('test');
+            expect(vm.a.element.innerHTML).to.eql('test');
             expect(vm.$el.outerHTML).be.eql('<div><div class="a">test</div><div>two</div></div>');
         });
 
@@ -504,16 +494,13 @@ describe('Unit Test', () => {
         });
 
         it('update keyed functional component children', async () => {
+            // v-if / v-else will add different key by Vue
             const h = Intact.Vdt.miss.h;
             render(`
                 <C>
                     <div>
-                        <div v-if="show">
-                            <C key="a" ref="a">1</C>
-                        </div>
-                        <div v-else>
-                            <C key="b" ref="b">2</C>
-                        </div>
+                        <C :forwardRef="i => a = i" v-if="show">1</C>
+                        <C :forwardRef="i => b = i" v-else>2</C>
                     </div>
                 </C>
                 `, {
@@ -523,102 +510,99 @@ describe('Unit Test', () => {
             }, {show: true});
 
             await nextTick();
-            const a = vm.$refs.a;
+            const a = vm.a;
             vm.show = false;
             await nextTick();
-            const b = vm.$refs.b;
+            const b = vm.b;
             expect(a === b).be.false;
-            // expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
+            expect(vm.$el.innerHTML).be.eql('<div><div>2</div></div>');
         });
 
-        // it('diff IntactComponent with vue element', function(done) {
-            // this.enableTimeouts(false);
-            // render('<C><C v-if="show">1</C><p v-else>2</p></C>', {
-                // C: ChildrenIntactComponent
-            // }, {show: false});
+        it('diff IntactComponent with vue element', async () => {
+            const C = ChildrenIntactComponent;
+            render(function() {
+                return h(C, null, this.show ? h(C, null, '1') : h('p', null, '2'));
+            }, null,  function() {
+                return {
+                    show: false
+                }
+            });
 
-            // vm.show = true;
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><div>1</div></div>');
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div><div>1</div></div>');
+            vm.show = false;
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div><p>2</p></div>');
+        });
 
-                // vm.show = false;
+        it('should update ref', async () => {
+            const C = ChildrenIntactComponent;
+            render(function() {
+                return h('div', null, this.show ? h(C, null, 1) : h(C, {ref: 'a'}, 2));
+            }, null, {show: true});
 
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).be.eql('<div><p>2</p></div>');
-                    // done();
-                // });
-            // });
-        // });
+            vm.show = false;
+            await nextTick();
+            expect(vm.$refs.a.inited).be.true;
+        });
 
-        // it('should update ref', done => {
-            // render('<div><C v-if="show">1</C><C ref="a" v-else>2</C></div>', {
-                // // C: Vue.extend({
-                    // // template: '<div><template slots="default"></template></div>'
-                // // })
-                // C: ChildrenIntactComponent
-            // }, {show: true});
+        it('should update ref in for', async () => {
+            render(`
+                <div>
+                    <C v-for="(item, index) in data"
+                        :key="index"
+                        :ref="'test' + index"
+                        :index="item.value"
+                    >{{ item.value }}</C>
+                </div>
+            `, {
+                C: ChildrenIntactComponent
+            }, {data: []}, {add(index) {
+                this.data.push({value: this.data.length + 1});
+            }});
 
-            // vm.show = false;
-            // vm.$nextTick(() => {
-                // expect(vm.$refs.a).be.an.instanceof(ChildrenIntactComponent);
-                // done();
-            // });
-        // });
+            vm.data.push({value: 1});
+            await nextTick();
+            vm.data.push({value: 2});
+            await nextTick();
+            vm.data.push({value: 3});
+            await nextTick();
+            [0, 1, 2].forEach((index) => {
+                expect(vm.$refs['test' + index].get('index')).to.eql(index + 1);
+            });
+        });
 
-        // it('should update ref in for', done => {
-            // render(`
-                // <div>
-                    // <C v-for="(item, index) in data"
-                        // :key="index"
-                        // ref="test"
-                        // :index="item.value"
-                    // >{{ item.value }}</C>
-                // </div>
-            // `, {
-                // C: ChildrenIntactComponent
-            // }, {data: []}, {add(index) {
-                // this.data.push({value: this.data.length + 1});
-            // }});
+        it('should watch vue component nested into intact component', async () => {
+            const handler = sinon.spy();
+            render('<C><D :a="a" /><div @click="add" ref="add">click</div></C>', {
+                C: ChildrenIntactComponent,
+                // C: {template: '<div><slot></slot></div>'},
+                D: {
+                    template: '<div>{{ a.join(",") }}</div>',
+                    props: {
+                        a: {
+                            default: [],
+                            type: Array,
+                        }
+                    },
+                    watch: {
+                        a: {
+                            immediate: true,
+                            deep: true,
+                            handler,
+                        }
+                    }
+                }
+            }, {a: [2]}, {add() { this.a.push(2) }});
 
-            // vm.data.push({value: 1});
-            // vm.$nextTick(() => {
-                // vm.data.push({value: 2});
-                // vm.$nextTick(() => {
-                    // vm.data.push({value: 3});
-                    // vm.$nextTick(() => {
-                        // vm.$refs.test.forEach((item, index) => {
-                            // expect(item.get('index')).to.eql(index + 1);
-                        // });
-                        // done();
-                    // });
-                // });
-            // });
-        // });
-
-        // it('should watch vue component nested into intact component', () => {
-            // render('<C><D :a="a" /><div @click="add">click</div></C>', {
-                // C: ChildrenIntactComponent,
-                // // C: {template: '<div><slot></slot></div>'},
-                // D: {
-                    // template: '<div>{{ a.join(",") }}</div>',
-                    // props: {
-                        // a: {
-                            // default: [],
-                            // type: Array,
-                        // }
-                    // },
-                    // watch: {
-                        // a: {
-                            // immediate: true,
-                            // handler() {
-                                // console.log('test');
-                            // }
-                        // }
-                    // }
-                // }
-            // }, {a: [2]}, {add() { this.a.push(2) }});
-        // });
+            await nextTick();
+            expect(handler.callCount).to.eql(1);
+            vm.$refs.add.click();
+            await nextTick();
+            expect(handler.callCount).to.eql(2);
+        });
 
         // it('should update correctly even if intact has changed type of element', (done) => {
             // render(`<div><div v-if="show"><C :total="total" /></div><div v-else></div></div>`, {
@@ -1188,4 +1172,25 @@ describe('Unit Test', () => {
             // });
         // });
     // });
+
+    describe('Vue Test', () => {
+        it('render emtpy slot', async () => {
+            render('<C><template v-slot:slot></template></C>', {
+                C: {
+                    template: `<div><slot name="slot">test</slot></div>`
+                }
+            });
+        });
+
+        it('keep-alive', async () => {
+            render('<keep-alive><C /></keep-alive>', {
+                C: function() {
+                    const instance = getCurrentInstance();
+                    const {p: patch} = instance.parent.ctx.renderer;
+                    console.log(patch);
+                    return h('div', null, 'test');
+                }
+            });
+        });
+    });
 });

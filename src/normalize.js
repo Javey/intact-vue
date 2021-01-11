@@ -4,7 +4,7 @@ import {camelize, Text, Comment, Fragment, isVNode} from 'vue';
 import {EMPTY_OBJ} from '@vue/shared';
 
 const {h} = Intact.Vdt.miss;
-const {hasOwn, isArray, get, set, each} = Intact.utils;
+const {hasOwn, isArray, get, set, each, isString} = Intact.utils;
 
 export function normalize(vNode) {
     if (vNode == null) return vNode;
@@ -129,6 +129,16 @@ function normalizeBoolean(propTypes, key, camelizedKey, value) {
 
 function normalizeSlots(slots, props) {
     if (!slots) return;
+
+    // is array children
+    if (isArray(slots)) {
+        return props.children = normalizeChildren(slots);
+    }
+
+    // is string
+    if (isString(slots)) {
+        return props.children = slots;
+    }
 
     // the default slot maybe a scope slot, but we can not detect
     // whether it is or not, so we try to normalize it as children and

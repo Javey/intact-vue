@@ -23,7 +23,7 @@ export function normalize(vNode) {
             null,
             null,
             vNode.key,
-            // vNode.ref
+            vNode.ref
         );
     } else {
         // ignore comment vNode
@@ -34,6 +34,9 @@ export function normalize(vNode) {
         }
         vNode = h(Wrapper, {vueVNode: vNode}, null, null, vNode.key);
     }
+
+    // tell Vue that this is a read only object, and don't reactive it
+    vNode.__v_isReadonly = true;
 
     return vNode;
 }

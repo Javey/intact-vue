@@ -13,9 +13,10 @@ export default class Wrapper {
     }
 
     update(lastVNode, nextVNode) {
-        console.log('update')
-        // this._addProps(nextVNode);
-        // return patch(lastVNode.props.vueVNode, nextVNode.props.vueVNode, false, false, this.parentDom);
+        this._addProps(nextVNode);
+        const vueVNode = nextVNode.props.vueVNode;
+        render(vueVNode, this.container);
+        return vueVNode.el;
     }
 
     destroy(vNode) {

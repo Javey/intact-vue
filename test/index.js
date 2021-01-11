@@ -1,7 +1,9 @@
-import {createApp} from 'vue';
+import {createApp, h} from 'vue';
 import Intact from '../src/IntactVue';
 import App from './app.vue';
-// import IntactVue, {IntactComponent} from '../src/IntactVue';
+import Normalize from './normalize.vue';
+
+const {isFunction} = Intact.utils;
 
 // describe('Vue Test', () => {
     // it('test', () => {
@@ -41,7 +43,6 @@ import App from './app.vue';
 
 // import Vue from 'vue';
 // import Test1 from './test1.vue';
-// import Normalize from './normalize.vue';
 
 let vm;
 
@@ -49,7 +50,7 @@ function render(template, components, data = {}, methods = {}) {
     const container = document.createElement('div');
     document.body.appendChild(container);
     return vm = createApp({
-        data: () => data,
+        data: isFunction(data) ? data : () => data,
         components,
         methods,
         [typeof template === 'function' ? 'render' : 'template']: template,
@@ -373,80 +374,70 @@ describe('Unit Test', () => {
             expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
         });
 
-        // it('render style and class', done => {
-            // render(`<C style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
-                // C: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
-            // });
+        it('render style and class', async () => {
+            render(`<C style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
+                C: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div class="a b" style="color: red; font-size: 12px;">test</div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div class="a b" style="color: red; font-size: 12px;">test</div>');
+        });
 
-        // it('render async intact component', done => {
-            // render('<C />', {
-                // C: createIntactComponent('<div>test</div>', {
-                    // _init() {
-                        // return new Promise((resolve) => {
-                            // resolve();
-                        // });
-                    // }
-                // })
-            // });
+        it('render async intact component', async () => {
+            render('<C />', {
+                C: createIntactComponent('<div>test</div>', {
+                    _init() {
+                        return new Promise((resolve) => {
+                            resolve();
+                        });
+                    }
+                })
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).be.eql('<div>test</div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).be.eql('<div>test</div>');
+        });
 
-        // it('render nested array children', done => {
-            // render(function(h) {
-                // const content = Intact.normalize([
-                    // h('div', null, '1'),
-                    // [
-                        // h('div', null, '2'),
-                        // h('div', null, '3')
-                    // ]
-                // ]);
-                // return h('C', {attrs: {content}});
-            // }, {
-                // C: createIntactComponent(`<div>{self.get('content')}</div>`)
-            // });
+        it('render nested array children', async () => {
+            const C = createIntactComponent(`<div>{self.get('content')}</div>`);
+            render(function() {
+                const content = Intact.normalize([
+                    h('div', null, '1'),
+                    [
+                        h('div', null, '2'),
+                        h('div', null, '3')
+                    ]
+                ]);
+                return h(C, {content});
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div><div>1</div><div>2</div><div>3</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>1</div><div>2</div><div>3</div></div>');
+        });
 
-        // it('render normalize vNode with propperty', done => {
-            // // no [Vue warn]
-            // render(function(h) {
-                // return h('C');
-            // }, {
-                // C: Normalize
-            // });
+        it('render normalize vNode with propperty', async () => {
+            const C = Normalize;
+            // no [Vue warn]
+            render(function() {
+                return h(C);
+            });
 
-            // done();
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>test</div><div></div></div>');
+        });
 
-        // it('render vue vNodes as children', done => {
-            // render('<C :children="children" />', {
-                // C: ChildrenIntactComponent
-            // }, function() {
-                // const h = this.$createElement;
-                // return {
-                    // children: Intact.normalize(h('div', null, 'test'))
-                // }
-            // });
+        it('render vue vNodes as children', async () => {
+            render('<C :children="children" />', {
+                C: ChildrenIntactComponent
+            }, function() {
+                return {
+                    children: Intact.normalize(h('div', null, 'test'))
+                }
+            });
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div><div>test</div></div>');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>test</div></div>');
+        });
 
         it('render props which name is hyphenated style', async () => {
             const Component = createIntactComponent(`<div ev-click={self.click}>{self.get('userName')}</div>`, {
@@ -512,33 +503,33 @@ describe('Unit Test', () => {
             expect(vm.$refs.c.refs.c.test).to.be.true;
         });
 
-        // it('update keyed functional component children', async () => {
-            // const h = Intact.Vdt.miss.h;
-            // render(`
-                // <C>
-                    // <div>
-                        // <div v-if="show">
-                            // <C key="a" ref="a">1</C>
-                        // </div>
-                        // <div v-else>
-                            // <C key="b" ref="b">2</C>
-                        // </div>
-                    // </div>
-                // </C>
-                // `, {
-                // C: Intact.functionalWrapper(function Wrapper(props) {
-                    // return h(ChildrenIntactComponent, props);
-                // }),
-            // }, {show: true});
+        it('update keyed functional component children', async () => {
+            const h = Intact.Vdt.miss.h;
+            render(`
+                <C>
+                    <div>
+                        <div v-if="show">
+                            <C key="a" ref="a">1</C>
+                        </div>
+                        <div v-else>
+                            <C key="b" ref="b">2</C>
+                        </div>
+                    </div>
+                </C>
+                `, {
+                C: Intact.functionalWrapper(function Wrapper(props) {
+                    return h(ChildrenIntactComponent, props);
+                }),
+            }, {show: true});
 
-            // await nextTick();
-            // const a = vm.$refs.a;
-            // vm.show = false;
-            // await nextTick();
-            // const b = vm.$refs.b;
-            // // expect(a === b).be.false;
-            // // expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
-        // });
+            await nextTick();
+            const a = vm.$refs.a;
+            vm.show = false;
+            await nextTick();
+            const b = vm.$refs.b;
+            expect(a === b).be.false;
+            // expect(vm.$el.innerHTML).be.eql('<div><div><div>2</div></div></div>');
+        });
 
         // it('diff IntactComponent with vue element', function(done) {
             // this.enableTimeouts(false);

@@ -1,6 +1,6 @@
 import Intact from 'intact/dist';
 import {Comment, createVNode, getCurrentInstance, inject} from 'vue';
-import {createVNodeBySetupContext, normalize} from './normalize';
+import {createVNodeBySetupContext, normalize, normalizeChildren} from './normalize';
 import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
 
@@ -9,6 +9,7 @@ let mountedQueue;
 
 export default class IntactVue extends Intact {
     static functionalWrapper = functionalWrapper;
+    static normalize = normalizeChildren;
 
     static get __vccOpts() {
         const Component = this;
@@ -230,19 +231,5 @@ export default class IntactVue extends Intact {
     __popActiveInstance() {
         activeInstance = this._prevActiveInstance;
         this._prevActiveInstance = null;
-    }
-}
-
-export class IntactComponent extends IntactVue {
-    static template = `<div ev-click={self.onClick}>{self.get('count')}</div>`;
-
-    defaults() {
-        return {
-            count: 1
-        }
-    }
-
-    onClick() {
-        this.set('count', this.get('count') + 1);
     }
 }

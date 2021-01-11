@@ -1,4 +1,5 @@
-import {createApp, h, render, getCurrentInstance, KeepAlive} from 'vue';
+import {createApp, h, getCurrentInstance, KeepAlive} from 'vue';
+import {isIntactComponent} from './normalize';
 
 // we must use this hack method to get patch function
 let internals;
@@ -22,7 +23,7 @@ export default class Wrapper {
         const parentDom = this.parentDom || document.createDocumentFragment();
         // const container = this.container = document.createDocumentFragment();
         // render(vueVNode, container);
-        patch(null, vueVNode, parentDom, null);
+        patch(null, vueVNode, parentDom, null, getParentComponent());
         return vueVNode.el;
     }
 
@@ -30,7 +31,7 @@ export default class Wrapper {
         this._addProps(nextVNode);
         const vueVNode = nextVNode.props.vueVNode;
         // render(vueVNode, this.container);
-        patch(lastVNode.props.vueVNode, vueVNode, this.parentDom, null);
+        patch(lastVNode.props.vueVNode, vueVNode, this.parentDom, null, getParentComponent());
         return vueVNode.el;
     }
 
@@ -92,7 +93,10 @@ export default class Wrapper {
     }
 }
 
-function getParentComponent(instance) {
-    let parent = instance.parent;
-
+function getParentComponent() {
+    let instance = getCurrentInstance();
+    while (instance && isIntactComponent(instance)) {
+        instance = instance.parent;
+    }
+    return instance;
 }

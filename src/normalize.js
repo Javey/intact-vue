@@ -229,7 +229,7 @@ function normalizeEvents(props, key, value) {
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);
 
-function isIntactComponent(vNode) {
+export function isIntactComponent(vNode) {
     return !!vNode.type.Component;
 }
 

@@ -1,6 +1,6 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
-import {camelize, Text, Comment, Fragment, isVNode} from 'vue';
+import {camelize, Text, Comment, Fragment, isVNode, vShow} from 'vue';
 import {EMPTY_OBJ} from '@vue/shared';
 
 const {h} = Intact.Vdt.miss;
@@ -32,7 +32,7 @@ export function normalize(vNode) {
         if (vNode.type === Fragment) {
             return normalizeChildren(vNode.children);
         }
-        vNode = h(Wrapper, {vueVNode: vNode}, null, null, vNode.key);
+        vNode = h(Wrapper, {vueVNode: vNode}, null, vNode.props && vNode.props.class, vNode.key);
     }
 
     // tell Vue that this is a read only object, and don't reactive it
@@ -97,7 +97,7 @@ export function normalizeProps(vNode) {
     }
 
     normalizeSlots(slots, props);
-    // normalizeContext(owner, props);
+    normalizeDirs(vNode.dirs, props);
 
     return props;
 }
@@ -204,27 +204,19 @@ function normalizeEvents(props, key, value) {
     }
 }
 
-// function normalizeContext(owner, props) {
-    // // if the vNode is returned by functionWrapper, then the _context has injected
-    // if (props._context) return;
+function normalizeDirs(dirs, props) {
+    if (!dirs) return;
 
-    // const data = owner.data;
-    // props._context = {
-        // data: {
-            // get(name) {
-                // if (name != null) {
-                    // return get(data, name);
-                // } else {
-                    // return data;
-                // }
-            // },
-
-            // set(name, value) {
-                // set(data, name, value);
-            // }
-        // }
-    // }
-// }
+    dirs.find(({dir, value}) => {
+        // only handle v-show
+        if (dir === vShow) {
+            if (!value) {
+                (props.style || (props.style = {})).display = 'none';
+            }
+            return true;
+        }
+    });
+}
 
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);

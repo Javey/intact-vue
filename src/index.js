@@ -1,3 +1,3 @@
-import IntactVue from 'IntactVue';
+import IntactVue from './IntactVue';
 
 export default IntactVue;

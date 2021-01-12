@@ -2,47 +2,10 @@ import {createApp, h, getCurrentInstance} from 'vue';
 import Intact from '../src/IntactVue';
 import App from './app.vue';
 import Normalize from './normalize.vue';
+import Test1 from './test1.vue';
+import Test3 from './test3.vue';
 
 const {isFunction} = Intact.utils;
-
-// describe('Vue Test', () => {
-    // it('test', () => {
-        // const container = document.createElement('div');
-        // document.body.appendChild(container);
-        // createApp(App).mount(container);
-    // });
-
-    // it('render with v-model in vue', async () => {
-        // render('<C v-model.trim="a" />', {
-            // C: {
-                // props: {
-                    // modelValue: String,
-                // },
-                // emits: ['update:modelValue'],
-                // template: `<div @click="add">{{ modelValue }}</div>`,
-                // methods: {
-                    // add() {
-                        // this.$emit('update:modelValue', ' aaaa ');
-                    // }
-                // }
-            // }
-        // }, {a: 1});
-    // })
-
-
-    // it('test IntactVue', () => {
-        // const container = document.createElement('div');
-        // document.body.appendChild(container);
-        // // createApp(IntactVue).mount(container);
-        // createApp({
-            // template: `<div><IntactComponent :count="2" key="a" ref="a">child</IntactComponent></div>`,
-            // components: {IntactComponent}
-        // }).mount(container);
-    // });
-// });
-
-// import Vue from 'vue';
-// import Test1 from './test1.vue';
 
 let vm;
 
@@ -602,453 +565,420 @@ describe('Unit Test', () => {
             vm.$refs.add.click();
             await nextTick();
             expect(handler.callCount).to.eql(2);
+            expect(vm.$el.innerHTML).to.eql('<div>2,2</div><div>click</div>');
         });
 
-        // it('should update correctly even if intact has changed type of element', (done) => {
-            // render(`<div><div v-if="show"><C :total="total" /></div><div v-else></div></div>`, {
-                // C: createIntactComponent(`if (!self.get('total')) return; <div>component</div>`)
-            // }, {show: true, total: 0});
+        it('should update correctly even if intact has changed type of element', async () => {
+            const C = createIntactComponent(`if (!self.get('total')) return; <div>component</div>`);
+            render(function() {
+                return h('div', null, this.show ?
+                    h('div', null, h(C, {total: this.total})) :
+                    h('div')
+                );
+            }, null, {show: true, total: 0});
 
-            // vm.total = 1;
-            // vm.$nextTick(() => {
-                // vm.show = false;
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).eql('<div><div></div></div>');
+            vm.total = 1;
+            await nextTick();
+            vm.show = false;
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div><div></div></div>');
+        });
 
-                    // done();
-                // });
-            // });
-        // });
+        it('update vue element which has been reused across multiple renders', async () => {
+            render(`<C ref="c"><div>test</div></C>`, {
+                C: createIntactComponent(`<div>{self.get('children')}{self.get('children')}</div>`)
+            });
+            vm.$forceUpdate();
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
 
-        // it('update vue element which has been reused across multiple renders', (done) => {
-            // render(`<C ref="c"><div>test</div></C>`, {
-                // C: createIntactComponent(`<div>{self.get('children')}{self.get('children')}</div>`)
-            // });
-            // vm.$forceUpdate();
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
+            vm.$refs.c.update();
+            expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
+        });
 
-                // vm.$refs.c.update();
-                // expect(vm.$el.outerHTML).eql('<div><div>test</div><div>test</div></div>');
+        it('call intact show method to create elements that contains vue component, should get the $parent in vue component', (done) => {
+            render(`<C ref="c"><V /></C>`, {
+                C: createIntactComponent(`<div>{self.get('show') ? self.get('children') : undefined}</div>`),
+                V: {
+                    template: `<div>test</div>`,
+                    beforeCreate() {
+                        expect(this.$parent === vm).to.be.true;
+                        done();
+                    }
+                }
+            });
 
-                // done();
-            // });
-        // });
+            vm.$refs.c.set('show', true);
+        });
 
-        // it('call intact show method to create elements that contains vue component, should get the $parent in vue component', (done) => {
-            // render(`<C ref="c"><V /></C>`, {
-                // C: createIntactComponent(`<div>{self.get('show') ? self.get('children') : undefined}</div>`),
-                // V: {
-                    // template: `<div>test</div>`,
-                    // beforeCreate() {
-                        // expect(this.$parent === vm).to.be.true;
-                        // done();
-                    // }
-                // }
-            // });
+        it('should update vNode.el of Vue if Intact component updated and return the different dom', async () => {
+            const C = createIntactComponent(`
+                const show = self.get('show');
+                if (!show) return;
+                <div>show</div>
+            `, {
+                defaults() {
+                    return {show: true};
+                },
 
-            // vm.$refs.c.set('show', true);
-        // });
+                hide() {
+                    this.set('show', false);
+                    this.trigger('hide');
+                }
+            });
 
-        // it('should update vNode.elm of Vue if Intact component updated and return the different dom', (done) => {
-            // const C = createIntactComponent(`
-                // const show = self.get('show');
-                // if (!show) return;
-                // <div>show</div>
-            // `, {
-                // defaults() {
-                    // return {show: true};
-                // },
+            render(`<div><C v-if="show" ref="c" @hide="hide" /></div>`, {C}, {show: true}, {
+                hide() {
+                    this.show = false;
+                }
+            });
 
-                // hide() {
-                    // this.set('show', false);
-                    // this.trigger('hide');
-                // }
-            // });
+            vm.$refs.c.hide();
 
-            // render(`<div><C v-if="show" ref="c" @hide="hide" /></div>`, {C}, {show: true}, {
-                // hide() {
-                    // this.show = false;
-                // }
-            // });
-
-            // vm.$refs.c.hide();
-
-            // vm.$nextTick(() => {
-                // expect(vm.$el.innerHTML).to.eql('<!---->');
-                // done();
-            // });
-        // });
+            await nextTick();
+            expect(vm.$el.innerHTML).to.eql('<!--v-if-->');
+        });
     });
 
-    // describe('v-show', () => {
-        // it('should render v-show correctly', (done) => {
-            // render(`<C>
-               // <div v-show="show">show</div>
-               // <C v-show="show">test</C>
-               // <C v-show="show" style="font-size: 12px;">font-size</C>
-               // <C v-show="show" :style="{fontSize: '12px'}">fontSize</C>
-            // </C>`, {
-                // C: ChildrenIntactComponent
-            // }, {show: false});
+    describe('v-show', () => {
+        it('should render v-show correctly', async () => {
+            render(`<C v-show="show">
+               <div v-show="show">show</div>
+               <C v-show="show">test</C>
+               <C v-show="show" style="font-size: 12px;">font-size</C>
+               <C v-show="show" :style="{fontSize: '12px'}">fontSize</C>
+            </C>`, {
+                C: ChildrenIntactComponent
+            }, {show: false});
 
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).eql('<div><div style="display: none;">show</div> <div style="display: none;">test</div> <div style="font-size: 12px; display: none;">font-size</div> <div style="font-size: 12px; display: none;">fontSize</div></div>');
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div style="display: none;"><div style="display: none;">show</div><div style="display: none;">test</div><div style="font-size: 12px; display: none;">font-size</div><div style="font-size: 12px; display: none;">fontSize</div></div>');
 
-                // vm.show = true;
-                // vm.$nextTick(() => {
-                    // expect(vm.$el.outerHTML).eql('<div><div style="">show</div> <div>test</div> <div style="font-size: 12px;">font-size</div> <div style="font-size: 12px;">fontSize</div></div>');
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div><div style="">show</div><div>test</div><div style="font-size: 12px;">font-size</div><div style="font-size: 12px;">fontSize</div></div>');
+        });
+    });
 
-                    // done();
-                // });
-            // });
-        // });
-    // });
+    describe('Lifecycle', () => {
+        it('lifecycle of intact in vue', async () => {
+            const _create = sinon.spy();
+            const _mount = sinon.spy();
+            const _update = sinon.spy();
+            const _destroy = sinon.spy();
+            render('<C :a="a" v-if="show"/>', {
+                C: createIntactComponent('<div>test</div>', {
+                    _create,
+                    _mount,
+                    _update,
+                    _destroy
+                })
+            }, {a: 1, show: true});
 
-    // describe('Lifecycle', () => {
-        // it('lifecycle of intact in vue', (done) => {
-            // const _create = sinon.spy();
-            // const _mount = sinon.spy();
-            // const _update = sinon.spy();
-            // const _destroy = sinon.spy();
-            // render('<C :a="a" v-if="show"/>', {
-                // C: createIntactComponent('<div></div>', {
-                    // _create,
-                    // _mount,
-                    // _update,
-                    // _destroy
-                // })
-            // }, {a: 1, show: true});
+            vm.a = 2;
+            await nextTick();
+            expect(_create.callCount).be.eql(1);
+            expect(_mount.callCount).be.eql(1);
+            expect(_update.callCount).be.eql(1);
 
-            // vm.a = 2;
-            // vm.$nextTick(() => {
-                // expect(_create.callCount).be.eql(1);
-                // expect(_mount.callCount).be.eql(1);
-                // expect(_update.callCount).be.eql(1);
+            vm.show = false;
+            await nextTick();
+            expect(_destroy.callCount).be.eql(1);
+        });
 
-                // vm.show = false;
-                // vm.$nextTick(() => {
-                    // expect(_destroy.callCount).be.eql(1);
-                    // done();
-                // });
-            // });
-        // });
+        it('lifecycle of vue in intact', async () => {
+            const created = sinon.spy();
+            const mounted = sinon.spy();
+            const updated = sinon.spy();
+            const destroyed = sinon.spy();
+            render('<C v-if="show"><VueComponent :a="a"/></C>', {
+                C: ChildrenIntactComponent,
+                VueComponent: {
+                    props: ['a'],
+                    template: '<div>{{a}}</div>',
+                    created,
+                    mounted,
+                    updated,
+                    unmounted: destroyed,
+                }
+            }, {show: true, a: 1});
 
-        // it('lifecycle of vue in intact', done => {
-            // const created = sinon.spy();
-            // const mounted = sinon.spy();
-            // const updated = sinon.spy();
-            // const destroyed = sinon.spy();
-            // render('<C v-if="show"><VueComponent :a="a"/></C>', {
-                // C: ChildrenIntactComponent,
-                // VueComponent: {
-                    // props: ['a'],
-                    // template: '<div>{{a}}</div>',
-                    // created,
-                    // mounted,
-                    // updated,
-                    // destroyed
-                // }
-            // }, {show: true, a: 1});
+            vm.a = 2;
+            await nextTick();
+            expect(created.callCount).be.eql(1);
+            expect(mounted.callCount).be.eql(1);
+            expect(updated.callCount).be.eql(1);
 
-            // vm.a = 2;
-            // vm.$nextTick(() => {
-                // expect(created.callCount).be.eql(1);
-                // expect(mounted.callCount).be.eql(1);
-                // expect(updated.callCount).be.eql(1);
+            vm.show = false;
+            await nextTick();
+            expect(destroyed.callCount).be.eql(1);
+        });
 
-                // vm.show = false;
-                // vm.$nextTick(() => {
-                    // expect(destroyed.callCount).be.eql(1);
-                    // done();
-                // });
-            // });
-        // });
+        it('lifecycle of mounted nested intact component', async () => {
+            const mounted1 = sinon.spy(() => {
+                console.log(1)
+            });
+            const mounted2 = sinon.spy(() => {
+                console.log(2)
+            });
+            const mounted3 = sinon.spy(() => {
+                console.log(3);
+            });
+            const E = createIntactComponent(`<div></div>`, {_mount: mounted3});
 
-        // it('lifecycle of mounted nested intact component', done => {
-            // const mounted1 = sinon.spy(() => {
-                // console.log(1)
-            // });
-            // const mounted2 = sinon.spy(() => {
-                // console.log(2)
-            // });
-            // const mounted3 = sinon.spy(() => {
-                // console.log(3);
-            // });
-            // const E = createIntactComponent(`<div></div>`, {_mount: mounted3});
+            render('<div><C><div><D /></div></C></div>', {
+                C: createIntactComponent('<div>{self.get("children")}</div>', {
+                    _mount: mounted1,
+                }),
+                D: createIntactComponent('<div><E /></div>', {
+                    _init() {
+                        this.E = E;
+                    },
+                    _mount: mounted2
+                })
+            });
 
-            // render('<div<C><div><D /></div></C></div>', {
-                // C: createIntactComponent('<div>{self.get("children")}</div>', {
-                    // _mount: mounted1,
-                // }),
-                // D: createIntactComponent('<div><E /></div>', {
-                    // _init() {
-                        // this.E = E;
-                    // },
-                    // _mount: mounted2
-                // })
-            // });
+            await nextTick();
+            expect(mounted1.callCount).be.eql(1);
+            expect(mounted2.callCount).be.eql(1);
+            expect(mounted2.calledBefore(mounted1)).be.true;
+            expect(mounted3.calledBefore(mounted2)).be.true;
+        });
 
-            // vm.$nextTick(() => {
-                // expect(mounted1.callCount).be.eql(1);
-                // expect(mounted2.callCount).be.eql(1);
-                // expect(mounted2.calledBefore(mounted1)).be.true;
-                // expect(mounted3.calledBefore(mounted2)).be.true;
-                // done();
-            // });
-        // });
+        it('handle mountedQueue', async () => {
+            render('<VueComponent :a="a" />', {
+                VueComponent: {
+                    props: ['a'],
+                    template: '<div><C :a="a" />{{ a }}</div>',
+                    components: {
+                        C: createIntactComponent(
+                            `<div>test</div>`,
+                            {
+                                _init() {
+                                    this.on('$change:a', () => {
+                                        this.update();
+                                    })
+                                }
+                            }
+                        ),
+                    }
+                }
+            }, {a: 1});
 
-        // it('handle mountedQueue', done => {
-            // render('<VueComponent :a="a" />', {
-                // VueComponent: {
-                    // props: ['a'],
-                    // template: '<div><C :a="a" />{{ a }}</div>',
-                    // components: {
-                        // C: createIntactComponent(
-                            // `<div>test</div>`,
-                            // {
-                                // _init() {
-                                    // this.on('$change:a', () => {
-                                        // this.update();
-                                    // })
-                                // }
-                            // }
-                        // ),
-                    // }
-                // }
-            // }, {a: 1});
+            vm.a = 2;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>test</div>2</div>');
+        });
 
-            // vm.a = 2;
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div><div>test</div>2</div>');
-                // done();
-            // });
-        // });
+        it('call method of Intact component to show nested Intact component', async () => {
+            function Test(isShow) {
+                return new Promise(resolve => {
+                    render('<div><IntactComponent ref="a"><div><C /></div></IntactComponent></div>', {
+                        IntactComponent: createIntactComponent(
+                            `<div v-if={self.get('show')}>{self.get('children')}</div>`,
+                            {
+                                defaults() {
+                                    return {show: !!isShow};
+                                },
+                                show() {
+                                    this.set('show', true);
+                                }
+                            }
+                        ),
+                        C: createIntactComponent(`<Test />`, {
+                            _init() {
+                                this.Test = createIntactComponent(`<div>test</div>`, {
+                                    _mount() {
+                                        expect(document.body.contains(this.element)).to.be.true;
+                                        resolve();
+                                    }
+                                });
+                            }
+                        })
+                    });
+                });
+            }
 
-        // it('call method of Intact component to show nested Intact component', () => {
-            // function Test(isShow) {
-                // return new Promise(resolve => {
-                    // render('<div><IntactComponent ref="a"><div><C /></div></IntactComponent></div>', {
-                        // IntactComponent: createIntactComponent(
-                            // `<div v-if={self.get('show')}>{self.get('children')}</div>`,
-                            // {
-                                // defaults() {
-                                    // return {show: !!isShow};
-                                // },
-                                // show() {
-                                    // this.set('show', true);
-                                // }
-                            // }
-                        // ),
-                        // C: createIntactComponent(`<Test />`, {
-                            // _init() {
-                                // this.Test = createIntactComponent(`<div>test</div>`, {
-                                    // _mount() {
-                                        // expect(document.body.contains(this.element)).to.be.true;
-                                        // resolve();
-                                    // }
-                                // });
-                            // }
-                        // })
-                    // });
-                // });
-            // }
+            await Test(true);
+            await Promise.all([Test(false), vm.$refs.a.show()]);
+        });
 
-            // return Test(true).then(() => {
-                // Test(false);
-                // vm.$refs.a.show();
-            // });
-        // });
+        it('should call mount method when we update data in vue mounted lifecycle method', async () => {
+            class IntactComponent extends Intact {
+                @Intact.template()
+                static template = `<div>{self.get('value') ? self.get('children') : null}</div>`;
+            };
+            const mount = sinon.spy(() => console.log('mount'));
+            class IntactChildrenComponent extends Intact {
+                @Intact.template()
+                static template = `<span>{self.get('children')}</span>`;
 
-        // it('should call mount method when we update data in vue mounted lifecycle method', (done) => {
-            // class IntactComponent extends Intact {
-                // @Intact.template()
-                // static template = `<div>{self.get('value') ? self.get('children') : null}</div>`;
-            // };
-            // const mount = sinon.spy(() => console.log('mount'));
-            // class IntactChildrenComponent extends Intact {
-                // @Intact.template()
-                // static template = `<div>{self.get('children')}</div>`;
+                _mount() {
+                    mount();
+                }
+            };
+            const Test = {
+                template: `
+                    <IntactChildrenComponent ref="b">
+                        {{ value }}
+                    </IntactChildrenComponent>
+                `,
+                components: {
+                    IntactChildrenComponent,
+                },
+                data() {
+                    return {value: 1}
+                },
+                mounted() {
+                    debugger;
+                    this.value= 2;
+                }
+            };
+            render(`<IntactComponent :value="show" ref="a"><Test ref="c" /></IntactComponent>`, {
+                IntactComponent, Test,
+            }, {show: false});
 
-                // _mount() {
-                    // mount();
-                // }
-            // };
-            // const Test = {
-                // template: `
-                    // <IntactChildrenComponent ref="b">
-                        // {{ value }}
-                    // </IntactChildrenComponent>
-                // `,
-                // components: {
-                    // IntactChildrenComponent,
-                // },
-                // data() {
-                    // return {value: 1}
-                // },
-                // mounted() {
-                    // this.value= 2;
-                // }
-            // };
-            // render(`<IntactComponent v-model="show" ref="a"><Test ref="c" /></IntactComponent>`, {
-                // IntactComponent, Test,
-            // }, {show: false});
-
-            // vm.show = true;
-            // vm.$nextTick(() => {
-                // expect(mount.callCount).to.eql(1);
-                // expect(vm.$refs.a.mountedQueue.done).to.be.true;
-                // expect(vm.$refs.c.$refs.b.mountedQueue.done).to.be.true;
-
-                // done();
-            // });
-        // });
-    // });
+            vm.show = true;
+            await nextTick();
+            expect(mount.callCount).to.eql(1);
+            expect(vm.$refs.a.mountedQueue.done).to.be.true;
+            expect(vm.$refs.c.$refs.b.mountedQueue.done).to.be.true;
+        });
+    });
 
     describe('vNode', () => {
-        // it('change children\'s props of vue element', function(done) {
-            // this.enableTimeouts(false);
-            // const onClick = sinon.spy(() => console.log('click'));
-            // class IntactComponent extends Intact {
-                // get template() {
-                    // return `<div>{self.get('children')}</div>`
-                // }
+        it('change children\'s props of vue element', async () => {
+            const onClick = sinon.spy(() => console.log('click'));
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<div>{self.get('children')}</div>`
+                }
 
-                // _init() {
-                    // this._changeProps();
-                    // this.on('$change:children', this._changeProps);
-                // }
+                _init() {
+                    this._changeProps();
+                    this.on('$change:children', this._changeProps);
+                }
 
-                // _changeProps() {
-                    // const children = this.get('children');
-                    // children.props['ev-click'] = this.onClick.bind(this);
-                    // children.props.className = children.className + ' test';
-                    // children.props.style = {display: 'block'};
-                // }
+                _changeProps() {
+                    const children = this.get('children');
+                    children.props['ev-click'] = this.onClick.bind(this);
+                    children.props.className = children.className + ' test';
+                    children.props.style = {display: 'block'};
+                }
 
-                // _remove() {
-                    // const children = this.get('children');
-                    // children.props.className = '';
-                    // children.props.style = {display: undefined};
-                // }
-            // }
-            // IntactComponent.prototype.onClick = onClick;
+                _remove() {
+                    const children = this.get('children');
+                    children.props.className = '';
+                    children.props.style = {display: ''};
+                }
+            }
+            IntactComponent.prototype.onClick = onClick;
 
-            // render('<C ref="c"><div class="a" :class="{b: true}" style="font-size: 12px;">click</div></C>', {
-                // C: IntactComponent,
-            // });
+            render('<C ref="c"><div class="a" :class="{b: true}" style="font-size: 12px;">click</div></C>', {
+                C: IntactComponent,
+            });
 
-            // vm.$nextTick(() => {
-                // dispatchEvent(vm.$el.firstChild, 'click');
-                // expect(vm.$el.innerHTML).eql('<div class="a b test" style="font-size: 12px; display: block;">click</div>');
-                // expect(onClick.callCount).be.eql(1);
-                // // vm.$forceUpdate();
-                // vm.$refs.c._remove();
-                // vm.$refs.c.update();
-                // vm.$nextTick(() => {
-                    // dispatchEvent(vm.$el.firstChild, 'click');
-                    // expect(onClick.callCount).be.eql(2);
-                    // expect(vm.$el.innerHTML).eql('<div class="" style="font-size: 12px;">click</div>');
-                    // done();
-                // });
-            // });
-        // });
+            await nextTick();
+            dispatchEvent(vm.$el.firstChild, 'click');
+            expect(vm.$el.innerHTML).eql('<div class="a b test" style="font-size: 12px; display: block;">click</div>');
+            expect(onClick.callCount).be.eql(1);
+            // vm.$forceUpdate();
+            vm.$refs.c._remove();
+            vm.$refs.c.update();
+            await nextTick();
+            dispatchEvent(vm.$el.firstChild, 'click');
+            expect(onClick.callCount).be.eql(2);
+            expect(vm.$el.innerHTML).eql('<div class="" style="font-size: 12px;">click</div>');
+        });
 
-        // it('should get parentVNode', function(done) {
-            // this.enableTimeouts(false);
-            // // render('<C><p><E><b><D /></b></E></p></C>', {
-                // // C: {template: `<div><slot></slot></div>`},
-                // // D: {template: `<span>test</span>`},
-                // // E: {template: `<i><slot></slot></i>`},
-            // // });
+        it('should get parentVNode of nested component', (done) => {
+            render('<C><p><E><b><D /></b></E></p></C>', {
+                C: ChildrenIntactComponent,
+                D: createIntactComponent('<span>test</span>', {
+                    _mount() {
+                        expect(this.parentVNode.parentVNode.tag === ChildrenIntactComponent).to.be.true;
+                        done();
+                    }
+                }),
+                E: createIntactComponent('<i>{self.get("children")}</i>')
+            });
+        });
 
-            // // render('<C><D /></C>', {
-                // // C: ChildrenIntactComponent,
-                // // D: createIntactComponent('<span>test</span>', {
-                    // // _mount() {
-                        // // console.log(this);
-                    // // }
-                // // })
-            // // });
+        it('should get parentVNode after updating', async () => {
+            const C = createIntactComponent(`<div>{self.get('children')}</div>`);
+            const mount = sinon.spy();
+            const update = sinon.spy();
 
-            // render('<C><p><E><b><D /></b></E></p></C>', {
-                // C: ChildrenIntactComponent,
-                // D: createIntactComponent('<span>test</span>', {
-                    // _mount() {
-                        // expect(this.parentVNode.parentVNode.tag === ChildrenIntactComponent).to.be.true;
-                    // }
-                // }),
-                // E: createIntactComponent('<i>{self.get("children")}</i>')
-            // });
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<D>{self.get('children')}</D>`
+                }
 
-            // const C = createIntactComponent(`<div>{self.get('children')}</div>`);
-            // const mount = sinon.spy();
-            // const update = sinon.spy();
+                _init() {
+                    this.D = createIntactComponent('<i>{self.get("children")}</i>', {
+                        _mount() {
+                            mount();
+                            expect(this.parentVNode.tag === IntactComponent).to.be.true;
+                            expect(this.parentVNode.parentVNode.tag === C).to.be.true;
+                            expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
+                        },
 
-            // class IntactComponent extends Intact {
-                // get template() {
-                    // return `<D>{self.get('children')}</D>`
-                // }
+                        _update() {
+                            update();
+                            expect(this.parentVNode.tag === IntactComponent).to.be.true;
+                            expect(this.parentVNode.parentVNode.tag === C).to.be.true;
+                            expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
+                        }
+                    });
+                }
+            }
 
-                // _init() {
-                    // this.D = createIntactComponent('<i>{self.get("children")}</i>', {
-                        // _mount() {
-                            // mount();
-                            // expect(this.parentVNode.tag === IntactComponent).to.be.true;
-                            // expect(this.parentVNode.parentVNode.tag === C).to.be.true;
-                            // expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
-                        // },
+            class IntactComponent1 extends Intact {
+                get template() {
+                    return `<C>{self.get('children')}</C>`;
+                }
 
-                        // _update() {
-                            // update();
-                            // expect(this.parentVNode.tag === IntactComponent).to.be.true;
-                            // expect(this.parentVNode.parentVNode.tag === C).to.be.true;
-                            // expect(this.parentVNode.parentVNode.parentVNode.tag === IntactComponent1).to.be.true;
-                        // }
-                    // });
-                // }
-            // }
+                _init() {
+                    this.C = C;
+                }
+            }
 
-            // class IntactComponent1 extends Intact {
-                // get template() {
-                    // return `<C>{self.get('children')}</C>`;
-                // }
+            render(`<div>` +
+                `{{count}}` +
+                `<IntactComponent1>` +
+                    `<p>` +
+                        `{{count}}` +
+                        `<IntactComponent>test{{count}}</IntactComponent>` +
+                    `</p>` +
+                `</IntactComponent1>` +
+            `</div>`, {
+                IntactComponent1,
+                IntactComponent,
+            }, {count: 1});
 
-                // _init() {
-                    // this.C = C;
-                // }
-            // }
+            vm.count = 2;
+            await nextTick();
+            expect(mount.callCount).to.eql(1);
+            expect(update.callCount).to.eql(1);
+        });
 
-            // render('<div>{{count}}<IntactComponent1><p>{{count}}<IntactComponent>test{{count}}</IntactComponent></p></IntactComponent1></div>', {
-                // IntactComponent1,
-                // IntactComponent,
-            // }, {count: 1});
-
-            // vm.count = 2;
-            // vm.$nextTick(() => {
-                // expect(mount.callCount).to.eql(1);
-                // expect(update.callCount).to.eql(1);
-                // done();
-            // });
-        // });
-
-        // it('should get parentVNode of inserted Component which nested in vue element in updating', (done) => {
-            // let count = 0;
-            // render('<C><div><E /></div><div v-if="show"><D /><D /></div></C>', {
-                // C: ChildrenIntactComponent,
-                // D: createIntactComponent('<span>test</span>', {
-                    // _mount() {
-                        // count++;
-                        // expect(this.parentVNode.tag === ChildrenIntactComponent).to.be.true;
-                        // if (count === 2) {
-                            // done();
-                        // }
-                    // }
-                // }),
-                // E: SimpleIntactComponent,
-            // }, {show: false});
-            // vm.show = true;
-        // });
+        it('should get parentVNode of inserted Component which nests in vue element in updating', (done) => {
+            let count = 0;
+            render('<C><div></div><div v-if="show"><D /><D /></div></C>', {
+                C: ChildrenIntactComponent,
+                D: createIntactComponent('<span>test</span>', {
+                    _mount() {
+                        count++;
+                        expect(this.parentVNode.tag === ChildrenIntactComponent).to.be.true;
+                        if (count === 2) {
+                            done();
+                        }
+                    }
+                }),
+                E: SimpleIntactComponent,
+            }, {show: false});
+            vm.show = true;
+        });
     });
 
     describe('v-model', () => {
@@ -1122,56 +1052,53 @@ describe('Unit Test', () => {
         });
     });
 
-    // describe('Scoped style', () => {
-        // it('render scoped intact component', (done) => {
-            // render('<Test1><C /><D><C /></D></Test1>', {
-                // C: SimpleIntactComponent,
-                // D: ChildrenIntactComponent,
-                // Test1
-            // });
-            // vm.$nextTick(() => {
-                // expect(vm.$el.outerHTML).to.eql('<div data-v-68694da0="" class="test1"><div data-v-68694da0="" class="test2"><span>test2</span> <i data-v-68694da0="">test1</i> <div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b> <div data-v-6830ef9c="" data-v-68694da0="" class="test3"><span data-v-6830ef9c="">test3</span> <div data-v-6830ef9c="" data-v-68694da0="">intact component in vue<b data-v-68694da0="" data-v-6830ef9c="">test</b></div></div></div></div> <div data-v-68694da0="">Intact Component</div><div data-v-68694da0=""><div data-v-68694da0="">Intact Component</div></div></div>');
+    describe('Scoped style', () => {
+        it('render scoped intact component', async () => {
+            render('<Test1><C /><D><C /></D></Test1>', {
+                C: SimpleIntactComponent,
+                D: ChildrenIntactComponent,
+                Test1
+            });
 
-                // done();
-            // });
-        // });
-    // });
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div data-v-68694da0="" class="test1"><div data-v-68694da0="" class="test2"><span>test2</span> <i data-v-68694da0="">test1</i> <div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b> <div data-v-6830ef9c="" data-v-68694da0="" class="test3"><span data-v-6830ef9c="">test3</span> <div data-v-6830ef9c="" data-v-68694da0="">intact component in vue<b data-v-68694da0="" data-v-6830ef9c="">test</b></div></div></div></div> <div data-v-68694da0="">Intact Component</div><div data-v-68694da0=""><div data-v-68694da0="">Intact Component</div></div></div>');
+        });
+    });
 
-    // describe('Demo', () => {
-        // it('demo', () => {
-            // class IntactComponent extends Intact {
-                // get template() {
-                    // return `<button ev-click={self.onClick.bind(self)}>
-                        // click {self.get('value')}
-                    // </button>`;
-                // }
+    describe('Demo', () => {
+        it('demo', () => {
+            class IntactComponent extends Intact {
+                get template() {
+                    return `<button ev-click={self.onClick.bind(self)}>
+                        click {self.get('value')}
+                    </button>`;
+                }
 
-                // onClick() {
-                    // this.set('value', this.get('value') + 1);
-                    // this.trigger('click');
-                // }
-            // }
+                onClick() {
+                    this.set('value', this.get('value') + 1);
+                    this.trigger('click');
+                }
+            }
 
-            // const container = document.createElement('div');
-            // document.body.appendChild(container);
-            // const vue = new Vue({
-                // el: container,
-                // data: {
-                    // count: 0,
-                // },
-                // template: `<div>
-                    // <IntactComponent @click="onClick" v-model="count" ref="a"/>
-                    // <div>count: {{ count }}</div>
-                // </div>`,
-                // methods: {
-                    // onClick() {
-                        // console.log(this.count);
-                    // }
-                // },
-                // components: {IntactComponent}
-            // });
-        // });
-    // });
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            const vue = createApp({
+                data() {
+                    return {count: 0};
+                },
+                template: `<div>
+                    <IntactComponent @click="onClick" v-model="count" ref="a"/>
+                    <div>count: {{ count }}</div>
+                </div>`,
+                methods: {
+                    onClick() {
+                        console.log(this.count);
+                    }
+                },
+                components: {IntactComponent}
+            }).mount(container);
+        });
+    });
 
     describe('Vue Test', () => {
         it('render emtpy slot', async () => {
@@ -1189,6 +1116,23 @@ describe('Unit Test', () => {
                     const {p: patch} = instance.parent.ctx.renderer;
                     console.log(patch);
                     return h('div', null, 'test');
+                }
+            });
+        });
+
+        it('v-show', async () => {
+            render('<C v-show="false">show</C>', {
+                C: {
+                    template: `<div><slot /></div>`
+                }
+            });
+        });
+
+        it('scoped', async () => {
+            render('<Test3><div>test</div><Test /></Test3>', {
+                Test3,
+                Test: {
+                    template: `<div>component</div>`
                 }
             });
         });

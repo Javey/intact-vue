@@ -1,4 +1,4 @@
-import {createApp, h, getCurrentInstance, KeepAlive} from 'vue';
+import {createApp, h, getCurrentInstance, KeepAlive, cloneVNode} from 'vue';
 import {isIntactComponent} from './normalize';
 
 // we must use this hack method to get patch function
@@ -13,6 +13,8 @@ createApp({
 }).mount(document.createElement('div'));
 const {p: patch, um: unmount} = internals;
 
+const ignorePropRegExp = /_ev[A-Z]/;
+
 export default class Wrapper {
     init(lastVNode, nextVNode) {
         // let the component destroy by itself
@@ -23,7 +25,7 @@ export default class Wrapper {
         const parentDom = this.parentDom || document.createDocumentFragment();
         // const container = this.container = document.createDocumentFragment();
         // render(vueVNode, container);
-        patch(null, vueVNode, parentDom, null, getParentComponent());
+        patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode));
         return vueVNode.el;
     }
 
@@ -31,61 +33,48 @@ export default class Wrapper {
         this._addProps(nextVNode);
         const vueVNode = nextVNode.props.vueVNode;
         // render(vueVNode, this.container);
-        patch(lastVNode.props.vueVNode, vueVNode, this.parentDom, null, getParentComponent());
+        patch(lastVNode.props.vueVNode, vueVNode, this.parentDom, null, getParentComponent(nextVNode));
         return vueVNode.el;
     }
 
     destroy(vNode) {
         unmount(vNode.props.vueVNode, null, null, false);
-        // render will doRemove in Vue, but Intact may repalce child with the dom
-        // so we hack the parentNode to let Vue does not remove the child
-        // const vueNode = vNode.props.vueVNode;
-        // const child = vueNode.el;
-        // const parentNode = child.parentNode;
-        // let lock = true;
-        // Object.defineProperty(child, 'parentNode', {
-            // get() {
-                // if (lock) return null;
-                // return child.parentElement;
-            // }
-        // });
-        // render(null, this.container);
-        // lock = false;
     }
 
     // maybe the props has been changed, so we change the vueVNode's data
     _addProps(vNode) {
         // for Intact reusing the dom
         this.vdt = {vNode};
-        return;
         const props = vNode.props;
         let vueVNode = props.vueVNode;
         // if we reuse the vNode, clone it
-        if (vueVNode.elm) {
+        if (vueVNode.el) {
             vueVNode = cloneVNode(vueVNode);
         }
+        let shouldAssign = true;
         for (let key in props) {
             if (key === 'vueVNode') continue;
             if (ignorePropRegExp.test(key)) continue;
-            if (!vueVNode.data) vueVNode.data = {};
-            const data = vueVNode.data;
+            let vueProps = vueVNode.props;
+            if (shouldAssign) {
+                // props may be a EMPTY_OBJ, but we can not get its reference,
+                // so we use a flag to handle it
+                vueProps = vueVNode.props = {...vueVNode.props};
+                shouldAssign = false;
+                // should change patchFlag to let Vue full diff props
+                vueVNode.patchFlag |= 16;
+            }
             const prop = props[key];
             // is event
             if (key === 'className') {
-                data.staticClass = prop;
-                delete data.class;
+                vueProps.class = prop;
             } else if (key === 'style') {
-                if (data.staticStyle) {
-                    data.staticStyle = {...data.staticStyle, ...prop};
-                } else {
-                    data.staticStyle = prop;
-                }
+                vueProps.style = {...vueProps.style, ...prop};
             } else if (key.substr(0, 3) === 'ev-') {
-                if (!data.on) data.on = {};
-                data.on[key.substr(3)] = prop;
+                const name = key.substr(3);
+                vueProps[`on` + name[0].toUpperCase() + name.substr(1)] = prop;
             } else {
-                if (!data.attrs) data.attrs = {};
-                data.attrs[key] = prop;
+                vueProps[key] = prop;
             }
         }
 
@@ -93,10 +82,14 @@ export default class Wrapper {
     }
 }
 
-function getParentComponent() {
-    let instance = getCurrentInstance();
-    while (instance && isIntactComponent(instance)) {
-        instance = instance.parent;
+function getParentComponent(vNode) {
+    let parentVNode = vNode.parentVNode;
+    while (parentVNode) {
+        const children = parentVNode.children;
+        if (children && children.vueInstance) {
+            return children.vueInstance.$parent.$;
+        }
+        parentVNode = parentVNode.parentVNode;
     }
-    return instance;
 }
+

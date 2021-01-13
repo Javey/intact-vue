@@ -3,6 +3,7 @@ import {Comment, createVNode, getCurrentInstance, inject} from 'vue';
 import {createVNodeBySetupContext, normalize, normalizeChildren} from './normalize';
 import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
+import './scopeId';
 
 let activeInstance;
 let mountedQueue;
@@ -10,6 +11,7 @@ let mountedQueue;
 export default class IntactVue extends Intact {
     static functionalWrapper = functionalWrapper;
     static normalize = normalizeChildren;
+    static cid = 'IntactVue';
 
     static get __vccOpts() {
         const Component = this;
@@ -115,17 +117,9 @@ export default class IntactVue extends Intact {
     }
 
     init(lastVNode, nextVNode) {
-        const init = () => {
-            pushActiveInstance(this);
-            var element = super.init(lastVNode, nextVNode);
-            popActiveInstance();
-
-            return element;
-        };
-
-        if (!this._isVue) return init();
-
-        const element = init();
+        pushActiveInstance(this);
+        var element = super.init(lastVNode, nextVNode);
+        popActiveInstance();
 
         return element;
     }

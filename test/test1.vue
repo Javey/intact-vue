@@ -14,7 +14,11 @@
         <slot></slot>
     </div>
 </template>
-<style scoped></style>
+<style scoped>
+.test1 {
+    font-size: 12px;
+}
+</style>
 <script>
 import Intact from '../src';
 import Test2 from './test2.vue';

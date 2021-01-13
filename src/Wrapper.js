@@ -1,5 +1,5 @@
 import {createApp, h, getCurrentInstance, KeepAlive, cloneVNode} from 'vue';
-import {isIntactComponent} from './normalize';
+import {isIntactComponent} from './utils';
 
 // we must use this hack method to get patch function
 let internals;

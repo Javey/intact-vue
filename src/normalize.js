@@ -1,7 +1,7 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
 import {camelize, Text, Comment, Fragment, isVNode, vShow} from 'vue';
-import {EMPTY_OBJ} from '@vue/shared';
+import {isIntactComponent} from './utils';
 
 const {h} = Intact.Vdt.miss;
 const {hasOwn, isArray, get, set, each, isString} = Intact.utils;
@@ -166,6 +166,7 @@ function normalizeSlots(slots, props) {
     }
 }
 
+const EMPTY_OBJ = {};
 function normalizeEvents(props, key, value) {
     let name;
     let cb = value;
@@ -220,10 +221,6 @@ function normalizeDirs(dirs, props) {
 
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);
-
-export function isIntactComponent(vNode) {
-    return !!vNode.type.Component;
-}
 
 function ensureValidVNode(vNodes) {
     return vNodes.some(child => {

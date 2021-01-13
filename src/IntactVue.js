@@ -1,6 +1,6 @@
 import Intact from 'intact/dist';
-import {Comment, createVNode, getCurrentInstance, inject} from 'vue';
-import {createVNodeBySetupContext, normalize, normalizeChildren} from './normalize';
+import {Comment, createVNode, getCurrentInstance} from 'vue';
+import {normalize, normalizeChildren} from './normalize';
 import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
 import './scopeId';

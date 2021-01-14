@@ -15,6 +15,17 @@ import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProper
 function isIntactComponent(vNode) {
   return !!vNode.type.Component;
 }
+var cid = 'IntactVueNext';
+var warn = console.warn;
+
+var noop = function noop() {};
+
+function silentWarn() {
+  console.warn = noop;
+}
+function resetWarn() {
+  console.warn = warn;
+}
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -279,8 +290,13 @@ function normalizeSlots(slots, props) {
     var slot = slots["default"];
 
     try {
+      // Vue will warn if we get property of undefined, we keep it silent
+      silentWarn();
       props.children = normalizeChildren(ensureValidVNode(slot()));
-    } catch (e) {}
+      resetWarn();
+    } catch (e) {
+      console.warn(e);
+    }
   }
 
   var blocks;
@@ -386,6 +402,7 @@ var isOn = function isOn(key) {
 };
 
 function ensureValidVNode(vNodes) {
+  if (!Array.isArray(vNodes)) vNodes = [vNodes];
   return vNodes.some(function (child) {
     if (!isVNode(child)) {
       return true;
@@ -406,12 +423,18 @@ function ensureValidVNode(vNodes) {
 function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$1(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var isStringOrNumber = Intact.utils.isStringOrNumber;
 function functionalWrapper(Component) {
   function Ctor(props, context) {
     if (context) {
+      // invoked by Vue
       var forwardRef = props.forwardRef,
-          rest = _objectWithoutProperties(props, ["forwardRef"]); // invoked by Vue
+          rest = _objectWithoutProperties(props, ["forwardRef"]); // Vue will detect whether the slot is invoked outside or not,
+      // but it does not affetch anything in here,
+      // so we keep the warning silent
 
+
+      silentWarn();
 
       var _props = normalizeProps({
         props: _objectSpread$1(_objectSpread$1({}, rest), {}, {
@@ -423,6 +446,7 @@ function functionalWrapper(Component) {
         }
       });
 
+      resetWarn();
       var vNode = Component(_props, true
       /* is in vue */
       );
@@ -434,6 +458,9 @@ function functionalWrapper(Component) {
       }
 
       return toVueVNode(vNode);
+    } else {
+      // invoked by Intact
+      return Component(props);
     }
   }
 
@@ -441,7 +468,11 @@ function functionalWrapper(Component) {
 }
 
 function toVueVNode(vNode) {
-  return h$1(vNode.tag, vNode.props);
+  if (isStringOrNumber(vNode)) return vNode;
+
+  if (vNode) {
+    return h$1(vNode.tag, vNode.props);
+  }
 }
 
 var hooks = Intact.Vdt.miss.hooks;
@@ -454,7 +485,7 @@ if (hooks) {
 
     while (parent) {
       // find Intact Component which renders by Vue
-      if ((i = parent.tag) && i.cid === 'IntactVue' && (i = parent.children.vueInstance)) {
+      if ((i = parent.tag) && i.cid === cid && (i = parent.children.vueInstance)) {
         var vnode = i.$.vnode;
         var parentComponent = i.$parent.$;
         setScopeId(dom, vnode.scopeId, vnode, parentComponent);
@@ -496,6 +527,7 @@ function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflec
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 var activeInstance;
 var mountedQueue;
+var pendingCount = 0;
 
 var IntactVue = /*#__PURE__*/function (_Intact) {
   _inherits(IntactVue, _Intact);
@@ -535,7 +567,9 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
       if (!this._isVue) return update();
       var element = update(); // should update vnode.el, becasue Intact may change dom after it updated
 
-      this._updateVNodeEl();
+      if (!fromPending) {
+        this._updateVNodeEl();
+      }
 
       return element;
     } // we should promise that all intact components have been mounted
@@ -543,11 +577,9 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
   }, {
     key: "__initMountedQueue",
     value: function __initMountedQueue() {
-      this._shouldTrigger = false;
+      ++pendingCount;
 
       if (!mountedQueue || mountedQueue.done) {
-        this._shouldTrigger = true;
-
         if (!this.mountedQueue || this.mountedQueue.done) {
           this._initMountedQueue();
         }
@@ -560,11 +592,10 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
   }, {
     key: "__triggerMountedQueue",
     value: function __triggerMountedQueue() {
-      if (this._shouldTrigger) {
+      if (! --pendingCount) {
         this._triggerMountedQueue();
 
         mountedQueue = null;
-        this._shouldTrigger = false;
       }
     }
   }, {
@@ -683,7 +714,7 @@ _defineProperty(IntactVue, "functionalWrapper", functionalWrapper);
 
 _defineProperty(IntactVue, "normalize", normalizeChildren);
 
-_defineProperty(IntactVue, "cid", 'IntactVue');
+_defineProperty(IntactVue, "cid", cid);
 var stack = [];
 var index = -1;
 

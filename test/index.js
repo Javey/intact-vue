@@ -1,6 +1,5 @@
 import {createApp, h, getCurrentInstance} from 'vue';
 import Intact from '../src/IntactVue';
-import App from './app.vue';
 import Normalize from './normalize.vue';
 import Test1 from './test1.vue';
 import Test3 from './test3.vue';
@@ -9,7 +8,7 @@ const {isFunction} = Intact.utils;
 
 let vm;
 
-function render(template, components, data = {}, methods = {}) {
+function render(template, components, data = {}, methods = {}, lifecycle = {}) {
     const container = document.createElement('div');
     document.body.appendChild(container);
     return vm = createApp({
@@ -17,6 +16,7 @@ function render(template, components, data = {}, methods = {}) {
         components,
         methods,
         [typeof template === 'function' ? 'render' : 'template']: template,
+        ...lifecycle,
     }).mount(container);
 }
 
@@ -275,6 +275,20 @@ describe('Unit Test', () => {
             expect(vm.$el.outerHTML).be.eql('<div><div>test</div></div>');
         });
 
+        it('should silent when we try to treat a default scope slot as children', async () => {
+            const consoleWarn = console.warn;
+            const warn = console.warn = sinon.spy();
+
+            render(`<C><template v-slot="item">{{ item.a }}</template></C>`, {
+                C: createIntactComponent(`<div><b:default args={[{a: 1}]} /></div>`)
+            });
+
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>1</div>');
+            expect(warn.callCount).to.eql(0);
+            console.warn = consoleWarn;
+        });
+
         it('ignore empty slot in vue, this is default behavior of vue', async () => {
             render('<C><template v-slot:slot></template></C>', {
                 C: createIntactComponent(`<div><b:slot>test</b:slot></div>`)
@@ -408,6 +422,22 @@ describe('Unit Test', () => {
             expect(vm.$el.outerHTML).to.eql('<div>Javey</div>');
             vm.$el.click();
             expect(click.callCount).to.eql(1);
+        });
+
+        it('should not affect render Intact functional component', async () => {
+            const h = Intact.Vdt.miss.h;
+            render('<C />', {
+                C: createIntactComponent(`<C />`, {
+                    _init() {
+                        this.C = Intact.functionalWrapper(function() {
+                            return h('div', null, 'test');
+                        });
+                    }
+                })
+            });
+
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>test</div>');
         });
     });
 
@@ -638,6 +668,45 @@ describe('Unit Test', () => {
             await nextTick();
             expect(vm.$el.innerHTML).to.eql('<!--v-if-->');
         });
+
+        it('call update method on init in Intact component', async () => {
+            render('<C />', {
+                C: createIntactComponent(`<div>test</div>`, {
+                    _init() {
+                        this.update();
+                    }
+                })
+            });
+
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>test</div>');
+        });
+
+        it('should call update method of vue to update Intact functional component children that create by createVNode', async () => {
+            const consoleWarn = console.warn;
+            const warn = console.warn = sinon.spy(consoleWarn);
+            const C = Intact.functionalWrapper(function(props) {
+                return props.children;
+            });
+            const D = createIntactComponent(`const children = self.get('children'); <div>{children}{children}</div>`);
+            render(function(ctx) {
+                return h(D, null, {
+                    default() {
+                        return h(C, null, {
+                            default() {
+                                return ctx.test;
+                            }
+                        });
+                    }
+                });
+            }, null, {test: 1});
+
+            vm.test = 2;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>22</div>');
+            expect(warn.callCount).to.eql(0);
+            console.warn = consoleWarn;
+        });
     });
 
     describe('v-show', () => {
@@ -830,7 +899,6 @@ describe('Unit Test', () => {
                     return {value: 1}
                 },
                 mounted() {
-                    debugger;
                     this.value= 2;
                 }
             };
@@ -843,6 +911,53 @@ describe('Unit Test', () => {
             expect(mount.callCount).to.eql(1);
             expect(vm.$refs.a.mountedQueue.done).to.be.true;
             expect(vm.$refs.c.$refs.b.mountedQueue.done).to.be.true;
+        });
+
+        it('should call mounted after all components have mounted', async () => {
+            const mount = sinon.spy(function() {
+                expect(this.element.parentNode).to.be.exist;
+            });
+            const C = createIntactComponent(`<div>test</div>`, {
+                _mount: mount,
+            });
+            render('<div><C /><C /></div>', {C});
+            await nextTick();
+            expect(mount.callCount).to.eql(2);
+        });
+
+        it('should call lifecycle correctly in the case that Vue update to render Intact component', async () => {
+            const _beforeCreate = sinon.spy(() => console.log('beforeCreate'));
+            const _mount = sinon.spy(() => console.log('mount'));
+            const _beforeUpdate = sinon.spy(() => console.log('beforeUpdate'));
+            const _update = sinon.spy(() => console.log('update'));
+            render(`<C :data="data" v-model="value"><template v-slot><div><D id="2" /></div></template></C>`, {
+                C: createIntactComponent(`<div><template v-for={self.get('data')}><b:default /></template></div>`, {
+                    _init() {
+                        this.on('$receive:value', (c, v) => {
+                            if (v === 1) {
+                                this.set('value', 2);
+                            }
+                        })
+                    }
+                }),
+                D: createIntactComponent(`<div>test</div>`, {
+                    _beforeCreate,
+                    _mount,
+                    _beforeUpdate,
+                    _update,
+                }),
+            }, {data: [], value: 0}, null, {
+                created() {
+                    setTimeout(() => {
+                        vm.value = 1;
+                        vm.data = [1, 2];
+                    }, 500);
+                }
+            });
+
+            await nextTick();
+            console.log(vm);
+            // vm.data  = [1, 2];
         });
     });
 

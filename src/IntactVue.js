@@ -3,15 +3,17 @@ import {Comment, createVNode, getCurrentInstance} from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
+import {cid} from './utils';
 import './scopeId';
 
 let activeInstance;
 let mountedQueue;
+let pendingCount = 0;
 
 export default class IntactVue extends Intact {
     static functionalWrapper = functionalWrapper;
     static normalize = normalizeChildren;
-    static cid = 'IntactVue';
+    static cid = cid;
 
     static get __vccOpts() {
         const Component = this;
@@ -138,16 +140,17 @@ export default class IntactVue extends Intact {
         const element = update();
 
         // should update vnode.el, becasue Intact may change dom after it updated
-        this._updateVNodeEl();
+        if (!fromPending) {
+            this._updateVNodeEl();
+        }
 
         return element;
     }
 
     // we should promise that all intact components have been mounted
     __initMountedQueue() {
-        this._shouldTrigger = false;
+        ++pendingCount;
         if (!mountedQueue || mountedQueue.done) {
-            this._shouldTrigger = true;
             if (!this.mountedQueue || this.mountedQueue.done) {
                 this._initMountedQueue();
             }
@@ -158,10 +161,9 @@ export default class IntactVue extends Intact {
     }
 
     __triggerMountedQueue() {
-        if (this._shouldTrigger) {
+        if (!--pendingCount) {
             this._triggerMountedQueue();
             mountedQueue = null;
-            this._shouldTrigger = false;
         }
     }
 

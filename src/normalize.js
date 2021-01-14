@@ -1,7 +1,7 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
 import {camelize, Text, Comment, Fragment, isVNode, vShow} from 'vue';
-import {isIntactComponent} from './utils';
+import {isIntactComponent, silentWarn, resetWarn} from './utils';
 
 const {h} = Intact.Vdt.miss;
 const {hasOwn, isArray, get, set, each, isString} = Intact.utils;
@@ -146,12 +146,18 @@ function normalizeSlots(slots, props) {
     if (slots.default) {
         const slot = slots.default;
         try {
+            // Vue will warn if we get property of undefined, we keep it silent
+            silentWarn();
             props.children = normalizeChildren(ensureValidVNode(slot()));
-        } catch (e) {  }
+            resetWarn();
+        } catch (e) {
+            console.warn(e);
+        }
     }
 
     let blocks;
     for (const key in slots) {
+        if (key === '_') continue;
         const slot = slots[key];
         if (!blocks) blocks = {};
         blocks[key] = function(parent, ...args) {
@@ -223,6 +229,7 @@ const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);
 
 function ensureValidVNode(vNodes) {
+    if (!Array.isArray(vNodes)) vNodes = [vNodes];
     return vNodes.some(child => {
         if (!isVNode(child)) {
             return true;

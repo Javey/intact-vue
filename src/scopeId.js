@@ -1,4 +1,5 @@
 import Intact from 'intact/dist';
+import {cid} from './utils';
 
 const {hooks} = Intact.Vdt.miss;
 
@@ -11,7 +12,7 @@ if (hooks) {
             // find Intact Component which renders by Vue
             if (
                 (i = parent.tag) &&
-                (i.cid === 'IntactVue') &&
+                (i.cid === cid) &&
                 (i = parent.children.vueInstance)
             ) {
                 const vnode = i.$.vnode;

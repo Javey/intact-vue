@@ -1,11 +1,13 @@
 export function isIntactComponent(vNode) {
-    return !!vNode.type.Component;
+    // don't convert Intact functional component to Intact vNode,
+    // because it's propTypes are missing
+    return !!vNode.type.Component; // || vNode.type.cid === cid;
 }
 
 export const cid = 'IntactVueNext';
 
 const warn = console.warn;
-const noop = () => {};
+export const noop = () => {};
 export function silentWarn() {
     console.warn = noop;
 }

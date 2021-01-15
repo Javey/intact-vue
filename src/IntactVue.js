@@ -17,7 +17,7 @@ export default class IntactVue extends Intact {
 
     static get __vccOpts() {
         const Component = this;
-        if (Component.__cache) {
+        if (Component.hasOwnProperty('__cache')) {
             return Component.__cache;
         }
 
@@ -90,15 +90,30 @@ export default class IntactVue extends Intact {
                 // update vnode.el
                 this._updateVNodeEl();
 
+                // If we trigger a update in a update lifecyle,
+                // the order of hooks is beforeMount -> beforeUpdate -> mountd -> updated,
+                // in this case, we should not updateVNodeEl in beforeUpdated,
+                // so we add a flag to skip it
+                this._hasCalledMountd = true;
+
                 this.__triggerMountedQueue();
             },
 
             beforeUpdate() {
                 this.vueInstance = this;
 
+                // If we trigger a update in a update lifecyle,
+                // the updated hook will add multipe times,
+                // but Vue will dedup the pendingPostFlushCbs.
+                // We add a flag `__updating` to indicate the component is updating
+                // and don't add the `pendingCount`.
                 this.__initMountedQueue();
+                this.__updating = true;
 
+                enableTracking();
                 const vNode = normalize(this.$.vnode);
+                resetTracking();
+
                 const lastVNode = this.vNode;
                 vNode.children = this;
 
@@ -109,6 +124,7 @@ export default class IntactVue extends Intact {
             },
 
             updated() {
+                this.__updating = false;
                 this.__triggerMountedQueue();
             },
 
@@ -140,7 +156,7 @@ export default class IntactVue extends Intact {
         const element = update();
 
         // should update vnode.el, becasue Intact may change dom after it updated
-        if (!fromPending) {
+        if (this._hasCalledMountd) {
             this._updateVNodeEl();
         }
 
@@ -149,7 +165,9 @@ export default class IntactVue extends Intact {
 
     // we should promise that all intact components have been mounted
     __initMountedQueue() {
-        ++pendingCount;
+        if (!this.__updating) {
+            ++pendingCount;
+        }
         if (!mountedQueue || mountedQueue.done) {
             if (!this.mountedQueue || this.mountedQueue.done) {
                 this._initMountedQueue();
@@ -168,11 +186,12 @@ export default class IntactVue extends Intact {
     }
 
     _updateVNodeEl() {
+        const element = this.element;
         let vueInstance = this.vueInstance.$;
         let vnode;
         do {
             vnode = vueInstance.vnode;
-            vueInstance.subTree.el = vnode.el = this.element;
+            vueInstance.subTree.el = vnode.el = element;
             vueInstance = vueInstance.parent;
         } while (vueInstance && vueInstance.subTree === vnode);
     }

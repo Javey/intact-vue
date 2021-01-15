@@ -13,7 +13,9 @@ import { enableTracking, resetTracking } from '@vue/reactivity';
 import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProperties';
 
 function isIntactComponent(vNode) {
-  return !!vNode.type.Component;
+  // don't convert Intact functional component to Intact vNode,
+  // because it's propTypes are missing
+  return !!vNode.type.Component; // || vNode.type.cid === cid;
 }
 var cid = 'IntactVueNext';
 var warn = console.warn;
@@ -302,6 +304,7 @@ function normalizeSlots(slots, props) {
   var blocks;
 
   var _loop = function _loop(key) {
+    if (key === '_') return "continue";
     var slot = slots[key];
     if (!blocks) blocks = {};
 
@@ -318,7 +321,9 @@ function normalizeSlots(slots, props) {
   };
 
   for (var key in slots) {
-    _loop(key);
+    var _ret2 = _loop(key);
+
+    if (_ret2 === "continue") continue;
   }
 
   if (blocks) {
@@ -464,6 +469,7 @@ function functionalWrapper(Component) {
     }
   }
 
+  Ctor.cid = cid;
   return Ctor;
 }
 
@@ -567,7 +573,7 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
       if (!this._isVue) return update();
       var element = update(); // should update vnode.el, becasue Intact may change dom after it updated
 
-      if (!fromPending) {
+      if (this._hasCalledMountd) {
         this._updateVNodeEl();
       }
 
@@ -577,7 +583,9 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
   }, {
     key: "__initMountedQueue",
     value: function __initMountedQueue() {
-      ++pendingCount;
+      if (!this.__updating) {
+        ++pendingCount;
+      }
 
       if (!mountedQueue || mountedQueue.done) {
         if (!this.mountedQueue || this.mountedQueue.done) {
@@ -615,7 +623,7 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
     get: function get() {
       var Component = this;
 
-      if (Component.__cache) {
+      if (Component.hasOwnProperty('__cache')) {
         return Component.__cache;
       }
 
@@ -681,16 +689,29 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
           var dom = this.element;
           el.parentNode.replaceChild(dom, el); // update vnode.el
 
-          this._updateVNodeEl();
+          this._updateVNodeEl(); // If we trigger a update in a update lifecyle,
+          // the order of hooks is beforeMount -> beforeUpdate -> mountd -> updated,
+          // in this case, we should not updateVNodeEl in beforeUpdated,
+          // so we add a flag to skip it
+
+
+          this._hasCalledMountd = true;
 
           this.__triggerMountedQueue();
         },
         beforeUpdate: function beforeUpdate() {
-          this.vueInstance = this;
+          this.vueInstance = this; // If we trigger a update in a update lifecyle,
+          // the updated hook will add multipe times,
+          // but Vue will dedup the pendingPostFlushCbs.
+          // We add a flag `__updating` to indicate the component is updating
+          // and don't add the `pendingCount`.
 
           this.__initMountedQueue();
 
+          this.__updating = true;
+          enableTracking();
           var vNode = normalize(this.$.vnode);
+          resetTracking();
           var lastVNode = this.vNode;
           vNode.children = this;
           this.vNode = vNode;
@@ -698,6 +719,8 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
           this.vNode.dom = this.update(lastVNode, vNode);
         },
         updated: function updated() {
+          this.__updating = false;
+
           this.__triggerMountedQueue();
         },
         beforeUnmount: function beforeUnmount() {

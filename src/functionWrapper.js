@@ -1,7 +1,7 @@
 import {normalizeProps} from './normalize';
 import {h, getCurrentInstance} from 'vue';
 import Intact from 'intact/dist';
-import {silentWarn, resetWarn} from './utils';
+import {silentWarn, resetWarn, cid} from './utils';
 
 const {isStringOrNumber} = Intact.utils;
 
@@ -33,6 +33,8 @@ export default function functionalWrapper(Component) {
             return Component(props);
         }
     }
+
+    Ctor.cid = cid;
 
     return Ctor;
 }

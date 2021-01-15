@@ -1,5 +1,5 @@
 import {createApp, h, getCurrentInstance, KeepAlive, cloneVNode} from 'vue';
-import {isIntactComponent} from './utils';
+import {isIntactComponent, cid, noop} from './utils';
 
 // we must use this hack method to get patch function
 let internals;
@@ -23,9 +23,8 @@ export default class Wrapper {
 
         const vueVNode = nextVNode.props.vueVNode;
         const parentDom = this.parentDom || document.createDocumentFragment();
-        // const container = this.container = document.createDocumentFragment();
-        // render(vueVNode, container);
         patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode));
+
         return vueVNode.el;
     }
 
@@ -38,7 +37,17 @@ export default class Wrapper {
     }
 
     destroy(vNode) {
-        unmount(vNode.props.vueVNode, null, null, false);
+        // if we wrap a Intact functional component which return a Inact component,
+        // the dom will be a comment node that will be replaced by InactVue,
+        // in this case we set _unmount to let Inact never remove it,
+        // and set doRemove to true to let Vue remove it instead.
+        const vueVNode = vNode.props.vueVNode;
+        let doRemove = false;
+        if (vueVNode.type.cid === cid) {
+            vNode.dom._unmount = noop;
+            doRemove = true;
+        }
+        unmount(vNode.props.vueVNode, null, null, doRemove);
     }
 
     // maybe the props has been changed, so we change the vueVNode's data
@@ -92,4 +101,3 @@ function getParentComponent(vNode) {
         parentVNode = parentVNode.parentVNode;
     }
 }
-

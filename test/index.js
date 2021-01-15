@@ -341,6 +341,20 @@ describe('Unit Test', () => {
             expect(vm.$el.outerHTML).be.eql('<div><span>test</span></div>');
         });
 
+        it('render functional components as Intact component\'s children', async () => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(props => {
+                return h(SimpleIntactComponent);
+            });
+            render('<C><Component /></C>', {
+                C: ChildrenIntactComponent,
+                Component,
+            });
+
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
+        });
+
         it('render style and class', async () => {
             render(`<C style="color: red;" :style="{fontSize: '12px'}" class="a" :class="{b: true}"/>`, {
                 C: createIntactComponent(`<div style={self.get('style')} class={self.get('className')}>test</div>`)
@@ -707,6 +721,54 @@ describe('Unit Test', () => {
             expect(warn.callCount).to.eql(0);
             console.warn = consoleWarn;
         });
+
+        it('should update children which are Intact components of Intact component', async () => {
+            render(`<C><D v-if="show" /><D /></C>`, {
+                C: ChildrenIntactComponent,
+                D: SimpleIntactComponent,
+            }, {show: false});
+
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div><div>Intact Component</div></div>');
+
+            vm.show = false;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
+        });
+
+        it('should update children which are Intact functional components of Intact component', async () => {
+            const h = Intact.Vdt.miss.h;
+            render(`<C><D v-if="show" /><D /></C>`, {
+                C: ChildrenIntactComponent,
+                D: Intact.functionalWrapper(props => {
+                    return h(SimpleIntactComponent);
+                }),
+            }, {show: false});
+
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div><div>Intact Component</div></div>');
+
+            vm.show = false;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
+        });
+
+        it('should update children of Intact component which nested in vue element', async () => {
+            const h = Intact.Vdt.miss.h;
+            render(`<div><C><div v-if="show">test</div></C></div>`, {
+                C: ChildrenIntactComponent,
+            }, {show: false});
+
+            vm.show = true;
+            // await nextTick();
+            // expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div><div>Intact Component</div></div>');
+
+            // vm.show = false;
+            // await nextTick();
+            // expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
+        });
     });
 
     describe('v-show', () => {
@@ -925,39 +987,54 @@ describe('Unit Test', () => {
             expect(mount.callCount).to.eql(2);
         });
 
-        it('should call lifecycle correctly in the case that Vue update to render Intact component', async () => {
+        it('should call lifecycle correctly in the case that update in updating', async () => {
             const _beforeCreate = sinon.spy(() => console.log('beforeCreate'));
             const _mount = sinon.spy(() => console.log('mount'));
             const _beforeUpdate = sinon.spy(() => console.log('beforeUpdate'));
             const _update = sinon.spy(() => console.log('update'));
-            render(`<C :data="data" v-model="value"><template v-slot><div><D id="2" /></div></template></C>`, {
-                C: createIntactComponent(`<div><template v-for={self.get('data')}><b:default /></template></div>`, {
+            render(`
+                <C :data="data" v-model="value">
+                    <template v-slot>
+                        <div><D id="2">test</D></div>
+                    </template>
+                </C>
+            `, {
+                C: createIntactComponent(`
+                    <div>
+                        <div v-for={self.get('data')}>
+                            <b:default />
+                        </div>
+                    </div>
+                `, {
                     _init() {
                         this.on('$receive:value', (c, v) => {
                             if (v === 1) {
-                                this.set('value', 2);
+                                this.set('value', 2, {silent: true});
                             }
                         })
                     }
                 }),
-                D: createIntactComponent(`<div>test</div>`, {
+                D: createIntactComponent(`<div>{self.get('children')}</div>`, {
                     _beforeCreate,
                     _mount,
                     _beforeUpdate,
                     _update,
                 }),
-            }, {data: [], value: 0}, null, {
-                created() {
-                    setTimeout(() => {
-                        vm.value = 1;
-                        vm.data = [1, 2];
-                    }, 500);
-                }
-            });
+            }, {data: [], value: 0});
+
+            vm.value = 1;
+            vm.data = [1];
 
             await nextTick();
-            console.log(vm);
-            // vm.data  = [1, 2];
+            expect(vm.$el.outerHTML).to.eql('<div><div><div><div>test</div></div></div></div>');
+
+            expect(_beforeCreate.callCount).to.eql(1);
+            expect(_beforeUpdate.callCount).to.eql(1);
+            expect(_mount.callCount).to.eql(1);
+            expect(_update.callCount).to.eql(1);
+
+            expect(_beforeCreate.calledBefore(_beforeUpdate)).to.be.true
+            expect(_mount.calledBefore(_update)).to.be.true;
         });
     });
 

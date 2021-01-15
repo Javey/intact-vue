@@ -32,7 +32,9 @@ export function normalize(vNode) {
         if (vNode.type === Fragment) {
             return normalizeChildren(vNode.children);
         }
-        vNode = h(Wrapper, {vueVNode: vNode}, null, vNode.props && vNode.props.class, vNode.key);
+        // Vue will add key 0 to v-if, but Intact will ignore it, so we cast it string
+        const key = vNode.key === 0 ? '0' : vNode.key;
+        vNode = h(Wrapper, {vueVNode: vNode}, null, vNode.props && vNode.props.class, key);
     }
 
     // tell Vue that this is a read only object, and don't reactive it

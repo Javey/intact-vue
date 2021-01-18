@@ -9,7 +9,6 @@ import Intact from 'intact/dist';
 import { createApp, h as h$1, KeepAlive, getCurrentInstance, cloneVNode, Text, Comment, Fragment, camelize, isVNode, vShow, createVNode } from 'vue';
 import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
 import _typeof from '@babel/runtime/helpers/typeof';
-import { enableTracking, resetTracking } from '@vue/reactivity';
 import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProperties';
 
 function isIntactComponent(vNode) {
@@ -19,9 +18,7 @@ function isIntactComponent(vNode) {
 }
 var cid = 'IntactVueNext';
 var warn = console.warn;
-
 var noop = function noop() {};
-
 function silentWarn() {
   console.warn = noop;
 }
@@ -61,9 +58,7 @@ var Wrapper = /*#__PURE__*/function () {
       this._addProps(nextVNode);
 
       var vueVNode = nextVNode.props.vueVNode;
-      var parentDom = this.parentDom || document.createDocumentFragment(); // const container = this.container = document.createDocumentFragment();
-      // render(vueVNode, container);
-
+      var parentDom = this.parentDom || document.createDocumentFragment();
       patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode));
       return vueVNode.el;
     }
@@ -80,7 +75,19 @@ var Wrapper = /*#__PURE__*/function () {
   }, {
     key: "destroy",
     value: function destroy(vNode) {
-      unmount(vNode.props.vueVNode, null, null, false);
+      // if we wrap a Intact functional component which return a Inact component,
+      // the dom will be a comment node that will be replaced by InactVue,
+      // in this case we set _unmount to let Inact never remove it,
+      // and set doRemove to true to let Vue remove it instead.
+      var vueVNode = vNode.props.vueVNode;
+      var doRemove = false;
+
+      if (vueVNode.type.cid === cid) {
+        vNode.dom._unmount = noop;
+        doRemove = true;
+      }
+
+      unmount(vNode.props.vueVNode, null, null, doRemove);
     } // maybe the props has been changed, so we change the vueVNode's data
 
   }, {
@@ -179,11 +186,13 @@ function normalize(vNode) {
 
     if (vNode.type === Fragment) {
       return normalizeChildren(vNode.children);
-    }
+    } // Vue will add key 0 to v-if, but Intact will ignore it, so we cast it string
 
+
+    var key = vNode.key === 0 ? '0' : vNode.key;
     vNode = h(Wrapper, {
       vueVNode: vNode
-    }, null, vNode.props && vNode.props["class"], vNode.key);
+    }, null, vNode.props && vNode.props["class"], key);
   } // tell Vue that this is a read only object, and don't reactive it
 
 
@@ -609,12 +618,13 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
   }, {
     key: "_updateVNodeEl",
     value: function _updateVNodeEl() {
+      var element = this.element;
       var vueInstance = this.vueInstance.$;
       var vnode;
 
       do {
         vnode = vueInstance.vnode;
-        vueInstance.subTree.el = vnode.el = this.element;
+        vueInstance.subTree.el = vnode.el = element;
         vueInstance = vueInstance.parent;
       } while (vueInstance && vueInstance.subTree === vnode);
     }
@@ -630,29 +640,22 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
       return Component.__cache = {
         Component: Component,
         setup: function setup(props, ctx) {
-          var vueInstance = getCurrentInstance();
-          enableTracking();
-          var vNode = normalize(vueInstance.vnode);
-          resetTracking();
-          var instance = new Component(vNode.props);
-          instance.vNode = vNode;
-          instance._isVue = true;
-          vNode.children = instance;
           var setupState = {
-            instance: instance
+            instance: null
           };
           var proxy = new Proxy(setupState, {
             get: function get(_ref, key) {
               var instance = _ref.instance;
               if (key === '__v_isReactive') return true;
+              if (!instance) return null;
+              if (key === 'instance') return instance;
               return instance[key];
             },
-            set: function set(_ref2, key, value) {
-              var instance = _ref2.instance;
-              return Reflect.set(instance, key, value);
+            set: function set(setupState, key, value) {
+              if (key === 'instance') return Reflect.set(setupState, key, value);
+              return Reflect.set(setupState.instance, key, value);
             },
-            getOwnPropertyDescriptor: function getOwnPropertyDescriptor(_ref3, key) {
-              var instance = _ref3.instance;
+            getOwnPropertyDescriptor: function getOwnPropertyDescriptor() {
               return {
                 value: undefined,
                 writable: true,
@@ -666,23 +669,39 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
           });
           return proxy;
         },
-        render: function render() {
+        render: function render(proxyToUse, renderCache, props, setupState, data, ctx) {
+          var vueInstance = proxyToUse.$;
+          var vNode = normalize(vueInstance.vnode);
+          var instance = setupState.instance;
+          var isInit = false;
+
+          if (!instance) {
+            isInit = true;
+            instance = setupState.instance = new Component(vNode.props);
+            instance._isVue = true;
+          }
+
+          vNode.children = instance;
+          instance.vueInstance = proxyToUse;
+          instance.parentVNode = vNode.parentVNode = activeInstance && activeInstance.vNode;
+          var lastVNode = instance.vNode;
+          instance.vNode = vNode;
+
+          instance.__initMountedQueue();
+
+          if (isInit) {
+            // disable intact async component
+            instance.inited = true;
+            vNode.dom = instance.init(null, vNode);
+            instance.mountedQueue.push(function () {
+              instance.mount();
+            });
+          } else {
+            instance.__updating = true;
+            vNode.dom = instance.update(lastVNode, vNode);
+          }
+
           return createVNode(Comment, null, 'intact-vue-placeholer');
-        },
-        beforeMount: function beforeMount() {
-          var _this2 = this;
-
-          this.vueInstance = this;
-
-          this.__initMountedQueue();
-
-          this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode; // disable intact async component
-
-          this.inited = true;
-          this.vNode.dom = this.init(null, this.vNode);
-          this.mountedQueue.push(function () {
-            _this2.mount();
-          });
         },
         mounted: function mounted() {
           var el = this.$el;
@@ -698,25 +717,6 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
           this._hasCalledMountd = true;
 
           this.__triggerMountedQueue();
-        },
-        beforeUpdate: function beforeUpdate() {
-          this.vueInstance = this; // If we trigger a update in a update lifecyle,
-          // the updated hook will add multipe times,
-          // but Vue will dedup the pendingPostFlushCbs.
-          // We add a flag `__updating` to indicate the component is updating
-          // and don't add the `pendingCount`.
-
-          this.__initMountedQueue();
-
-          this.__updating = true;
-          enableTracking();
-          var vNode = normalize(this.$.vnode);
-          resetTracking();
-          var lastVNode = this.vNode;
-          vNode.children = this;
-          this.vNode = vNode;
-          this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
-          this.vNode.dom = this.update(lastVNode, vNode);
         },
         updated: function updated() {
           this.__updating = false;

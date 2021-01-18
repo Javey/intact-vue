@@ -756,18 +756,27 @@ describe('Unit Test', () => {
         });
 
         it('should update children of Intact component which nested in vue element', async () => {
-            const h = Intact.Vdt.miss.h;
             render(`<div><C><div v-if="show">test</div></C></div>`, {
                 C: ChildrenIntactComponent,
             }, {show: false});
 
             vm.show = true;
-            // await nextTick();
-            // expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div><div>Intact Component</div></div>');
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div><div>test</div></div></div>');
 
-            // vm.show = false;
-            // await nextTick();
-            // expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
+            vm.show = false;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div><div></div></div>');
+        });
+
+        it('should update children of slot in Intact component which nested in vue element', async () => {
+            render(`<C><template v-slot:test>{{ show }}</template></C>`, {
+                C: createIntactComponent(`<div><b:test /></div>`),
+            }, {show: false});
+
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql('<div>true</div>');
         });
     });
 

@@ -1,7 +1,6 @@
 import Intact from 'intact/dist';
-import {Comment, createVNode, getCurrentInstance} from 'vue';
+import {Comment, createVNode} from 'vue';
 import {normalize, normalizeChildren} from './normalize';
-import {enableTracking, resetTracking} from '@vue/reactivity';
 import functionalWrapper from './functionWrapper';
 import {cid} from './utils';
 import './scopeId';
@@ -24,29 +23,21 @@ export default class IntactVue extends Intact {
         return Component.__cache = {
             Component,
             setup(props, ctx) {
-                const vueInstance = getCurrentInstance();
-
-                enableTracking();
-                const vNode = normalize(vueInstance.vnode);
-                resetTracking();
-
-                const instance = new Component(vNode.props);
-                instance.vNode = vNode;
-                instance._isVue = true;
-                vNode.children = instance;
-
-                const setupState = {instance};
+                const setupState = {instance: null};
                 const proxy = new Proxy(setupState, {
                     get({instance}, key) {
                         if (key === '__v_isReactive') return true;
+                        if (!instance) return null;
+                        if (key === 'instance') return instance;
                         return instance[key];
                     },
 
-                    set({instance}, key, value) {
-                        return Reflect.set(instance, key, value);
+                    set(setupState, key, value) {
+                        if (key === 'instance') return Reflect.set(setupState, key, value);
+                        return Reflect.set(setupState.instance, key, value);
                     },
 
-                    getOwnPropertyDescriptor({instance}, key) {
+                    getOwnPropertyDescriptor() {
                         return {
                             value: undefined,
                             writable: true,
@@ -63,23 +54,42 @@ export default class IntactVue extends Intact {
                 return proxy;
             },
 
-            render() {
+            render(proxyToUse, renderCache, props, setupState, data, ctx) {
+                const vueInstance = proxyToUse.$;
+                const vNode = normalize(vueInstance.vnode);
+
+                let instance = setupState.instance;
+                let isInit = false;
+                if (!instance) {
+                    isInit = true;
+                    instance = setupState.instance = new Component(vNode.props);
+                    instance._isVue = true;
+                }
+
+                vNode.children = instance;
+
+                instance.vueInstance = proxyToUse;
+                instance.parentVNode = vNode.parentVNode = activeInstance && activeInstance.vNode;
+
+                const lastVNode = instance.vNode;
+                instance.vNode = vNode;
+
+                instance.__initMountedQueue();
+
+                if (isInit) {
+                    // disable intact async component
+                    instance.inited = true;
+                    vNode.dom = instance.init(null, vNode);
+
+                    instance.mountedQueue.push(() => {
+                        instance.mount();
+                    });
+                } else {
+                    instance.__updating = true;
+                    vNode.dom = instance.update(lastVNode, vNode);
+                }
+
                 return createVNode(Comment, null, 'intact-vue-placeholer');
-            },
-
-            beforeMount() {
-                this.vueInstance = this;
-
-                this.__initMountedQueue();
-
-                this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
-                // disable intact async component
-                this.inited = true;
-                this.vNode.dom = this.init(null, this.vNode);
-
-                this.mountedQueue.push(() => {
-                    this.mount();
-                });
             },
 
             mounted() {
@@ -97,30 +107,6 @@ export default class IntactVue extends Intact {
                 this._hasCalledMountd = true;
 
                 this.__triggerMountedQueue();
-            },
-
-            beforeUpdate() {
-                this.vueInstance = this;
-
-                // If we trigger a update in a update lifecyle,
-                // the updated hook will add multipe times,
-                // but Vue will dedup the pendingPostFlushCbs.
-                // We add a flag `__updating` to indicate the component is updating
-                // and don't add the `pendingCount`.
-                this.__initMountedQueue();
-                this.__updating = true;
-
-                enableTracking();
-                const vNode = normalize(this.$.vnode);
-                resetTracking();
-
-                const lastVNode = this.vNode;
-                vNode.children = this;
-
-                this.vNode = vNode;
-                this.parentVNode = this.vNode.parentVNode = activeInstance && activeInstance.vNode;
-
-                this.vNode.dom = this.update(lastVNode, vNode);
             },
 
             updated() {

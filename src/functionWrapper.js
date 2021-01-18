@@ -31,6 +31,7 @@ export default function functionalWrapper(Component) {
     }
 
     Ctor.cid = cid;
+    Ctor.displayName = Component.displayName || Component.name;
 
     return Ctor;
 }

@@ -21,6 +21,9 @@ export default class IntactVue extends Intact {
         }
 
         return Component.__cache = {
+            // for debug
+            name: Component.displayName || Component.name,
+
             Component,
             setup(props, ctx) {
                 const setupState = {instance: null};

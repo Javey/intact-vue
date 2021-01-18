@@ -507,6 +507,7 @@ function functionalWrapper(Component) {
   }
 
   Ctor.cid = cid;
+  Ctor.displayName = Component.displayName || Component.name;
   return Ctor;
 }
 
@@ -666,6 +667,8 @@ var IntactVue = /*#__PURE__*/function (_Intact) {
       }
 
       return Component.__cache = {
+        // for debug
+        name: Component.displayName || Component.name,
         Component: Component,
         setup: function setup(props, ctx) {
           var setupState = {

@@ -778,6 +778,26 @@ describe('Unit Test', () => {
             await nextTick();
             expect(vm.$el.outerHTML).to.eql('<div>true</div>');
         });
+
+        it('should handle ref correctly on update block in Intact component', async () => {
+            render('<C ref="c"><template v-slot:content><D ref="d" v-if="show" /></template></C>', {
+                C: createIntactComponent(`<div><b:content /></div>`),
+                D: SimpleIntactComponent,
+            }, {show: true});
+
+            await nextTick();
+            expect(vm.$refs.c.init).to.be.exist;
+            expect(vm.$refs.d.init).to.be.exist;
+
+            vm.$refs.c.update();
+            expect(vm.$refs.c.init).to.be.exist;
+            expect(vm.$refs.d.init).to.be.exist;
+
+            vm.show = false;
+            await nextTick();
+            expect(vm.$refs.c.init).to.be.exist;
+            expect(vm.$refs.d).to.be.null;
+        });
     });
 
     describe('v-show', () => {

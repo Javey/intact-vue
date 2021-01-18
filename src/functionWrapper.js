@@ -15,11 +15,12 @@ export default function functionalWrapper(Component) {
             // so we keep the warning silent
             silentWarn();
             const _props = normalizeProps({
-                props: {...rest, ref: forwardRef},
+                props: rest,
                 children: context.slots,
                 type: {
                     Component,
                 },
+                ref: forwardRef,
             });
             resetWarn();
 

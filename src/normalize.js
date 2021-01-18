@@ -1,10 +1,10 @@
 import Intact from 'intact/dist';
 import Wrapper from './Wrapper';
-import {camelize, Text, Comment, Fragment, isVNode, vShow} from 'vue';
+import {camelize, Text, Comment, Fragment, isVNode, vShow, isRef} from 'vue';
 import {isIntactComponent, silentWarn, resetWarn} from './utils';
 
 const {h} = Intact.Vdt.miss;
-const {hasOwn, isArray, get, set, each, isString} = Intact.utils;
+const {hasOwn, isArray, get, set, each, isString, isFunction} = Intact.utils;
 
 export function normalize(vNode) {
     if (vNode == null) return vNode;
@@ -23,7 +23,7 @@ export function normalize(vNode) {
             null,
             null,
             vNode.key,
-            vNode.ref
+            null,
         );
     } else {
         // ignore comment vNode
@@ -75,6 +75,7 @@ export function normalizeProps(vNode) {
     for (let key in attrs) {
         let value = attrs[key];
         switch (key) {
+            case 'ref': break;
             case 'class':
                 props.className = value;
                 break;
@@ -100,6 +101,7 @@ export function normalizeProps(vNode) {
 
     normalizeSlots(slots, props);
     normalizeDirs(vNode.dirs, props);
+    normalizeRef(vNode.ref, props);
 
     return props;
 }
@@ -152,9 +154,7 @@ function normalizeSlots(slots, props) {
             silentWarn();
             props.children = normalizeChildren(ensureValidVNode(slot()));
             resetWarn();
-        } catch (e) {
-            console.warn(e);
-        }
+        } catch (e) {  }
     }
 
     let blocks;
@@ -227,6 +227,15 @@ function normalizeDirs(dirs, props) {
     });
 }
 
+function normalizeRef(rawRef, props) {
+    if (isFunction(rawRef)) props.ref = rawRef;
+    else if (rawRef) {
+        props.ref = (i) => {
+            setRef(rawRef, i);
+        }
+    }
+}
+
 const onRE = /^on[^a-z]/;
 const isOn = (key) => onRE.test(key);
 
@@ -244,4 +253,22 @@ function ensureValidVNode(vNodes) {
         }
         return true;
     }) ? vNodes : null;
+}
+
+function setRef(rawRef, value) {
+    if (isArray(rawRef)) {
+        rawRef.forEach((r, i) => setRef(r, value));
+        return;
+    }
+    const { i: owner, r: ref } = rawRef;
+    const refs = !Object.keys(owner.refs).length ? (owner.refs = {}) : owner.refs;
+    if (isString(ref)) {
+        refs[ref] = value;
+    } else if (isRef(ref)) {
+        ref.value = value;
+    } else if (isFunction(ref)) {
+        ref(value, refs);
+    } else {
+        console.warn('Invalid template ref type:', value, `(${typeof value})`);
+    }
 }

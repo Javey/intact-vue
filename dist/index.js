@@ -6,7 +6,7 @@ import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstruct
 import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
 import _defineProperty from '@babel/runtime/helpers/defineProperty';
 import Intact from 'intact/dist';
-import { createApp, h as h$1, KeepAlive, getCurrentInstance, cloneVNode, Text, Comment, Fragment, camelize, isVNode, vShow, createVNode } from 'vue';
+import { createApp, h as h$1, KeepAlive, getCurrentInstance, cloneVNode, Text, Comment, Fragment, camelize, isVNode, vShow, isRef, createVNode } from 'vue';
 import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
 import _typeof from '@babel/runtime/helpers/typeof';
 import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProperties';
@@ -164,7 +164,8 @@ var _Intact$utils = Intact.utils,
     get = _Intact$utils.get,
     set = _Intact$utils.set,
     each = _Intact$utils.each,
-    isString = _Intact$utils.isString;
+    isString = _Intact$utils.isString,
+    isFunction = _Intact$utils.isFunction;
 function normalize(vNode) {
   if (vNode == null) return vNode;
 
@@ -179,7 +180,7 @@ function normalize(vNode) {
   }
 
   if (isIntactComponent(vNode)) {
-    vNode = h(vNode.type.Component, normalizeProps(vNode), null, null, vNode.key, vNode.ref);
+    vNode = h(vNode.type.Component, normalizeProps(vNode), null, null, vNode.key, null);
   } else {
     // ignore comment vNode
     if (vNode.type === Comment) return null; // spread fragment
@@ -236,6 +237,9 @@ function normalizeProps(vNode) {
     var value = attrs[key];
 
     switch (key) {
+      case 'ref':
+        break;
+
       case 'class':
         props.className = value;
         break;
@@ -263,6 +267,7 @@ function normalizeProps(vNode) {
 
   normalizeSlots(slots, props);
   normalizeDirs(vNode.dirs, props);
+  normalizeRef(vNode.ref, props);
   return props;
 }
 
@@ -305,9 +310,7 @@ function normalizeSlots(slots, props) {
       silentWarn();
       props.children = normalizeChildren(ensureValidVNode(slot()));
       resetWarn();
-    } catch (e) {
-      console.warn(e);
-    }
+    } catch (e) {}
   }
 
   var blocks;
@@ -409,6 +412,14 @@ function normalizeDirs(dirs, props) {
   });
 }
 
+function normalizeRef(rawRef, props) {
+  if (isFunction(rawRef)) props.ref = rawRef;else if (rawRef) {
+    props.ref = function (i) {
+      setRef(rawRef, i);
+    };
+  }
+}
+
 var onRE = /^on[^a-z]/;
 
 var isOn = function isOn(key) {
@@ -434,9 +445,29 @@ function ensureValidVNode(vNodes) {
   }) ? vNodes : null;
 }
 
-function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+function setRef(rawRef, value) {
+  if (isArray(rawRef)) {
+    rawRef.forEach(function (r, i) {
+      return setRef(r, value);
+    });
+    return;
+  }
 
-function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$1(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+  var owner = rawRef.i,
+      ref = rawRef.r;
+  var refs = !Object.keys(owner.refs).length ? owner.refs = {} : owner.refs;
+
+  if (isString(ref)) {
+    refs[ref] = value;
+  } else if (isRef(ref)) {
+    ref.value = value;
+  } else if (isFunction(ref)) {
+    ref(value, refs);
+  } else {
+    console.warn('Invalid template ref type:', value, "(".concat(_typeof(value), ")"));
+  }
+}
+
 var isStringOrNumber = Intact.utils.isStringOrNumber;
 function functionalWrapper(Component) {
   function Ctor(props, context) {
@@ -451,13 +482,12 @@ function functionalWrapper(Component) {
       silentWarn();
 
       var _props = normalizeProps({
-        props: _objectSpread$1(_objectSpread$1({}, rest), {}, {
-          ref: forwardRef
-        }),
+        props: rest,
         children: context.slots,
         type: {
           Component: Component
-        }
+        },
+        ref: forwardRef
       });
 
       resetWarn();

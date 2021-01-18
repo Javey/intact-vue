@@ -306,6 +306,10 @@ function normalizeSlots(slots, props) {
     var slot = slots["default"];
 
     try {
+      // Vue will detect whether the slot is invoked outside or not,
+      // but it does not affetch anything in here,
+      // so we keep the warning silent
+      //
       // Vue will warn if we get property of undefined, we keep it silent
       silentWarn();
       props.children = normalizeChildren(ensureValidVNode(slot()));
@@ -474,12 +478,7 @@ function functionalWrapper(Component) {
     if (context) {
       // invoked by Vue
       var forwardRef = props.forwardRef,
-          rest = _objectWithoutProperties(props, ["forwardRef"]); // Vue will detect whether the slot is invoked outside or not,
-      // but it does not affetch anything in here,
-      // so we keep the warning silent
-
-
-      silentWarn();
+          rest = _objectWithoutProperties(props, ["forwardRef"]);
 
       var _props = normalizeProps({
         props: rest,
@@ -490,7 +489,6 @@ function functionalWrapper(Component) {
         ref: forwardRef
       });
 
-      resetWarn();
       var vNode = Component(_props, true
       /* is in vue */
       );

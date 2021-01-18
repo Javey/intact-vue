@@ -3,6 +3,7 @@ import Intact from '../src/IntactVue';
 import Normalize from './normalize.vue';
 import Test1 from './test1.vue';
 import Test3 from './test3.vue';
+import {createRouter, createWebHashHistory} from 'vue-router';
 
 const {isFunction} = Intact.utils;
 
@@ -1283,6 +1284,73 @@ describe('Unit Test', () => {
 
             await nextTick();
             expect(vm.$el.outerHTML).to.eql('<div class="test1" data-v-68694da0=""><div class="test2" data-v-68694da0=""><span>test2</span><i data-v-68694da0="">test1</i><div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b><div class="test3" data-v-6830ef9c="" data-v-68694da0=""><span data-v-6830ef9c="">test3</span><div data-v-68694da0="" data-v-6830ef9c-s="">intact component in vue<b data-v-68694da0="" data-v-6830ef9c-s="">test</b></div></div></div></div><div data-v-68694da0="">Intact Component</div><div data-v-68694da0=""><div data-v-68694da0="">Intact Component</div></div></div>');
+        });
+    });
+
+    describe('Router', () => {
+        function render(routes) {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            const app = createApp({
+                template: `<router-view />`
+            });
+            app.use(createRouter({
+                history: createWebHashHistory(),
+                routes,
+            }));
+            app.mount(container);
+        }
+
+        const {Types} = Intact.Vdt.miss;
+        function findRouter(instance) {
+            while (instance) {
+                const vueInstance = instance.vueInstance;
+                if (vueInstance) {
+                    return vueInstance.$router;
+                }
+                let parentVNode = instance.parentVNode;
+                while (true) {
+                    if (!parentVNode) return;
+                    if (parentVNode.type === Types.ComponentClass) {
+                        instance = parentVNode.children;
+                        break;
+                    }
+                    parentVNode = parentVNode.parentVNode;
+                }
+            }
+        }
+
+        it('should get router in Intact component', (done) => {
+            render([
+                {path: '/', component: {
+                    template: '<C />',
+                    components: {
+                        C: createIntactComponent(`<div>test</div>`, {
+                            _mount() {
+                                expect(findRouter(this)).to.be.exist;
+                                done();
+                            }
+                        })
+                    }
+                }},
+            ]);
+        });
+
+        it('should get router in nested Intact component', (done) => {
+            render([
+                {path: '/', component: {
+                    template: '<ChildrenIntactComponent><C /></ChildrenIntactComponent>',
+                    components: {
+                        ChildrenIntactComponent,
+                        C: createIntactComponent(`<div>test</div>`, {
+                            _mount() {
+                                expect(findRouter(this)).to.be.exist;
+                                done();
+                            }
+                        })
+                    }
+                }},
+            ]);
         });
     });
 

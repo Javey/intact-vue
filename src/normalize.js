@@ -150,6 +150,10 @@ function normalizeSlots(slots, props) {
     if (slots.default) {
         const slot = slots.default;
         try {
+            // Vue will detect whether the slot is invoked outside or not,
+            // but it does not affetch anything in here,
+            // so we keep the warning silent
+            //
             // Vue will warn if we get property of undefined, we keep it silent
             silentWarn();
             props.children = normalizeChildren(ensureValidVNode(slot()));

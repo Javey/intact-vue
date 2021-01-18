@@ -10,10 +10,6 @@ export default function functionalWrapper(Component) {
         if (context) {
             // invoked by Vue
             const {forwardRef, ...rest} = props;
-            // Vue will detect whether the slot is invoked outside or not,
-            // but it does not affetch anything in here,
-            // so we keep the warning silent
-            silentWarn();
             const _props = normalizeProps({
                 props: rest,
                 children: context.slots,
@@ -22,7 +18,6 @@ export default function functionalWrapper(Component) {
                 },
                 ref: forwardRef,
             });
-            resetWarn();
 
             const vNode = Component(_props, true /* is in vue */);
             if (Array.isArray(vNode)) {

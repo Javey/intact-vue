@@ -828,7 +828,7 @@ describe('Unit Test', () => {
     });
 
     describe('v-show', () => {
-        it('should render v-show correctly', async () => {
+        it('should render v-show on class component correctly', async () => {
             render(`<C v-show="show">
                <div v-show="show">show</div>
                <C v-show="show">test</C>
@@ -845,6 +845,36 @@ describe('Unit Test', () => {
             await nextTick();
             expect(vm.$el.outerHTML).eql('<div><div style="">show</div><div>test</div><div style="font-size: 12px;">font-size</div><div style="font-size: 12px;">fontSize</div></div>');
         });
+
+        it('should render v-show on functional component correctly', async () => {
+            const h = Intact.Vdt.miss.h;
+            render(`<C v-show="show">
+               <div v-show="show">show</div>
+               <C v-show="show">test</C>
+               <C v-show="show" style="font-size: 12px;">font-size</C>
+               <C v-show="show" :style="{fontSize: '12px'}">fontSize</C>
+            </C>`, {
+                C: Intact.functionalWrapper(props => {
+                    return h(ChildrenIntactComponent, props);
+                }),
+            }, {show: false});
+
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div style="display: none;"><div style="display: none;">show</div><div style="display: none;">test</div><div style="font-size: 12px; display: none;">font-size</div><div style="font-size: 12px; display: none;">fontSize</div></div>');
+
+            vm.show = true;
+            await nextTick();
+            expect(vm.$el.outerHTML).eql('<div><div style="">show</div><div>test</div><div style="font-size: 12px;">font-size</div><div style="font-size: 12px;">fontSize</div></div>');
+        });
+
+        // it('should render v-show on functional component that returns mutliple vNodes correctly', async () => {
+            // const h = Intact.Vdt.miss.h;
+            // render(`<C v-show="show"></C>`, {
+                // C: Intact.functionalWrapper(props => {
+                    // return [h(ChildrenIntactComponent, props), h(SimpleIntactComponent)];
+                // }),
+            // }, {show: false});
+        // });
     });
 
     describe('Lifecycle', () => {
@@ -1439,6 +1469,17 @@ describe('Unit Test', () => {
             render('<C v-show="false">show</C>', {
                 C: {
                     template: `<div><slot /></div>`
+                }
+            });
+        });
+
+        it('v-show with functional component that returns multiple vnodes', async () => {
+            render('<C v-show="false">show</C>', {
+                C: function(props, context) {
+                    return [
+                        h('div', context.attrs, context.slots),
+                        h('div', null, 'test')
+                    ];
                 }
             });
         });

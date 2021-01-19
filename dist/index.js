@@ -65,8 +65,8 @@ var Wrapper = /*#__PURE__*/function () {
       // if we wrap a functional component that returns mutliple vNodes,
       // the vueVNode.el will be the start anchor node of Fragment,
       // and the anchor will be appended by Intact.
-      // This will change the order of nodes, so we return the end anchor
-      // for Intact to append.
+      // This will change the order of nodes,
+      // so we return the end anchor for Intact to append.
 
       if (isFunction(vueVNode.type)) {
         var subTree = vueVNode.component.subTree;

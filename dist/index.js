@@ -6,7 +6,7 @@ import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstruct
 import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
 import _defineProperty from '@babel/runtime/helpers/defineProperty';
 import Intact from 'intact/dist';
-import { createApp, h as h$1, KeepAlive, getCurrentInstance, cloneVNode, Text, Comment, Fragment, camelize, isVNode, vShow, isRef, createVNode } from 'vue';
+import { createApp, h as h$1, KeepAlive, getCurrentInstance, Fragment, cloneVNode, Text, Comment, camelize, isVNode, vShow, isRef, createVNode } from 'vue';
 import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
 import _typeof from '@babel/runtime/helpers/typeof';
 import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProperties';
@@ -29,6 +29,7 @@ function resetWarn() {
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var isFunction = Intact.utils.isFunction; // we must use this hack method to get patch function
 
 var internals;
 createApp({
@@ -59,7 +60,22 @@ var Wrapper = /*#__PURE__*/function () {
 
       var vueVNode = nextVNode.props.vueVNode;
       var parentDom = this.parentDom || document.createDocumentFragment();
-      patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode));
+      patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode)); // if the parentDom exists, Intact will append el to parentDom, but it has been appended by Vue
+      //
+      // if we wrap a functional component that returns mutliple vNodes,
+      // the vueVNode.el will be the start anchor node of Fragment,
+      // and the anchor will be appended by Intact.
+      // This will change the order of nodes, so we return the end anchor
+      // for Intact to append.
+
+      if (isFunction(vueVNode.type)) {
+        var subTree = vueVNode.component.subTree;
+
+        if (subTree.type === Fragment) {
+          return subTree.anchor;
+        }
+      }
+
       return vueVNode.el;
     }
   }, {
@@ -77,6 +93,7 @@ var Wrapper = /*#__PURE__*/function () {
     value: function destroy(vNode) {
       // if we wrap a Intact functional component which return a Inact component,
       // the dom will be a comment node that will be replaced by InactVue,
+      // or the dom will be a text node which specify the start anchor of Fragment,
       // in this case we set _unmount to let Inact never remove it,
       // and set doRemove to true to let Vue remove it instead.
       var vueVNode = vNode.props.vueVNode;
@@ -165,7 +182,7 @@ var _Intact$utils = Intact.utils,
     set = _Intact$utils.set,
     each = _Intact$utils.each,
     isString = _Intact$utils.isString,
-    isFunction = _Intact$utils.isFunction;
+    isFunction$1 = _Intact$utils.isFunction;
 function normalize(vNode) {
   if (vNode == null) return vNode;
 
@@ -417,7 +434,7 @@ function normalizeDirs(dirs, props) {
 }
 
 function normalizeRef(rawRef, props) {
-  if (isFunction(rawRef)) props.ref = rawRef;else if (rawRef) {
+  if (isFunction$1(rawRef)) props.ref = rawRef;else if (rawRef) {
     props.ref = function (i) {
       setRef(rawRef, i);
     };
@@ -465,7 +482,7 @@ function setRef(rawRef, value) {
     refs[ref] = value;
   } else if (isRef(ref)) {
     ref.value = value;
-  } else if (isFunction(ref)) {
+  } else if (isFunction$1(ref)) {
     ref(value, refs);
   } else {
     console.warn('Invalid template ref type:', value, "(".concat(_typeof(value), ")"));

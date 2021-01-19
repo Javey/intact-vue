@@ -1,4 +1,4 @@
-import {createApp, h, getCurrentInstance} from 'vue';
+import {createApp, h, getCurrentInstance, render as vueRender} from 'vue';
 import Intact from '../src/IntactVue';
 import Normalize from './normalize.vue';
 import Test1 from './test1.vue';
@@ -798,6 +798,32 @@ describe('Unit Test', () => {
             await nextTick();
             expect(vm.$refs.c.init).to.be.exist;
             expect(vm.$refs.d).to.be.null;
+        });
+    });
+
+    describe('Destroy', () => {
+        it('should destroy functional component correctly which returns multiple vNodes that nests Intact component', async () => {
+            const h = Intact.Vdt.miss.h;
+            const Component = Intact.functionalWrapper(function(props) {
+                const [element1, element2] = props.children;
+                return [
+                    h(ChildrenIntactComponent, null, element1),
+                    h(ChildrenIntactComponent, null, element2)
+                ];
+            });
+            render(`
+                <ChildrenIntactComponent>
+                    <Component>
+                        <a>1</a>
+                        <b>2</b>
+                    </Component>
+                </ChildrenIntactComponent>
+            `, {Component, ChildrenIntactComponent});
+
+            await nextTick();
+            const container = vm.$el.parentNode;
+            vueRender(null, container);
+            expect(container.childNodes.length).to.eql(0);
         });
     });
 

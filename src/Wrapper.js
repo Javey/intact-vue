@@ -1,5 +1,8 @@
-import {createApp, h, getCurrentInstance, KeepAlive, cloneVNode} from 'vue';
+import {createApp, h, getCurrentInstance, KeepAlive, cloneVNode, Fragment} from 'vue';
 import {isIntactComponent, cid, noop} from './utils';
+import Intact from 'intact/dist';
+
+const {isFunction} = Intact.utils;
 
 // we must use this hack method to get patch function
 let internals;
@@ -25,6 +28,19 @@ export default class Wrapper {
         const parentDom = this.parentDom || document.createDocumentFragment();
         patch(null, vueVNode, parentDom, null, getParentComponent(nextVNode));
 
+        // if the parentDom exists, Intact will append el to parentDom, but it has been appended by Vue
+        //
+        // if we wrap a functional component that returns mutliple vNodes,
+        // the vueVNode.el will be the start anchor node of Fragment,
+        // and the anchor will be appended by Intact.
+        // This will change the order of nodes, so we return the end anchor
+        // for Intact to append.
+        if (isFunction(vueVNode.type)) {
+            const subTree = vueVNode.component.subTree;
+            if (subTree.type === Fragment) {
+                return subTree.anchor;
+            }
+        }
         return vueVNode.el;
     }
 
@@ -39,6 +55,7 @@ export default class Wrapper {
     destroy(vNode) {
         // if we wrap a Intact functional component which return a Inact component,
         // the dom will be a comment node that will be replaced by InactVue,
+        // or the dom will be a text node which specify the start anchor of Fragment,
         // in this case we set _unmount to let Inact never remove it,
         // and set doRemove to true to let Vue remove it instead.
         const vueVNode = vNode.props.vueVNode;

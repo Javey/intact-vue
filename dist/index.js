@@ -1,15 +1,15 @@
-import _classCallCheck from '@babel/runtime/helpers/classCallCheck';
-import _createClass from '@babel/runtime/helpers/createClass';
-import _get from '@babel/runtime/helpers/get';
-import _inherits from '@babel/runtime/helpers/inherits';
-import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstructorReturn';
-import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
-import _defineProperty from '@babel/runtime/helpers/defineProperty';
+import _classCallCheck from '@babel/runtime/helpers/esm/classCallCheck';
+import _createClass from '@babel/runtime/helpers/esm/createClass';
+import _get from '@babel/runtime/helpers/esm/get';
+import _inherits from '@babel/runtime/helpers/esm/inherits';
+import _possibleConstructorReturn from '@babel/runtime/helpers/esm/possibleConstructorReturn';
+import _getPrototypeOf from '@babel/runtime/helpers/esm/getPrototypeOf';
+import _defineProperty from '@babel/runtime/helpers/esm/defineProperty';
 import Intact from 'intact/dist';
 import { createApp, h as h$1, KeepAlive, getCurrentInstance, Fragment, cloneVNode, Text, Comment, camelize, isVNode, vShow, isRef, createVNode } from 'vue';
-import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
-import _typeof from '@babel/runtime/helpers/typeof';
-import _objectWithoutProperties from '@babel/runtime/helpers/objectWithoutProperties';
+import _toConsumableArray from '@babel/runtime/helpers/esm/toConsumableArray';
+import _typeof from '@babel/runtime/helpers/esm/typeof';
+import _objectWithoutProperties from '@babel/runtime/helpers/esm/objectWithoutProperties';
 
 function isIntactComponent(vNode) {
   // don't convert Intact functional component to Intact vNode,

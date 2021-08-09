@@ -82,7 +82,7 @@ describe('Unit Test', () => {
                 '<VueComponent><C/></VueComponent>',
                 {
                     VueComponent: {
-                        template: `<div><slot></slot></div>`
+                        template: `<div><slot></slot><input type="checkbox" true-value="1" v-model="a" /></div>`
                     },
                     C: SimpleIntactComponent
                 }

@@ -1,16 +1,16 @@
 <template>
-    <Component :onVnodeMounted="test">
+    <C :onVnodeMounted="test">
         <div>hello world!</div>
-    </Component>
+    </C>
 </template>
 <script>
-import Component from './component.vue';
+import C from './component.vue';
 
 export default {
     name: 'App',
 
     components: {
-        Component
+        C
     },
 
     created() {

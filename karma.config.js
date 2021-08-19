@@ -5,16 +5,16 @@ const path = require('path');
 module.exports = function(config) {
     config.set({
         logLevel: config.LOG_INFO,
-        files: ['./test/index.js'],
+        files: ['./test/index.ts'],
         preprocessors: {
-            './test/index.js': ['webpack', 'sourcemap'],
+            './test/index.ts': ['webpack', 'sourcemap'],
         },
         webpack: {
             mode: 'development',
             module: {
                 rules: [
                     {
-                        test: /\.js$/,
+                        test: /\.[jt]sx?$/,
                         loader: 'babel-loader',
                         // exclude: [path.resolve(__dirname, 'node_modules/core-js')],
                         exclude: /node_modules/,
@@ -37,7 +37,9 @@ module.exports = function(config) {
             resolve: {
                 alias: {
                     'vue$': 'vue/dist/vue.esm-bundler.js',
-                }
+                    'intact$': 'intact/dist/index.esm.dev.js',
+                },
+                extensions: ['.ts', '.js'],
             },
             plugins: [
                 new VueLoaderPlugin(),
@@ -47,15 +49,16 @@ module.exports = function(config) {
             'mocha',
             'sinon-chai',
         ],
-        plugins: [
-            'karma-mocha',
-            'karma-webpack',
-            'karma-sourcemap-loader',
-            'karma-sinon-chai',
-        ],
+        // plugins: [
+            // 'karma-mocha',
+            // 'karma-webpack',
+            // 'karma-sourcemap-loader',
+            // 'karma-sinon-chai',
+        // ],
         client: {
             mocha: {
-                reporter: 'html'
+                reporter: 'html',
+                allowUncaught: true,
             }
         },
         singleRun: true,

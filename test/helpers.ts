@@ -37,7 +37,7 @@ export const PropsIntactComponent = createIntactComponent(
 export let vm: ComponentPublicInstance<any, any, any>;
 export function render(
     template: string | Function,
-    components: Record<string, VueComponent>,
+    components: Record<string, VueComponent> = {},
     data: object | ((this: any, vm: any) => any) = {}, 
     methods = {},
     lifecycle = {}

@@ -1,4 +1,4 @@
-import {ComponentClass, Props, VNodeComponentClass, VNode, IntactDom} from 'intact';
+import {ComponentClass, Props, VNodeComponentClass, VNode, IntactDom, removeVNodeDom} from 'intact';
 import {
     VNode as VueVNode,
     createApp,
@@ -51,7 +51,7 @@ export interface WrapperProps {
 }
 
 export class Wrapper implements ComponentClass<WrapperProps> {
-    public $inited: boolean = false;
+    public $inited: boolean = true;
     public $lastInput: VNode | null = null;
 
     constructor(
@@ -71,6 +71,9 @@ export class Wrapper implements ComponentClass<WrapperProps> {
         anchor: IntactDom | null,
         // mountedQueue: Function[]
     ): void {
+        if (lastVNode) {
+            removeVNodeDom(lastVNode, parentDom);
+        }
         const {vnode} = vNode.props!;
         const parent = (this.$parent as Component).vueInstance!.$parent!.$;
         patch(null, vnode, parentDom, anchor, parent, null, this.$SVG);
@@ -95,6 +98,6 @@ export class Wrapper implements ComponentClass<WrapperProps> {
         nextVNode: VNodeComponentClass | null
     ): void  {
         const parent = (this.$parent as Component).vueInstance!.$parent!.$;
-        unmount(vNode.props!.vnode, parent, null, false);
+        unmount(vNode.props!.vnode, parent, null, !!nextVNode);
     }
 }

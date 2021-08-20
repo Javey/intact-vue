@@ -2,8 +2,11 @@ const webpack = require('webpack');
 const {VueLoaderPlugin} = require('vue-loader');
 const path = require('path');
 
+const isDebug = !(process.env.COVER || process.env.CI);
+
 module.exports = function(config) {
     config.set({
+        browsers: !isDebug ? ['ChromeHeadless'] : undefined,
         logLevel: config.LOG_INFO,
         files: ['./test/index.ts'],
         preprocessors: {
@@ -18,6 +21,15 @@ module.exports = function(config) {
                         loader: 'babel-loader',
                         // exclude: [path.resolve(__dirname, 'node_modules/core-js')],
                         exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.ts$/,
+                        include: /src\/.*\.ts$/,
+                        enforce: 'post',
+                        use: {
+                            loader: 'istanbul-instrumenter-loader',
+                            options: {esModules: true}
+                        }
                     },
                     {
                         test: /\.css$/,
@@ -61,7 +73,13 @@ module.exports = function(config) {
                 allowUncaught: true,
             }
         },
-        singleRun: true,
-        reporters: ['progress'],
+        singleRun: !isDebug,
+        // reporters: ['progress'],
+        reporters: ['coverage-istanbul'],
+        coverageIstanbulReporter: {
+            reports: ['html', 'text-summary', 'lcovonly'],
+            dir: path.resolve(__dirname, './coverage/'),
+            fixWebpackSourcePaths: true,
+        },
     });
 }

@@ -34,6 +34,9 @@ export function normalize(vnode: VNodeChildAtom): VNodeAtom {
         vNode = createComponentVNode(4, Wrapper, {vnode}, vnode.key as Key);
     }
 
+    // tell Vue that this is a read only object, and don't reactive it
+    (vNode as any).__v_isReadonly = true;
+
     return vNode;
 }
 
@@ -41,8 +44,8 @@ export function isIntactComponent(vnode: VueVNode) {
     return !!(vnode.type as IntactComponentOptions).Component;
 }
 
-export function normalizeChildren(vNodes: VNodeArrayChildren) {
-    const loop = (vNodes: VNodeArrayChildren): VNodeAtom[] | VNodeAtom => {
+export function normalizeChildren(vNodes: VNodeArrayChildren | VNodeChildAtom) {
+    const loop = (vNodes: VNodeArrayChildren | VNodeChildAtom): VNodeAtom[] | VNodeAtom => {
         if (Array.isArray(vNodes)) {
             const ret: VNodeAtom[] = [];
             vNodes.forEach(vNode => {

@@ -3,12 +3,12 @@ import {h, VNode as VueVNode} from 'vue';
 import {ComponentFunction, NormalizedChildren, VNode} from 'intact';
 import {isStringOrNumber} from 'intact-shared';
 
-type ComponentFunctionForVue = ComponentFunction & {
+export type ComponentFunctionForVue = ComponentFunction & {
      (props: any, isVue?: boolean): NormalizedChildren 
 }
 
 export function functionalWrapper(Component: ComponentFunctionForVue) {
-    function Ctor(props: any, context: any) {
+    function Ctor(props: any, context?: any) {
         if (context) {
             // invoked by Vue
             const {forwardRef, ...rest} = props;

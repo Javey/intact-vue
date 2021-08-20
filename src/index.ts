@@ -1,6 +1,6 @@
 import {Component as IntactComponent, VNodeComponentClass, mount, patch, unmount, findDomFromVNode, IntactDom, Props, ComponentClass} from 'intact';
-import {ComponentOptions, ComponentPublicInstance, createVNode, Comment, ComponentInternalInstance} from 'vue';
-import {normalize} from './normalize';
+import {DefineComponent, ComponentOptions, ComponentPublicInstance, createVNode, Comment, ComponentInternalInstance, EmitsOptions, VNodeProps, AllowedComponentProps, ComponentCustomProps} from 'vue';
+import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
 
 export interface IntactComponentOptions extends ComponentOptions {
@@ -74,14 +74,12 @@ export class Component<P = {}> extends IntactComponent<P> {
                     const mountedQueue: Function[] = [];
                     vNode._vueInstance = proxyToUse;
 
-                    // this.vueInstance = proxyToUse;
                     mount(vNode, null, null, false, null, []);
                     setupState.instance = vNode.children as Component;
                     this.isVue = true;
 
-                    const element = this.element = findDomFromVNode(vNode, true) as IntactDom;
-
                     // hack the nodeOps of Vue to create the real dom instead of a comment
+                    const element = findDomFromVNode(vNode, true) as IntactDom;
                     const documentCreateComment = document.createComment;
                     document.createComment = () => {
                         document.createComment = documentCreateComment;
@@ -89,7 +87,7 @@ export class Component<P = {}> extends IntactComponent<P> {
                     };
                 } else {
                     const lastVNode = instance!.$vNode;
-                    patch(lastVNode, vNode, this.element.parentElement!, null, false, null, [], false);
+                    patch(lastVNode, vNode, this.$el.parentElement!, null, false, null, [], false);
                 }
 
                 return createVNode(Comment);
@@ -108,16 +106,21 @@ export class Component<P = {}> extends IntactComponent<P> {
             },
 
             beforeUnmount() {
-                unmount(this.$vNode); 
+                // we should get name by instance, if the name starts with '$'
+                unmount(this.instance.$vNode); 
             },
         });
     };
 
     static functionalWrapper = functionalWrapper;
+    static normalize = normalizeChildren;
 
-    private element: IntactDom | null = null;
+    // private element: IntactDom | null = null;
     public vueInstance: ComponentPublicInstance | undefined;
     private isVue: boolean = false;
+
+    // for Vue infers types
+    public $props!: P;
 
     constructor(
         props: Props<P, Component<P>> | null | undefined,
@@ -128,5 +131,7 @@ export class Component<P = {}> extends IntactComponent<P> {
     ) {
         super(props as any, $vNode, $SVG, $mountedQueue, $parent);
         this.vueInstance = $vNode._vueInstance;
+        // disable async component 
+        this.$inited = true;
     }
 } 

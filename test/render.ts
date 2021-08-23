@@ -22,6 +22,12 @@ describe('Unit Test', () => {
             expect(vm.$el.outerHTML).to.eql(SimpleIntactComponent.template);
         });
 
+        it('render nested intact component', async () => {
+            render(`<C><C>test</C></C>`, {C: ChildrenIntactComponent});
+            await nextTick();
+            expect(vm.$el.outerHTML).to.eql(`<div><div>test</div></div>`);
+        });
+
         it('render intact in vue element', async () => {
             render('<div><C/></div>', {C: SimpleIntactComponent});
             await nextTick();
@@ -400,7 +406,7 @@ describe('Unit Test', () => {
                 });
 
                 await nextTick();
-                expect(vm.a.element.innerHTML).to.eql('test');
+                expect(vm.a.$el.innerHTML).to.eql('test');
                 expect(vm.$el.outerHTML).be.eql('<div><div class="a">test</div><div>two</div></div>');
             });
 

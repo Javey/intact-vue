@@ -2,6 +2,8 @@ import {Component as IntactComponent, VNodeComponentClass, mount, patch, unmount
 import {DefineComponent, ComponentOptions, ComponentPublicInstance, createVNode, Comment, ComponentInternalInstance, EmitsOptions, VNodeProps, AllowedComponentProps, ComponentCustomProps} from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
+import {isFunction} from 'intact-shared';
+import {setScopeId} from'./scoped';
 
 export interface IntactComponentOptions extends ComponentOptions {
     Component: typeof Component
@@ -28,7 +30,7 @@ export class Component<P = {}> extends IntactComponent<P> {
             name: Component.displayName || Component.name,
             Component: Ctor,
 
-            setup(props, ctx) {
+            setup(props, setupContext) {
                 const setupState: SetupState = {instance: null};
                 const proxy = new Proxy(setupState, {
                     get({instance}, key: keyof Component | '__v_isReactive' | 'instance') {
@@ -36,7 +38,12 @@ export class Component<P = {}> extends IntactComponent<P> {
                         if (instance === null) return null;
                         if (key === 'instance') return instance;
 
-                        return instance[key];
+                        const value = instance[key];
+                        if (isFunction(value)) {
+                            // should bind instance, otherwise the `this` may point to proxyToUse
+                            return value.bind(instance);
+                        }
+                        return value;
                     },
 
                     set(setupState, key, value) {
@@ -67,6 +74,11 @@ export class Component<P = {}> extends IntactComponent<P> {
                 const vueInstance = proxyToUse.$;
                 const vNode = normalize(vueInstance.vnode) as VNodeComponentClassMaybeWithVueInstance;
 
+                const _setScopeId = (element: IntactDom) => {
+                    const vnode = vueInstance.vnode;
+                    setScopeId(element, vnode, vnode.scopeId, (vnode as any).slotScopeIds, vueInstance.parent);
+                }
+
                 let instance = setupState.instance;
                 const isInit = !instance;
 
@@ -75,8 +87,8 @@ export class Component<P = {}> extends IntactComponent<P> {
                     vNode._vueInstance = proxyToUse;
 
                     mount(vNode, null, null, false, null, []);
-                    setupState.instance = vNode.children as Component;
-                    this.isVue = true;
+                    instance = setupState.instance = vNode.children as Component;
+                    instance.isVue = true;
 
                     // hack the nodeOps of Vue to create the real dom instead of a comment
                     const element = findDomFromVNode(vNode, true) as IntactDom;
@@ -85,24 +97,23 @@ export class Component<P = {}> extends IntactComponent<P> {
                         document.createComment = documentCreateComment;
                         return element as Comment;
                     };
+
+                    // scope id
+                    _setScopeId(element);
                 } else {
                     const lastVNode = instance!.$vNode;
                     patch(lastVNode, vNode, this.$el.parentElement!, null, false, null, [], false);
+                    // element may have chagned
+                    const element = findDomFromVNode(vNode, true) as IntactDom;
+                    const subTree = vueInstance.subTree;
+                    if (subTree.el !== element) {
+                        subTree.el = element;
+                        // set scope id
+                        _setScopeId(element);
+                    }
                 }
 
                 return createVNode(Comment);
-            },
-
-            mounted() {
-                // const el = this.$el;
-                // el.parentNode.replaceChild(this.element, el);
-
-                // // update vnode.el
-                // this.updateVueVNodeEl();
-            },
-
-            updated() {
-
             },
 
             beforeUnmount() {

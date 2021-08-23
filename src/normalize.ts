@@ -17,11 +17,13 @@ export function normalize(vnode: VNodeChildAtom): VNodeAtom {
     let vNode: VNode;
 
     if (isIntactComponent(vnode)) {
+        const props = normalizeProps(vnode);
         vNode = createComponentVNode(
             4,
             (type as IntactComponentOptions).Component,
-            normalizeProps(vnode),
-            vnode.key as Key
+            props,
+            vnode.key as Key,
+            props.ref
         );
     } else {
         // ignore comment vNode

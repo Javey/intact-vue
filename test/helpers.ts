@@ -33,6 +33,7 @@ export const ChildrenIntactComponent = createIntactComponent(
 export const PropsIntactComponent = createIntactComponent(
     `<div>a: {this.get('a')} b: {this.get('b')}</div>`
 );
+export const WrapperComponent = createIntactComponent(`<template>{this.get('children')}</template>`);
 
 export let vm: ComponentPublicInstance<any, any, any>;
 export function render(

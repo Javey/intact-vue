@@ -1,4 +1,4 @@
-import {ComponentClass, Props, VNodeComponentClass, VNode, IntactDom, removeVNodeDom} from 'intact';
+import {ComponentClass, Props, VNodeComponentClass, VNode, IntactDom, removeVNodeDom, createVNode} from 'intact';
 import {
     VNode as VueVNode,
     createApp,
@@ -52,7 +52,7 @@ export interface WrapperProps {
 
 export class Wrapper implements ComponentClass<WrapperProps> {
     public $inited: boolean = true;
-    public $lastInput: VNode | null = null;
+    public $lastInput: VNode = createVNode('div');
 
     constructor(
         public props: Props<WrapperProps, ComponentClass<WrapperProps>>,
@@ -73,10 +73,14 @@ export class Wrapper implements ComponentClass<WrapperProps> {
     ): void {
         if (lastVNode) {
             removeVNodeDom(lastVNode, parentDom);
+        } else if (!parentDom) {
+            parentDom = document.createDocumentFragment() as any; 
         }
         const {vnode} = vNode.props!;
-        const parent = (this.$parent as Component).vueInstance!.$parent!.$;
-        patch(null, vnode, parentDom, anchor, parent, null, this.$SVG);
+        patch(null, vnode, parentDom, anchor, getParent(this), null, this.$SVG);
+
+        // add dom to the $lastInput for findDomFromVNode
+        this.$lastInput.dom = vnode.el;
     }
 
     $update(
@@ -89,8 +93,9 @@ export class Wrapper implements ComponentClass<WrapperProps> {
     ): void {
         const {vnode: lastVnode} = lastVNode.props!;
         const {vnode: nextVnode} = vNode.props!;
-        const parent = (this.$parent as Component).vueInstance!.$parent!.$;
-        patch(lastVnode, nextVnode, parentDom, anchor, parent, null, this.$SVG);
+        patch(lastVnode, nextVnode, parentDom, anchor, getParent(this), null, this.$SVG);
+
+        this.$lastInput.dom = nextVnode.el;
     }
 
     $unmount(
@@ -100,4 +105,15 @@ export class Wrapper implements ComponentClass<WrapperProps> {
         const parent = (this.$parent as Component).vueInstance!.$parent!.$;
         unmount(vNode.props!.vnode, parent, null, !!nextVNode);
     }
+}
+
+function getParent(instance: Wrapper) {
+    let $parent = instance.$parent as Component;
+
+    do {
+        const vueInstance = $parent.vueInstance;
+        if (vueInstance) {
+            return vueInstance.$parent!.$;
+        }
+    } while ($parent = $parent.$parent as Component)
 }

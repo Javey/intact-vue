@@ -1,8 +1,35 @@
-import {VNode, createComponentVNode, Props, TypeDefs, Key, NormalizedChildren, createVoidVNode, ComponentClass, TypePrimitive, TypeObject, Blocks} from 'intact';
-import {VNode as VueVNode, Text, Comment, Fragment, VNodeNormalizedChildren, camelize, VNodeArrayChildren, isVNode, VNodeChild, vShow, isRef} from 'vue';
+import {
+    VNode,
+    createComponentVNode,
+    TypeDefs,
+    Key,
+    TypePrimitive,
+    TypeObject,
+    Blocks
+} from 'intact';
+import {
+    VNode as VueVNode,
+    Comment,
+    Fragment,
+    VNodeNormalizedChildren,
+    camelize,
+    VNodeArrayChildren,
+    isVNode,
+    VNodeChild,
+    vShow,
+    isRef
+} from 'vue';
 import {Wrapper} from './wrapper';
 import type {IntactComponentOptions} from './';
-import {isArray, EMPTY_OBJ, hasOwn, isStringOrNumber, isInvalid, isFunction, isString} from 'intact-shared';
+import {
+    isArray,
+    EMPTY_OBJ,
+    hasOwn,
+    isStringOrNumber,
+    isInvalid,
+    isFunction,
+    isString
+} from 'intact-shared';
 
 type EventValue = Function | Function[]
 type TypeDefValue = TypePrimitive | TypePrimitive[] | TypeObject
@@ -148,7 +175,12 @@ function normalizeEvents(props: any, key: string, value: EventValue) {
     props[`ev-${name}`] = cb;
 }
 
-function normalizeBoolean(propTypes: TypeDefs<Record<string, TypeDefValue>>, key: string, camelizedKey: string, value: any) {
+function normalizeBoolean(
+    propTypes: TypeDefs<Record<string, TypeDefValue>>,
+    key: string,
+    camelizedKey: string,
+    value: any
+) {
     if (hasOwn.call(propTypes, camelizedKey)) {
         let tmp;
         if (

@@ -1,12 +1,18 @@
-import {ComponentClass, Props, VNodeComponentClass, VNode, IntactDom, removeVNodeDom, createVNode} from 'intact';
+import {
+    ComponentClass,
+    Props,
+    VNodeComponentClass,
+    VNode,
+    IntactDom,
+    removeVNodeDom,
+    createVNode
+} from 'intact';
 import {
     VNode as VueVNode,
     createApp,
     h,
     getCurrentInstance,
     KeepAlive,
-    cloneVNode,
-    Fragment,
     RendererElement,
     RendererNode,
     ComponentInternalInstance,
@@ -88,8 +94,8 @@ export class Wrapper implements ComponentClass<WrapperProps> {
         vNode: VNodeComponentClass,
         parentDom: Element,
         anchor: IntactDom | null,
-        mountedQueue: Function[],
-        force: boolean
+        // mountedQueue: Function[],
+        // force: boolean
     ): void {
         const {vnode: lastVnode} = lastVNode.props!;
         const {vnode: nextVnode} = vNode.props!;
@@ -112,11 +118,11 @@ function getParent(instance: Wrapper) {
     do {
         const vueInstance = $parent.vueInstance;
         if (vueInstance) {
-            // return vueInstance.$parent!.$;
-            // console.log(vueInstance.$);
             return vueInstance;
         }
     } while ($parent = $parent.$parent as Component);
 
+    // should not hit this
+    /* istanbul ignore next */
     return null
 }

@@ -1,9 +1,26 @@
-import {Component as IntactComponent, VNodeComponentClass, mount, patch, unmount, findDomFromVNode, IntactDom, Props, ComponentClass, callAll} from 'intact';
-import {DefineComponent, ComponentOptions, ComponentPublicInstance, createVNode, Comment, ComponentInternalInstance, EmitsOptions, VNodeProps, AllowedComponentProps, ComponentCustomProps} from 'vue';
+import {
+    Component as IntactComponent,
+    VNodeComponentClass,
+    mount,
+    patch,
+    unmount,
+    findDomFromVNode,
+    IntactDom,
+    Props,
+    ComponentClass,
+    callAll
+} from 'intact';
+import {
+    ComponentOptions,
+    ComponentPublicInstance,
+    createVNode,
+    Comment,
+    ComponentInternalInstance
+} from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
 import {isFunction} from 'intact-shared';
-import {setScopeId} from'./scoped';
+import {setScopeId}  from './scoped';
 
 export interface IntactComponentOptions extends ComponentOptions {
     Component: typeof Component
@@ -51,10 +68,10 @@ export class Component<P = {}> extends IntactComponent<P> {
                     },
 
                     set(setupState, key, value) {
-                        if (key === 'instance') {
+                        // if (key === 'instance') {
                             return Reflect.set(setupState, key, value);
-                        }
-                        return Reflect.set(setupState.instance!, key, value);
+                        // }
+                        // return Reflect.set(setupState.instance!, key, value);
                     },
 
                     getOwnPropertyDescriptor() {
@@ -218,6 +235,7 @@ function createStack<T>() {
 
 function callMountedQueue() {
     const mountedQueue = popMountedQueue();
+    /* istanbul ignore next */
     if (process.env.NODE_ENV !== 'production') {
         if (!mountedQueue) {
             throw new Error(`"mountedQueue" is undefined, maybe this is a bug of Intact-Vue`);
@@ -226,15 +244,3 @@ function callMountedQueue() {
 
     callAll(mountedQueue!);
 }
-
-// function getParent(instance: ComponentInternalInstance): Component | null {
-    // let parent = instance.parent; 
-    // do {
-        // const setupState = (parent as any).setupState;
-        // if (setupState && setupState.instance instanceof Component) {
-            // return setupState.instance;
-        // }
-    // } while (parent = parent!.parent);
-
-    // return null
-// }

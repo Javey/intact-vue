@@ -10,6 +10,7 @@ export function setScopeId(
     if (scopeId) {
         hostSetScopeId(el, scopeId);
     }
+    /* istanbul ignore next */
     if (slotScopeIds) {
         for (let i = 0; i < slotScopeIds.length; i++) {
             hostSetScopeId(el, slotScopeIds[i]);

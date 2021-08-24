@@ -68,8 +68,8 @@ if (options.minify) {
 
 const format = options.format;
 const external = format === 'umd' ||
-    format === 'iife' ||
-    format === 'es' && options.env !== 'unknown' ?
+    format === 'iife' ?
+    // format === 'es' && options.env !== 'unknown' ?
         [] :
         Object.keys(pkgJson.dependencies || {});
 

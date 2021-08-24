@@ -9,13 +9,11 @@
     "test": "karma start karma.config.js",
     "cover": "COVER=true karma start karma.config.js",
     "build": "run-p build:** && npm run types",
-    "build:es:dev": "            npm run rollup -- --env=development --name=index --ext=esm.dev.js          --format=es   --minify=false",
-    "build:es:prod": "           npm run rollup -- --env=production  --name=index --ext=esm.prod.js         --format=es   --minify=false",
-    "build:es": "                npm run rollup -- --env=unknown     --name=index --ext=esm.js              --format=es   --minify=false --replace=false",
-    "build:cjs:dev": "           npm run rollup -- --env=development --name=index --ext=cjs.dev.js          --format=cjs  --minify=false",
-    "build:cjs:prod": "          npm run rollup -- --env=production  --name=index --ext=cjs.prod.js         --format=cjs  --minify=false",
-    "build:iife:dev": "          npm run rollup -- --env=development              --ext=js                  --format=iife --minify=false",
-    "build:iife:prod": "         npm run rollup -- --env=production               --ext=min.js              --format=iife --minify=true",
+    "build:es:dev": "  npm run rollup -- --env=development --name=index --ext=esm.dev.js   --format=es   --minify=false",
+    "build:es:prod": " npm run rollup -- --env=production  --name=index --ext=esm.prod.js  --format=es   --minify=false",
+    "build:es": "      npm run rollup -- --env=unknown     --name=index --ext=esm.js       --format=es   --minify=false --replace=false",
+    "build:cjs:dev": " npm run rollup -- --env=development --name=index --ext=cjs.dev.js   --format=cjs  --minify=false",
+    "build:cjs:prod": "npm run rollup -- --env=production  --name=index --ext=cjs.prod.js  --format=cjs  --minify=false",
     "rollup": "node ./scripts/build.js",
     "types": "node ./scripts/typings.js",
     "release": "npm run release-patch",
@@ -80,6 +78,7 @@
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "rollup": "^2.36.1",
+    "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.30.0",
     "sinon": "^4.1.3",
     "sinon-chai": "^2.14.0",
@@ -94,6 +93,6 @@
     "webpack-dev-server": "^3.2.1"
   },
   "dependencies": {
-    "@babel/runtime": "^7.12.5"
+    "tslib": "^2.3.1"
   }
 }

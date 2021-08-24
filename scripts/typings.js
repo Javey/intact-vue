@@ -4,5 +4,6 @@ const mergedirs = require('merge-dirs').default;
 const cwd = process.cwd();
 const name = basename(cwd);
 
-mergedirs(join(cwd, 'dist/packages/', name, 'src'), join(cwd, 'dist'), 'overwrite');
-rimfaf.sync(join(cwd, 'dist/packages'));
+mergedirs(join(cwd, 'dist/src'), join(cwd, 'dist'), 'overwrite');
+rimfaf.sync(join(cwd, 'dist/src'));
+rimfaf.sync(join(cwd, 'dist/test'));

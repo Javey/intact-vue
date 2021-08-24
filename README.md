@@ -1,19 +1,19 @@
 # intact-vue
 
-A compatibility layer for running [Intact][1] component in [Vue][2].
+A compatibility layer for running [Intact][1] component in [Vue-Next][2].
 
 ## Usage
 
 ```js
-import Vue from 'vue';
-import Intact from 'intact-vue';
+import {createApp} from 'vue';
+import {Component} from 'intact-vue';
 
-class IntactComponent extends Intact {
-    get template() {
-        return `<button ev-click={self.onClick.bind(self)}>
-            click {self.get('value')}
-        </button>`;
-    }
+class IntactComponent extends Component {
+    static template = `
+        <button ev-click={this.onClick.bind(this)}>
+            click {this.get('value')}
+        </button>
+    `;
 
     onClick() {
         this.set('value', this.get('value') + 1);
@@ -23,8 +23,7 @@ class IntactComponent extends Intact {
 
 const container = document.createElement('div');
 document.body.appendChild(container);
-const vue = new Vue({
-    el: container,
+createApp({
     data: {
         count: 0,
     },
@@ -38,7 +37,7 @@ const vue = new Vue({
         }
     },
     components: {IntactComponent}
-});
+}).mount(container);
 ```
 
 ### webpack
@@ -61,8 +60,6 @@ resolve: {
     // native modifier
     <IntactComponent @click.native="onClick" />
     ```
-
-2. ~~Intact does not support `scoped`. You should avoid using them. Use className to limit style instead of.~~
 
 3. [Multiple values][3] style is not supported.
 

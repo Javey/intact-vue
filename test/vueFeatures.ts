@@ -12,9 +12,10 @@ import {
     nextTick,
 } from './helpers';
 import {createVNode as h, ComponentFunction} from 'intact';
-import {h as v, ComponentPublicInstance, render as vueRender, getCurrentInstance} from 'vue';
+import {h as v, ComponentPublicInstance, render as vueRender, getCurrentInstance, createApp} from 'vue';
 import Test1 from './test1.vue';
 import Test3 from './test3.vue';
+import {createRouter, createWebHashHistory, RouteRecordRaw} from 'vue-router';
 
 describe('Unit Test', () => {
     describe('Vue Features', () => {
@@ -151,6 +152,69 @@ describe('Unit Test', () => {
 
                 await nextTick();
                 expect(vm.$el.outerHTML).to.eql('<div class="test1" data-v-68694da0=""><div class="test2" data-v-68694da0=""><span>test2</span><i data-v-68694da0="">test1</i><div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b><div class="test3" data-v-6830ef9c="" data-v-68694da0=""><span data-v-6830ef9c="">test3</span><div data-v-68694da0="">intact component in vue<b data-v-68694da0="">test</b></div></div></div></div><div>Intact Component</div><div><div>Intact Component</div></div></div>');
+            });
+        });
+
+        describe('Router', () => {
+            function render(routes: RouteRecordRaw[]) {
+                const container = document.createElement('div');
+                document.body.appendChild(container);
+                const app = createApp({
+                    template: `<router-view />`
+                });
+                app.use(createRouter({
+                    history: createWebHashHistory(),
+                    routes,
+                }));
+                app.mount(container);
+            }
+
+            function findRouter(instance: Component) {
+                do {
+                    const vueInstance = instance.vueInstance;
+                    if (vueInstance) {
+                        return vueInstance.proxy!.$router;
+                    }
+                } while (instance = instance.$parent as Component);
+            }
+
+            it('should get router in Intact component', (done) => {
+                class Test extends Component {
+                    static template = `<div>test</div>`;
+                    mounted() {
+                        expect(findRouter(this)).to.be.exist;
+                        done();
+                    }
+                }
+
+                render([
+                    {path: '/', component: {
+                        template: '<C />',
+                        components: {
+                            C: Test 
+                        }
+                    }},
+                ]);
+            });
+
+            it('should get router in nested Intact component', (done) => {
+                class Test extends Component {
+                    static template = `<div>test</div>`;
+                    mounted() {
+                        expect(findRouter(this)).to.be.exist;
+                        done();
+                    }
+                }
+
+                render([
+                    {path: '/', component: {
+                        template: '<ChildrenIntactComponent><C /></ChildrenIntactComponent>',
+                        components: {
+                            ChildrenIntactComponent,
+                            C: Test 
+                        }
+                    }},
+                ]);
             });
         });
 

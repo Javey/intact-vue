@@ -1,4 +1,4 @@
-import {Component as IntactComponent, VNodeComponentClass, mount, patch, unmount, findDomFromVNode, IntactDom, Props, ComponentClass} from 'intact';
+import {Component as IntactComponent, VNodeComponentClass, mount, patch, unmount, findDomFromVNode, IntactDom, Props, ComponentClass, callAll} from 'intact';
 import {DefineComponent, ComponentOptions, ComponentPublicInstance, createVNode, Comment, ComponentInternalInstance, EmitsOptions, VNodeProps, AllowedComponentProps, ComponentCustomProps} from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
@@ -14,8 +14,12 @@ type SetupState = {
 }
 
 type VNodeComponentClassMaybeWithVueInstance = VNodeComponentClass<ComponentClass> & {
-    _vueInstance?: ComponentPublicInstance
+    _vueInstance?: ComponentInternalInstance
 }
+
+let currentInstance: Component | null = null;
+const [pushMountedQueue, popMountedQueue] = createStack<Function[]>();
+const [pushInstance, popInstance] = createStack<Component>();
 
 export class Component<P = {}> extends IntactComponent<P> {
     static __cache: IntactComponentOptions | null = null;
@@ -27,7 +31,7 @@ export class Component<P = {}> extends IntactComponent<P> {
         }
 
         return (Ctor.__cache = {
-            name: Component.displayName || Component.name,
+            name: Ctor.displayName || Ctor.name,
             Component: Ctor,
 
             setup(props, setupContext) {
@@ -79,15 +83,18 @@ export class Component<P = {}> extends IntactComponent<P> {
                     setScopeId(element, vnode, vnode.scopeId, (vnode as any).slotScopeIds, vueInstance.parent);
                 }
 
-                let instance = setupState.instance;
-                const isInit = !instance;
+                const mountedQueue = pushMountedQueue([]);
+                const subTree = createVNode(Comment);
+                const parentComponent = currentInstance;
+                const isSVG = parentComponent ? parentComponent.$SVG : false;
 
-                if (isInit) {
-                    const mountedQueue: Function[] = [];
-                    vNode._vueInstance = proxyToUse;
+                if (!vueInstance.isMounted) {
+                    vueInstance.subTree = subTree;
 
-                    mount(vNode, null, null, false, null, []);
-                    instance = setupState.instance = vNode.children as Component;
+                    vNode._vueInstance = vueInstance;
+
+                    mount(vNode, null, parentComponent, isSVG, null, mountedQueue);
+                    const instance = vNode.children as Component;
                     instance.isVue = true;
 
                     // hack the nodeOps of Vue to create the real dom instead of a comment
@@ -101,19 +108,28 @@ export class Component<P = {}> extends IntactComponent<P> {
                     // scope id
                     _setScopeId(element);
                 } else {
+                    const instance = setupState.instance;
                     const lastVNode = instance!.$vNode;
-                    patch(lastVNode, vNode, this.$el.parentElement!, null, false, null, [], false);
+                    patch(lastVNode, vNode, this.$el.parentElement!, parentComponent, isSVG, null, mountedQueue, false);
                     // element may have chagned
                     const element = findDomFromVNode(vNode, true) as IntactDom;
-                    const subTree = vueInstance.subTree;
-                    if (subTree.el !== element) {
-                        subTree.el = element;
+                    const oldSubTree = vueInstance.subTree;
+                    if (oldSubTree.el !== element) {
+                        oldSubTree.el = element;
                         // set scope id
                         _setScopeId(element);
                     }
                 }
 
-                return createVNode(Comment);
+                return subTree;
+            },
+
+            mounted() {
+                callMountedQueue();
+            },
+
+            updated() {
+                callMountedQueue();
             },
 
             beforeUnmount() {
@@ -126,8 +142,7 @@ export class Component<P = {}> extends IntactComponent<P> {
     static functionalWrapper = functionalWrapper;
     static normalize = normalizeChildren;
 
-    // private element: IntactDom | null = null;
-    public vueInstance: ComponentPublicInstance | undefined;
+    public vueInstance: ComponentInternalInstance | undefined;
     private isVue: boolean = false;
 
     // for Vue infers types
@@ -141,8 +156,85 @@ export class Component<P = {}> extends IntactComponent<P> {
         $parent: ComponentClass | null
     ) {
         super(props as any, $vNode, $SVG, $mountedQueue, $parent);
-        this.vueInstance = $vNode._vueInstance;
+        const vuePublicInstance = $vNode._vueInstance;
+        this.vueInstance = vuePublicInstance;
+        if (vuePublicInstance) {
+            // set the instance to the setupState of vueIntance.$
+            // ps: setupState is @internal in vue
+            (vuePublicInstance as any).setupState.instance = this;
+        }
         // disable async component 
         this.$inited = true;
     }
+
+    $render(
+        lastVNode: VNodeComponentClass | null,
+        nextVNode: VNodeComponentClass,
+        parentDom: Element,
+        anchor: IntactDom | null,
+        mountedQueue: Function[]
+    ): void {
+        const lastIntance = currentInstance;
+        currentInstance = pushInstance(this);
+
+        super.$render(lastVNode, nextVNode, parentDom, anchor, mountedQueue);
+
+        popInstance();
+        currentInstance = lastIntance;
+    }
+
+    $update(
+        lastVNode: VNodeComponentClass,
+        nextVNode: VNodeComponentClass,
+        parentDom: Element,
+        anchor: IntactDom | null,
+        mountedQueue: Function[],
+        force: boolean
+    ): void {
+        const lastIntance = currentInstance;
+        currentInstance = pushInstance(this);
+
+        super.$update(lastVNode, nextVNode, parentDom, anchor, mountedQueue, force);
+
+        popInstance();
+        currentInstance = lastIntance;
+    }
 } 
+
+function createStack<T>() {
+    const stack: T[] = [];
+
+    function pushStack(item: T) {
+        stack.push(item);
+        return item;
+    }
+
+    function popStack() {
+        return stack.pop();
+    }
+
+    return [pushStack, popStack] as const;
+}
+
+function callMountedQueue() {
+    const mountedQueue = popMountedQueue();
+    if (process.env.NODE_ENV !== 'production') {
+        if (!mountedQueue) {
+            throw new Error(`"mountedQueue" is undefined, maybe this is a bug of Intact-Vue`);
+        }
+    }
+
+    callAll(mountedQueue!);
+}
+
+// function getParent(instance: ComponentInternalInstance): Component | null {
+    // let parent = instance.parent; 
+    // do {
+        // const setupState = (parent as any).setupState;
+        // if (setupState && setupState.instance instanceof Component) {
+            // return setupState.instance;
+        // }
+    // } while (parent = parent!.parent);
+
+    // return null
+// }

@@ -207,12 +207,13 @@ describe('Unit Test', () => {
         });
 
         it('call intact show method to create elements that contains vue component, should get the $parent in vue component', (done) => {
+            const C = createIntactComponent(`<div>{this.get('show') ? this.get('children') : undefined}</div>`);
             render(`<C ref="c"><V /></C>`, {
-                C: createIntactComponent(`<div>{this.get('show') ? this.get('children') : undefined}</div>`),
+                C, 
                 V: {
                     template: `<div>test</div>`,
                     beforeCreate() {
-                        expect(this.$parent === vm).to.be.true;
+                        expect(this.$parent.$parent === vm).to.be.true;
                         done();
                     }
                 }

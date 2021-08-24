@@ -22,15 +22,15 @@ module.exports = function(config) {
                         // exclude: [path.resolve(__dirname, 'node_modules/core-js')],
                         exclude: /node_modules/,
                     },
-                    // {
-                        // test: /\.ts$/,
-                        // include: /src\/.*\.ts$/,
-                        // enforce: 'post',
-                        // use: {
-                            // loader: 'istanbul-instrumenter-loader',
-                            // options: {esModules: true}
-                        // }
-                    // },
+                    {
+                        test: /\.ts$/,
+                        include: /src\/.*\.ts$/,
+                        enforce: 'post',
+                        use: {
+                            loader: 'istanbul-instrumenter-loader',
+                            options: {esModules: true}
+                        }
+                    },
                     {
                         test: /\.css$/,
                         use: ['style-loader', 'css-loader']

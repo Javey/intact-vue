@@ -102,8 +102,7 @@ export class Wrapper implements ComponentClass<WrapperProps> {
         vNode: VNodeComponentClass,
         nextVNode: VNodeComponentClass | null
     ): void  {
-        const parent = (this.$parent as Component).vueInstance!.$parent!.$;
-        unmount(vNode.props!.vnode, parent, null, !!nextVNode);
+        unmount(vNode.props!.vnode, getParent(this), null, !!nextVNode);
     }
 }
 
@@ -113,7 +112,11 @@ function getParent(instance: Wrapper) {
     do {
         const vueInstance = $parent.vueInstance;
         if (vueInstance) {
-            return vueInstance.$parent!.$;
+            // return vueInstance.$parent!.$;
+            // console.log(vueInstance.$);
+            return vueInstance;
         }
-    } while ($parent = $parent.$parent as Component)
+    } while ($parent = $parent.$parent as Component);
+
+    return null
 }

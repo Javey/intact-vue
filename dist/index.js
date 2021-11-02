@@ -273,8 +273,11 @@ function normalizeProps(vNode) {
 
         if (propTypes) {
           var camelizedKey = camelize(key);
-          value = normalizeBoolean(propTypes, key, camelizedKey, value);
-          key = camelizedKey;
+
+          if (hasOwn.call(propTypes, camelizedKey)) {
+            value = normalizeBoolean(propTypes, key, camelizedKey, value);
+            key = camelizedKey;
+          }
         }
 
         props[key] = value;
@@ -289,16 +292,14 @@ function normalizeProps(vNode) {
 }
 
 function normalizeBoolean(propTypes, key, camelizedKey, value) {
-  if (hasOwn.call(propTypes, camelizedKey)) {
-    var tmp;
+  var tmp;
 
-    if (( // value is Boolean
-    (tmp = propTypes[camelizedKey]) === Boolean || tmp && ( // value contains Boolean
-    isArray(tmp) && tmp.indexOf(Boolean) > -1 || // value.type is Boolean
-    tmp.type === Boolean || // value.type contains Boolean
-    isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
-      value = true;
-    }
+  if (( // value is Boolean
+  (tmp = propTypes[camelizedKey]) === Boolean || tmp && ( // value contains Boolean
+  isArray(tmp) && tmp.indexOf(Boolean) > -1 || // value.type is Boolean
+  tmp.type === Boolean || // value.type contains Boolean
+  isArray(tmp.type) && tmp.type.indexOf(Boolean) > -1)) && (value === '' || value === key)) {
+    value = true;
   }
 
   return value;

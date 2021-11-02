@@ -4,6 +4,7 @@ import Normalize from './normalize.vue';
 import Test1 from './test1.vue';
 import Test3 from './test3.vue';
 import {createRouter, createWebHashHistory} from 'vue-router';
+import {Tooltip} from 'kpc-vue';
 
 const {isFunction} = Intact.utils;
 
@@ -1492,5 +1493,32 @@ describe('Unit Test', () => {
                 }
             });
         });
+    });
+
+    describe('Kpc', () => {
+        it('Tooltip', () => {
+            render(`
+                <div>
+                    <Tooltip theme="light" trigger="click" always
+                        class="xxx"
+                        confirm
+                        okText="测试点击"
+                        @ok="test"
+                        :value="true"
+                    >
+                        <span>Click</span>
+                        <template v-slot:content>
+                            <div>content</div>
+                        </template>
+                    </Tooltip>
+                </div>
+            `, {
+               Tooltip
+            }, {
+                test() {
+                    console.log('click');
+                }
+            });
+        })
     });
 });

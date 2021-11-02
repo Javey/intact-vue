@@ -30,6 +30,10 @@ module.exports = function(config) {
                     {
                         test: /\.vue$/,
                         loader: 'vue-loader'
+                    },
+                    {
+                        test: /\.(woff2?|eot|ttf|otf|svg|jpg|png)(\?.*)?$/,
+                        loader: 'file-loader',
                     }
                 ]
             },
@@ -37,6 +41,7 @@ module.exports = function(config) {
             resolve: {
                 alias: {
                     'vue$': 'vue/dist/vue.esm-bundler.js',
+                    'intact-vue$': path.resolve(__dirname, './src/index.js'),
                 }
             },
             plugins: [
